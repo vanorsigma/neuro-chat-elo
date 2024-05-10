@@ -16,3 +16,5 @@ dataclasses-json = "0.6.5"
 [tool.poetry.dev-dependencies]
 pytest = "^6.0"
 pylint = "*"
+black = "^24.0.0"
+flake8 = "*"

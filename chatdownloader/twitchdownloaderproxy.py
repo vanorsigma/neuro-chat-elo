@@ -18,7 +18,8 @@ import zipfile
 import json
 from typing import Optional
 
-RELEASES_URL = 'https://api.github.com/repos/lay295/TwitchDownloader/releases/latest'
+RELEASES_URL = "https://api.github.com/repos/lay295/TwitchDownloader/releases/latest"
+
 
 class TwitchChatDownloader:
     """
@@ -28,20 +29,21 @@ class TwitchChatDownloader:
     :param executable_path: The path to the executable
     """
 
-    def __init__(self, executable_path = ''):
+    def __init__(self, executable_path=""):
         # We don't delete on close because we need to use the executable
         # Instead, it'll have to be deleted manually
         # (our target is Python 3.11, which does not have delete_on_close yet)
-        self._predownloaded = executable_path != ''
+        self._predownloaded = executable_path != ""
         self._downloaded = self._predownloaded
 
-        self.executable_tempfile_name = \
+        self.executable_tempfile_name = (
             tempfile.mktemp() if not self._downloaded else executable_path
-        self.executable_tempfile = open(self.executable_tempfile_name, 'ab+')
+        )
+        self.executable_tempfile = open(self.executable_tempfile_name, "ab+")
         self.executable_tempfile.close()
 
-        self.chat_tempfile_name = tempfile.mktemp('.json')
-        self.chat_tempfile = open(self.chat_tempfile_name, 'ab+')
+        self.chat_tempfile_name = tempfile.mktemp(".json")
+        self.chat_tempfile = open(self.chat_tempfile_name, "ab+")
         self.chat_tempfile.close()
 
     def __enter__(self):
@@ -60,9 +62,9 @@ class TwitchChatDownloader:
     @staticmethod
     def __parse_github_api_response(response) -> Optional[str]:
         download_url = None
-        for asset in response['assets']:
-            if asset['name'].endswith('Linux-x64.zip'):
-                download_url = asset['browser_download_url']
+        for asset in response["assets"]:
+            if asset["name"].endswith("Linux-x64.zip"):
+                download_url = asset["browser_download_url"]
                 break
         return download_url
 
@@ -75,7 +77,7 @@ class TwitchChatDownloader:
             raise RuntimeError("Could not fetch releases page")
 
         body = r.json()
-        if 'assets' not in body:
+        if "assets" not in body:
             raise RuntimeError("No assets found in the release")
 
         download_url = self.__parse_github_api_response(body)
@@ -89,13 +91,17 @@ class TwitchChatDownloader:
         with tempfile.TemporaryFile() as tempf:
             tempf.write(r.content)
             with zipfile.ZipFile(tempf) as zipf:
-                zipf.extract('TwitchDownloaderCLI',
-                             path=os.path.dirname(
-                                 self.executable_tempfile_name))
-                os.rename(os.path.join(
-                    os.path.dirname(self.executable_tempfile_name),
-                    'TwitchDownloaderCLI'),
-                          self.executable_tempfile_name)
+                zipf.extract(
+                    "TwitchDownloaderCLI",
+                    path=os.path.dirname(self.executable_tempfile_name),
+                )
+                os.rename(
+                    os.path.join(
+                        os.path.dirname(self.executable_tempfile_name),
+                        "TwitchDownloaderCLI",
+                    ),
+                    self.executable_tempfile_name,
+                )
 
         try:
             os.chmod(self.executable_tempfile_name, 0o700 | os.X_OK)
@@ -111,18 +117,20 @@ class TwitchChatDownloader:
         to be downloaded.
         """
         if not self._downloaded:
-            print('No executable downloaded, downloading...')
+            print("No executable downloaded, downloading...")
             self.download_executable()
 
-        exit_code = os.system(f"{self.executable_tempfile_name} chatdownload -u {vod_id} -o {self.chat_tempfile_name}")
+        exit_code = os.system(
+            f"{self.executable_tempfile_name} chatdownload -u {vod_id} -o {self.chat_tempfile_name}"
+        )
         if exit_code != 0:
             raise RuntimeError("Error with chat download")
 
-        with open(self.chat_tempfile_name, 'r') as f:
+        with open(self.chat_tempfile_name, "r") as f:
             json_data = json.load(f)
 
         # TODO: Remove this, I'm just getting a sample for now
-        with open('result.json', 'w') as f:
+        with open("result.json", "w") as f:
             json.dump(json_data, f)
         return json_data
 
