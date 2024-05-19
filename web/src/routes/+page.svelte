@@ -1,5 +1,6 @@
 <script lang="ts">
   import Leaderboard from '$lib/leaderboard.svelte';
+  import Podium from '$lib/podium.svelte';
   import { ranks } from '$lib/ranks';
 
   // TODO: Placeholder function
@@ -17,8 +18,11 @@
   }
 </script>
 
-<h1 class="text-3xl">Leaderboard #1</h1>
-<Leaderboard fetchNextPage={getRankPage} />
+<h1 class="text-3xl">Podium</h1>
+<Podium />
+
+<!-- <h1 class="text-3xl">Leaderboard #1</h1> -->
+<!-- <Leaderboard fetchNextPage={getRankPage} /> -->
 
 <!-- <h1 class="text-3xl">Leaderboard #2</h1> -->
 <!-- <Leaderboard fetchNextPage={getRankPage} /> -->
