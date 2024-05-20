@@ -7,22 +7,9 @@
   let canvasWidth: number = 800;
   let canvasHeight: number = 600;
 
-  export let firstPlace: User = {
-    name: 'Someone',
-    elo: 300,
-    avatar: 'https://i.pinimg.com/474x/b8/10/b7/b810b717e748149f5b8a39daabff88a4.jpg'
-  };
-  export let secondPlace: User = {
-    name: 'Someone else',
-    elo: 240,
-    avatar:
-      'https://64.media.tumblr.com/80467bc9c6f4b85ae470c63312c6b73f/fa59626f4dee859b-49/s540x810/1a00796571563255ed587431644ec78bfcca7db9.jpg'
-  };
-  export let thirdPlace: User = {
-    name: 'not important',
-    elo: 10,
-    avatar: 'https://i.pinimg.com/736x/9f/92/d6/9f92d6377ddf5280f71ff345987f2df7.jpg'
-  };
+  export let firstPlace: User;
+  export let secondPlace: User;
+  export let thirdPlace: User;
 
   const avatarSize: number = 128;
   const nameFontSize = 20;
