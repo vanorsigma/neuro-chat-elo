@@ -1,9 +1,28 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import type { User } from './user';
+  import { sanitizeString } from '$lib';
 
   let canvasElement: HTMLCanvasElement;
   let canvasWidth: number = 800;
   let canvasHeight: number = 600;
+
+  export let firstPlace: User = {
+    name: 'Someone',
+    elo: 300,
+    avatar: 'https://i.pinimg.com/474x/b8/10/b7/b810b717e748149f5b8a39daabff88a4.jpg'
+  };
+  export let secondPlace: User = {
+    name: 'Someone else',
+    elo: 240,
+    avatar:
+      'https://64.media.tumblr.com/80467bc9c6f4b85ae470c63312c6b73f/fa59626f4dee859b-49/s540x810/1a00796571563255ed587431644ec78bfcca7db9.jpg'
+  };
+  export let thirdPlace: User = {
+    name: 'not important',
+    elo: 10,
+    avatar: 'https://i.pinimg.com/736x/9f/92/d6/9f92d6377ddf5280f71ff345987f2df7.jpg'
+  };
 
   const avatarSize: number = 128;
   const nameFontSize = 20;
@@ -12,6 +31,18 @@
   const eloFontSize = 10;
   const eloFont = `${eloFontSize}px arial`;
 
+  const colors = ['#C0C0C0', '#FFD700', '#CD7F32'];
+
+  /**
+   * Creates the user hero avatar thingy on top of the podium
+   *
+   * @argument parentContext {CanvasRenderingContext2D} The parent drawing context
+   * @argument elo {number} The user's elo
+   * @argument avatar_url {string} The URL to the profile pic of the user
+   * @argument podium_x {number} The podium's X offset
+   * @argument podium_y {number} The podium's y offset
+   * @argument podium_w {number} The podium's width
+   */
   function createUserCanvas(
     parentContext: CanvasRenderingContext2D,
     name: string,
@@ -19,10 +50,8 @@
     avatar_url: string,
     podium_x: number,
     podium_y: number,
-    podium_w: number,
-    podium_h: number
+    podium_w: number
   ) {
-    // const avatarSize = podium_w - 5;
     const avatarXOffset = (podium_w - avatarSize) / 2;
     const avatarYOffset = nameFontSize;
 
@@ -39,7 +68,11 @@
 
     context.font = nameFont;
     context.textAlign = 'center';
-    context.fillText(name, avatarXOffset + avatarSize / 2, avatarSize + nameFontSize);
+    context.fillText(
+      sanitizeString(name),
+      avatarXOffset + avatarSize / 2,
+      avatarSize + nameFontSize
+    );
 
     context.font = eloFont;
     context.textAlign = 'center';
@@ -57,75 +90,78 @@
     image.src = avatar_url;
   }
 
+  function widthFromString(str: string) {
+    return Math.max(100, Math.min(200, str.length * nameFontSize));
+  }
+
+  /**
+   * Draws a podium based on the parameters given.
+   *
+   * @argument context The drawing context
+   * @argument color Color of the podium
+   * @argument user A {User} object that contains things
+   * @argument xOffset The xOffset in the canvas
+   * @argument yOffset The yOffset to draw the podium (it's the base of the entire podium)
+   * @argument maxElo The maximum elo in the system (for relative scaling)
+   * @argument minElo The minimum elo in the system (also for relative scaling)
+   * @returns [number, number] The new xOffset to use for the next podium
+   */
+  function drawPodium(
+    context: CanvasRenderingContext2D,
+    color: string,
+    user: User,
+    xOffset: number,
+    yOffset: number,
+    maxElo: number,
+    minElo: number
+  ) {
+    const width = widthFromString(user.name);
+    const height = 50 + ((user.elo - minElo) / (maxElo - minElo)) * 100;
+
+    context.fillStyle = color;
+    context.fillRect(
+      xOffset,
+      yOffset - height + avatarSize + nameFontSize + eloFontSize + 20,
+      width,
+      height
+    );
+
+    context.fillStyle = 'black';
+    context.textAlign = 'center';
+
+    createUserCanvas(
+      context,
+      user.name,
+      user.elo,
+      user.avatar,
+      xOffset,
+      yOffset - height + 20,
+      width
+    );
+
+    return xOffset + width;
+  }
+
   onMount(async () => {
-    const podiums = [
-      {
-        y: 100,
-        width: Math.max(100, Math.min(200, 'Someone else'.length * nameFontSize)),
-        height: 100,
-        color: '#C0C0C0',
-        user: {
-          name: 'Someone else',
-          elo: 200,
-          avatar:
-            'https://64.media.tumblr.com/80467bc9c6f4b85ae470c63312c6b73f/fa59626f4dee859b-49/s540x810/1a00796571563255ed587431644ec78bfcca7db9.jpg'
-        }
-      },
-      {
-        // Top Chatter
-        y: 50,
-        width: Math.max(100, Math.min(200, 'Someone'.length * nameFontSize)), // TODO: Need to make this dynamic based on username
-        height: 150,
-        color: '#FFD700',
-        user: {
-          name: 'Someone',
-          elo: 300,
-          avatar: 'https://i.pinimg.com/474x/b8/10/b7/b810b717e748149f5b8a39daabff88a4.jpg'
-        }
-      },
-      {
-        y: 125,
-        width: Math.max(100, Math.min(200, 'not important'.length * nameFontSize)),
-        height: 75,
-        color: '#CD7F32',
-        user: {
-          name: 'not important',
-          elo: 300,
-          avatar: 'https://i.pinimg.com/736x/9f/92/d6/9f92d6377ddf5280f71ff345987f2df7.jpg'
-        }
-      }
-    ];
     const context = canvasElement.getContext('2d');
-    canvasWidth = podiums.reduce((accum, podium) => accum + podium.width, 0);
-    canvasHeight =
-      podiums.reduce((accum, podium) => Math.max(accum, podium.height), 0) +
-      avatarSize +
-      nameFontSize +
-      eloFontSize +
-      20;
+    const maxElo = Math.max(firstPlace.elo, secondPlace.elo, thirdPlace.elo);
+    const minElo = Math.min(firstPlace.elo, secondPlace.elo, thirdPlace.elo);
+
+    if (!context) {
+      console.error('Cannot get context of Podium');
+      return;
+    }
+
+    canvasWidth = [firstPlace, secondPlace, thirdPlace].reduce(
+      (accum, user) => accum + widthFromString(user.name),
+      0
+    );
+    canvasHeight = 150 + avatarSize + nameFontSize + eloFontSize + 20;
     await tick(); // wait for canvas width to update
-    let currentX = 0;
 
-    podiums.forEach((podium) => {
-      // derive width from username
-      context.fillStyle = podium.color;
-      context.fillRect(currentX, podium.y + avatarSize + nameFontSize, podium.width, podium.height);
-
-      context.fillStyle = 'black';
-      context.textAlign = 'center';
-
-      createUserCanvas(
-        context,
-        podium.user.name,
-        podium.user.elo,
-        podium.user.avatar,
-        currentX,
-        podium.y,
-        podium.width,
-        podium.height
-      );
-      currentX += podium.width;
-    });
+    let currentX = drawPodium(context, colors[0], secondPlace, 0, 150, maxElo, minElo);
+    currentX = drawPodium(context, colors[1], firstPlace, currentX, 150, maxElo, minElo);
+    drawPodium(context, colors[2], thirdPlace, currentX, 150, maxElo, minElo);
   });
 </script>
 
