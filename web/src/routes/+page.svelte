@@ -34,13 +34,14 @@
   });
 </script>
 
-<h1 class="text-3xl">Podium</h1>
-{#if topUsers}
-  <Podium firstPlace={topUsers[0]} secondPlace={topUsers[1]} thirdPlace={topUsers[2]} />
-{/if}
+<div class="bg-chat rounded-xl flex flex-col items-center gap-2 p-5">
+  <h1 class="text-3xl">Top Chatters</h1>
+  {#if topUsers}
+    <Podium firstPlace={topUsers[0]} secondPlace={topUsers[1]} thirdPlace={topUsers[2]} />
+  {/if}
+</div>
 
-<h1 class="text-3xl">Leaderboard #1</h1>
-<Leaderboard fetchNextPage={getRankPage} />
-
-<!-- <h1 class="text-3xl">Leaderboard #2</h1> -->
-<!-- <Leaderboard fetchNextPage={getRankPage} /> -->
+<div class="bg-chat rounded-xl flex flex-col items-center max-h-[90%] flex-1 p-5">
+  <h1 class="text-3xl">Leaderboard</h1>
+  <Leaderboard fetchNextPage={getRankPage} />
+</div>

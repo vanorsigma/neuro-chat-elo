@@ -5,6 +5,10 @@ export default {
     extend: {
       gridTemplateColumns: {
         '4': '1fr 4fr 1fr 1fr'
+      },
+      colors: {
+        'neuro': '#fea8ae',
+        'chat': '#f7dedf'
       }
     },
   },
