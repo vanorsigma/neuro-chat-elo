@@ -1,7 +1,15 @@
 import { readable } from 'svelte/store';
 
+export interface RankingInfo {
+  rank: number;
+  elo: number;
+  username: string;
+  delta: number;
+  avatar: string;
+}
+
 // TODO: Currently dummy data
-export const ranks = readable([{
+export const ranks: RankingInfo[] = readable([{
   rank: 1,
   elo: 200.2,
   username: 'hjalnir',
@@ -21,3 +29,12 @@ export const ranks = readable([{
   delta: 1.0,
   avatar: 'https://i.pinimg.com/474x/b8/10/b7/b810b717e748149f5b8a39daabff88a4.jpg'
 }))], () => {});
+
+export const altRanks: RankingInfo[] = readable([
+  ...Array.from({ length: 100 }, (v, i) => ({
+    rank: i + 1,
+    elo: 900 - i,
+    username: `user ${i + 3}`,
+    delta: 1.0,
+    avatar: 'https://i.pinimg.com/474x/b8/10/b7/b810b717e748149f5b8a39daabff88a4.jpg'
+  }))], () => {});
