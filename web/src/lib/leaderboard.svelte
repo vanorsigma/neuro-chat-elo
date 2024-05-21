@@ -43,13 +43,16 @@ TODO: Find a better way to do this, I'm too smooth-brained
   let fetchMarkerBefore: HTMLElement;
   let fetchMarkerAfter: HTMLElement;
   let fetchObserver: IntersectionObserver;
-  $: initialDataLoaded = (currentIndexTop === undefined && currentIndexBottom === undefined);
+  $: initialDataLoaded = currentIndexTop === undefined && currentIndexBottom === undefined;
 
   async function updateData(direction: boolean) {
-    const response = await fetchNextPage(direction ? currentIndexBottom : currentIndexTop, direction);
+    const response = await fetchNextPage(
+      direction ? currentIndexBottom : currentIndexTop,
+      direction
+    );
 
     if (!direction) {
-      currentData = [ ...response[0], ...currentData];
+      currentData = [...response[0], ...currentData];
       currentIndexTop = response[1];
       expectBefore = response[2];
     } else {
@@ -63,8 +66,7 @@ TODO: Find a better way to do this, I'm too smooth-brained
     await updateData(false);
 
     // NOTE: For initialization purposes
-    if (!currentIndexBottom)
-      currentIndexBottom = currentIndexTop;
+    if (!currentIndexBottom) currentIndexBottom = currentIndexTop;
   });
 
   onMount(() => {
@@ -73,7 +75,7 @@ TODO: Find a better way to do this, I'm too smooth-brained
         let topIntersect = false;
         let bottomIntersect = false;
 
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           topIntersect ||= entry.target === fetchMarkerBefore && entry.isIntersecting;
           bottomIntersect ||= entry.target === fetchMarkerAfter && entry.isIntersecting;
         });
@@ -83,32 +85,31 @@ TODO: Find a better way to do this, I'm too smooth-brained
         } else if (bottomIntersect && expectAfter) {
           updateData(true);
         }
-      }, { threshold: 1 });
+      },
+      { threshold: 1 }
+    );
   });
 
   beforeUpdate(() => {
-    if (!fetchObserver)
-      return;
+    if (!fetchObserver) return;
 
     fetchMarkerBefore ? fetchObserver.unobserve(fetchMarkerBefore) : null;
     fetchMarkerAfter ? fetchObserver.unobserve(fetchMarkerAfter) : null;
   });
 
   afterUpdate(() => {
-    if (!fetchObserver)
-      return;
+    if (!fetchObserver) return;
 
     fetchMarkerBefore ? fetchObserver.observe(fetchMarkerBefore) : null;
     fetchMarkerAfter ? fetchObserver.observe(fetchMarkerAfter) : null;
-  })
+  });
 
   onDestroy(() => {
-    if (!fetchObserver)
-      return;
+    if (!fetchObserver) return;
 
     fetchObserver.unobserve(fetchMarkerBefore);
     fetchObserver.unobserve(fetchMarkerAfter);
-  })
+  });
 
   /* Header Rendering Shenanigans */
   // Leaderboard header rendering related variables
@@ -169,7 +170,7 @@ TODO: Find a better way to do this, I'm too smooth-brained
     return () => {
       window.removeEventListener('scroll', updateHeaderValues);
     };
-  })
+  });
 
   onDestroy(() => {
     if (!headerObserver) return;
@@ -202,7 +203,7 @@ TODO: Find a better way to do this, I'm too smooth-brained
   }
 </script>
 
-<div bind:this={containerElement} class="relative w-full h-full overflow-y-scroll">
+<div bind:this={containerElement} class="relative w-full h-60 grow md:h-full overflow-y-scroll">
   <div class="relative w-full" bind:this={parentElement}>
     <div
       bind:this={stickyElement}
