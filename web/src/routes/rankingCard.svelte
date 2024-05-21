@@ -5,7 +5,6 @@
   import type { User } from '$lib/user';
   import { onMount } from 'svelte';
 
-  export let isActive = false;
   export let rankingInfo: RankingInfo;
 
   // TODO: Placeholder function
@@ -44,9 +43,7 @@
   });
 </script>
 
-<div
-  class="flex flex-row justify-center items-center w-full h-full gap-3 {isActive ? '' : 'hidden'}"
->
+<div class="flex flex-row justify-center items-center w-full h-full gap-3">
   <div class="bg-chat rounded-xl flex flex-col items-center gap-2 p-5 h-min">
     <h1 class="text-3xl">Top Chatters</h1>
     {#if topUsers}

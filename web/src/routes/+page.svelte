@@ -1,6 +1,7 @@
 <script lang="ts">
   import RankingCard from './rankingCard.svelte';
   import Carousel from '$lib/carousel.svelte';
+  import { fly } from 'svelte/transition';
   import { ranks, altRanks } from '$lib/ranks';
 
   let activeIndex = 0;
@@ -17,9 +18,15 @@
 
 <Carousel previousPage={() => navigatePage(-1)} nextPage={() => navigatePage(1)}>
   {#each ranking as rankingInfo, index}
-    <div class="flex flex-col w-full h-[90%] {index === activeIndex ? '' : 'hidden'}">
-      <h1 class="text-3xl flex-none font-bold">{rankingTitles[index]}</h1>
-      <RankingCard isActive={index === activeIndex} {rankingInfo} />
-    </div>
+    {#if index === activeIndex}
+      <div
+        in:fly={{ x: -window.innerWidth, duration: 200, delay: 201 }}
+        out:fly={{ x: window.innerWidth, duration: 200 }}
+        class="flex flex-col w-full h-[90%]"
+      >
+        <h1 class="text-3xl flex-none font-bold">{rankingTitles[index]}</h1>
+        <RankingCard {rankingInfo} />
+      </div>
+    {/if}
   {/each}
 </Carousel>
