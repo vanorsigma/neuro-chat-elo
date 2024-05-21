@@ -1,47 +1,25 @@
 <script lang="ts">
-  import Leaderboard from '$lib/leaderboard.svelte';
-  import Podium from '$lib/podium.svelte';
-  import { ranks } from '$lib/ranks';
-  import type { User } from '$lib/user';
-  import { onMount } from 'svelte';
+  import RankingCard from './rankingCard.svelte';
+  import Carousel from '$lib/carousel.svelte';
+  import { ranks, altRanks } from '$lib/ranks';
 
-  // TODO: Placeholder function
-  async function getRankPage(curr: string, direction: boolean) {
-    const ranksLength = $ranks.length;
-    const indexNow = (curr === undefined) ? 0 : (Number(curr));
-    const offset = (!direction ? -1 : 1);
-    const indexToFetch = Math.max(1, indexNow + offset);
-    const shouldFetchMore = !direction ? (indexNow * 30 != 0) :
-          (indexToFetch * 30 < ranksLength);
-    return [$ranks.slice(direction ? indexToFetch * 30 : (indexToFetch - 1) * 30,
-                         direction ? (indexToFetch + 1) * 30 : indexToFetch * 30),
-            `${indexToFetch + offset}`,
-            shouldFetchMore];
+  let activeIndex = 0;
+  let rankingTitles = ['Overall', 'Non-VIPS', 'Only Chatting'];
+  let ranking = [$ranks, $altRanks, undefined];
+
+  function navigatePage(offset: number) {
+    activeIndex = (activeIndex + offset) % (ranking.length - 1);
+    while (activeIndex < 0) {
+      activeIndex = ranking.length + activeIndex - 1;
+    }
   }
-
-  async function getTopUsers(): Promise<User[]> {
-    return $ranks.slice().sort((a, b) => a.rank > b.rank).slice(0, 3).map((data) => ({
-      name: data.username,
-      elo: data.elo,
-      avatar: data.avatar,
-    }));
-  }
-
-  let topUsers: User[] | undefined;
-
-  onMount(async () => {
-    topUsers = await getTopUsers();
-  });
 </script>
 
-<div class="bg-chat rounded-xl flex flex-col items-center gap-2 p-5">
-  <h1 class="text-3xl">Top Chatters</h1>
-  {#if topUsers}
-    <Podium firstPlace={topUsers[0]} secondPlace={topUsers[1]} thirdPlace={topUsers[2]} />
-  {/if}
-</div>
-
-<div class="bg-chat rounded-xl flex flex-col items-center max-h-[90%] flex-1 p-5">
-  <h1 class="text-3xl">Leaderboard</h1>
-  <Leaderboard fetchNextPage={getRankPage} />
-</div>
+<Carousel previousPage={() => navigatePage(-1)} nextPage={() => navigatePage(1)}>
+  {#each ranking as rankingInfo, index}
+    <div class="flex flex-col w-full h-[90%] {index === activeIndex ? '' : 'hidden'}">
+      <h1 class="text-3xl flex-none font-bold">{rankingTitles[index]}</h1>
+      <RankingCard isActive={index === activeIndex} {rankingInfo} />
+    </div>
+  {/each}
+</Carousel>
