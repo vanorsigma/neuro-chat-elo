@@ -6,6 +6,7 @@
   import { onMount } from 'svelte';
 
   export let rankingInfo: RankingInfo;
+  let podiumCard: HTMLDivElement;
 
   // TODO: Placeholder function
   async function getRankPage(curr: string, direction: boolean) {
@@ -37,21 +38,32 @@
   }
 
   let topUsers: User[] | undefined;
+  let podiumWidth;
 
   onMount(async () => {
     topUsers = await getTopUsers();
   });
 </script>
 
-<div class="flex flex-row justify-center items-center w-full h-full gap-3">
-  <div class="bg-chat rounded-xl flex flex-col items-center gap-2 p-5 h-min">
+<div class="flex flex-col md:flex-row justify-center items-center w-full h-full gap-3">
+  <div
+    bind:this={podiumCard}
+    class="bg-chat rounded-xl flex flex-col flex-none md:flex-1 items-center gap-2 p-5 h-min"
+  >
     <h1 class="text-3xl">Top Chatters</h1>
     {#if topUsers}
-      <Podium firstPlace={topUsers[0]} secondPlace={topUsers[1]} thirdPlace={topUsers[2]} />
+      <Podium
+        scaleToX={window.innerWidth < 768 ? podiumCard.clientWidth : 400}
+        firstPlace={topUsers[0]}
+        secondPlace={topUsers[1]}
+        thirdPlace={topUsers[2]}
+      />
     {/if}
   </div>
 
-  <div class="bg-chat rounded-xl flex flex-col items-center max-h-[90%] flex-1 p-5">
+  <div
+    class="bg-chat rounded-xl flex flex-col items-center md:max-h-[90%] flex-auto p-5 w-full md:w-auto"
+  >
     <h1 class="text-3xl">Leaderboard</h1>
     <Leaderboard fetchNextPage={getRankPage} />
   </div>

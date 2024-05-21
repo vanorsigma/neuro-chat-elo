@@ -7,6 +7,10 @@
   let canvasWidth: number = 800;
   let canvasHeight: number = 600;
 
+  export let scaleToX: number = 400;
+
+  const aspectRatio = canvasWidth / canvasHeight;
+
   export let firstPlace: User;
   export let secondPlace: User;
   export let thirdPlace: User;
@@ -23,7 +27,7 @@
   /**
    * Creates the user hero avatar thingy on top of the podium
    *
-   * @argument parentContext {CanvasRenderingContext2D} The parent drawing context
+   * @argument parentCanvas {OffscreenCanvas} The parent drawing canvas
    * @argument elo {number} The user's elo
    * @argument avatar_url {string} The URL to the profile pic of the user
    * @argument podium_x {number} The podium's X offset
@@ -31,7 +35,7 @@
    * @argument podium_w {number} The podium's width
    */
   function createUserCanvas(
-    parentContext: CanvasRenderingContext2D,
+    parentCanvas: OffscreenCanvas,
     name: string,
     elo: number,
     avatar_url: string,
@@ -71,20 +75,34 @@
 
     const image = new Image(avatarSize, avatarSize);
     image.addEventListener('load', () => {
+      const parentContext = parentCanvas.getContext('2d');
       context.drawImage(image, avatarXOffset, 0, avatarSize, avatarSize);
       parentContext.drawImage(element, podium_x, podium_y - avatarYOffset);
+
+      const actualCanvas = canvasElement.getContext('2d');
+      actualCanvas?.drawImage(
+        parentCanvas,
+        0,
+        0,
+        canvasWidth,
+        canvasHeight,
+        0,
+        0,
+        scaleToX,
+        scaleToX / aspectRatio
+      );
     });
     image.src = avatar_url;
   }
 
   function widthFromString(str: string) {
-    return Math.max(100, Math.min(200, str.length * nameFontSize));
+    return Math.max(128 + 5, Math.min(200, str.length * nameFontSize));
   }
 
   /**
    * Draws a podium based on the parameters given.
    *
-   * @argument context The drawing context
+   * @argument canvs The drawing canvas
    * @argument color Color of the podium
    * @argument user A {User} object that contains things
    * @argument xOffset The xOffset in the canvas
@@ -94,7 +112,7 @@
    * @returns [number, number] The new xOffset to use for the next podium
    */
   function drawPodium(
-    context: CanvasRenderingContext2D,
+    canvas: OffscreenCanvas,
     color: string,
     user: User,
     xOffset: number,
@@ -104,6 +122,7 @@
   ) {
     const width = widthFromString(user.name);
     const height = 50 + ((user.elo - minElo) / (maxElo - minElo)) * 100;
+    const context = canvas.getContext('2d');
 
     context.fillStyle = color;
     context.fillRect(
@@ -117,7 +136,7 @@
     context.textAlign = 'center';
 
     createUserCanvas(
-      context,
+      canvas,
       user.name,
       user.elo,
       user.avatar,
@@ -130,7 +149,9 @@
   }
 
   onMount(async () => {
-    const context = canvasElement.getContext('2d');
+    const drawingElement = new OffscreenCanvas(canvasWidth, canvasHeight);
+    const context = drawingElement.getContext('2d');
+
     const maxElo = Math.max(firstPlace.elo, secondPlace.elo, thirdPlace.elo);
     const minElo = Math.min(firstPlace.elo, secondPlace.elo, thirdPlace.elo);
 
@@ -146,10 +167,23 @@
     canvasHeight = 150 + avatarSize + nameFontSize + eloFontSize + 20;
     await tick(); // wait for canvas width to update
 
-    let currentX = drawPodium(context, colors[0], secondPlace, 0, 150, maxElo, minElo);
-    currentX = drawPodium(context, colors[1], firstPlace, currentX, 150, maxElo, minElo);
-    drawPodium(context, colors[2], thirdPlace, currentX, 150, maxElo, minElo);
+    let currentX = drawPodium(drawingElement, colors[0], secondPlace, 0, 150, maxElo, minElo);
+    currentX = drawPodium(drawingElement, colors[1], firstPlace, currentX, 150, maxElo, minElo);
+    drawPodium(drawingElement, colors[2], thirdPlace, currentX, 150, maxElo, minElo);
+
+    const actualCanvas = canvasElement.getContext('2d');
+    actualCanvas?.drawImage(
+      drawingElement,
+      0,
+      0,
+      canvasWidth,
+      canvasHeight,
+      0,
+      0,
+      scaleToX,
+      scaleToX / aspectRatio
+    );
   });
 </script>
 
-<canvas bind:this={canvasElement} width={canvasWidth} height={canvasHeight}></canvas>
+<canvas bind:this={canvasElement} width={scaleToX} height={scaleToX / aspectRatio}></canvas>
