@@ -7,6 +7,11 @@ during a float.
 Supports lazy loading.
 
 TODO: Find a better way to do this, I'm too smooth-brained
+TODO: Right now, we're not doing lazy loading anymore because of
+search. I'm too lazy to properly implement a searchable lazy
+structure; that'll likely require us to load some sort of global
+index, which, given the size of the data we have (i.e. not much), it's
+just not worth it.
 -->
 
 <script lang="ts">
@@ -39,7 +44,7 @@ TODO: Find a better way to do this, I'm too smooth-brained
   let currentIndexBottom: string = undefined;
   let currentData: any[] = [];
   let expectBefore: boolean = true;
-  let expectAfter: boolean = true;
+  let expectAfter: boolean = false; // HACK: We'll load everything in one shot
   let fetchMarkerBefore: HTMLElement;
   let fetchMarkerAfter: HTMLElement;
   let fetchObserver: IntersectionObserver;
