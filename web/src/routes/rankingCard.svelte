@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { sanitizeString } from '$lib';
   import Leaderboard from '$lib/leaderboard.svelte';
   import Podium from '$lib/podium.svelte';
   import type { RankingInfo } from '$lib/ranks';
@@ -47,6 +48,19 @@
   onMount(async () => {
     topUsers = await getTopUsers();
   });
+
+  // Searching shenanigans
+  let userSearchTextValue: string = new URL(window.location.href).searchParams.get('search') || '';
+
+  $: {
+    const url = new URL(window.location.href);
+    if (userSearchTextValue === undefined || userSearchTextValue === '') {
+      url.searchParams.set('search', '');
+    } else {
+      url.searchParams.set('search', sanitizeString(userSearchTextValue));
+    }
+    window.history.replaceState({}, '', url.toString());
+  }
 </script>
 
 <div class="flex flex-col md:flex-row justify-center items-center w-full h-full gap-3">
@@ -69,6 +83,13 @@
     class="bg-chat rounded-xl flex flex-col items-center md:max-h-[90%] flex-auto p-5 w-full md:w-auto"
   >
     <h1 class="text-3xl">Leaderboard</h1>
-    <Leaderboard fetchNextPage={getRankPage} />
+    <input
+      class="md:self-end m-2"
+      type="text"
+      placeholder="Search username..."
+      alt="Username"
+      bind:value={userSearchTextValue}
+    />
+    <Leaderboard searchTerm={userSearchTextValue} fetchNextPage={getRankPage} />
   </div>
 </div>
