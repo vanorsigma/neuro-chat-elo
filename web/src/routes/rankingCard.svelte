@@ -8,8 +8,9 @@
   export let rankingInfo: RankingInfo;
   let podiumCard: HTMLDivElement;
 
-  // TODO: Placeholder function
-  async function getRankPage(curr: string, direction: boolean) {
+  // TODO: Placeholder function. This placeholder function attempts to emulate
+  // multi-page data, but I figured it wasn't worth it anymore
+  async function _legacy_getRankPage(curr: string, direction: boolean) {
     const ranksLength = rankingInfo.length;
     const indexNow = curr === undefined ? 0 : Number(curr);
     const offset = !direction ? -1 : 1;
@@ -25,6 +26,10 @@
     ];
   }
 
+  function getRankPage(_curr: string, _direction: boolean) {
+    return [rankingInfo, '1', false];
+  }
+
   async function getTopUsers(): Promise<User[]> {
     return rankingInfo
       .slice()
@@ -38,7 +43,6 @@
   }
 
   let topUsers: User[] | undefined;
-  let podiumWidth;
 
   onMount(async () => {
     topUsers = await getTopUsers();
