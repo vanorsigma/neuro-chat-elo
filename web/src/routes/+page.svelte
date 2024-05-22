@@ -3,17 +3,27 @@
   import Carousel from '$lib/carousel.svelte';
   import { fly } from 'svelte/transition';
   import { ranks, altRanks } from '$lib/ranks';
+  import { sanitizeString } from '$lib';
 
-  let activeIndex = 0;
-  let rankingTitles = ['Overall', 'Non-VIPS', 'Only Chatting'];
-  let ranking = [$ranks, $altRanks, undefined];
+  let activeIndex =
+    Number(sanitizeString(new URL(window.location.href).searchParams.get('index'))) || 0;
+  let rankingTitles = ['Overall', 'Non-VIPS', 'Only Chat Messages', 'Copypasta Leaders'];
+  let ranking = [$ranks, $altRanks, undefined, undefined];
 
   function navigatePage(offset: number) {
-    activeIndex = (activeIndex + offset) % (ranking.length - 1);
+    activeIndex = (activeIndex + offset) % ranking.length;
     while (activeIndex < 0) {
-      activeIndex = ranking.length + activeIndex - 1;
+      activeIndex = ranking.length + activeIndex;
     }
   }
+
+  $: {
+    const url = new URL(window.location.href);
+    url.searchParams.set('index', activeIndex.toString());
+    // HACK: I get an error when trying to use Svelte's replaceState,
+    // so this'll do for now
+    window.history.replaceState({}, '', url.toString());}
+
 </script>
 
 <Carousel previousPage={() => navigatePage(-1)} nextPage={() => navigatePage(1)}>

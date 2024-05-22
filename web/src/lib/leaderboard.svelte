@@ -206,6 +206,12 @@ just not worth it.
       rect.right > 0
     );
   }
+
+  /* Searchable Shenanigans */
+  export let searchTerm = '';
+  $: filteredList = currentData.filter((val) => {
+    return new RegExp(searchTerm, 'i').test(val.username);
+  });
 </script>
 
 <div bind:this={containerElement} class="relative w-full h-60 grow md:h-full overflow-y-scroll">
@@ -222,22 +228,22 @@ just not worth it.
     </div>
   </div>
   <div class="grid auto-rows-auto grid-cols-4 w-full">
-    {#if currentData.length < elementsBeforeFetch && initialDataLoaded}
+    {#if filteredList.length < elementsBeforeFetch && initialDataLoaded}
       <div bind:this={fetchMarkerBefore} class="invisible col-span-4"></div>
     {/if}
 
-    {#each currentData as rank, i}
+    {#each filteredList as rank, i}
       <RankItem rank={rank.rank} score={rank.elo} username={rank.username} delta={rank.delta} />
       {#if i == elementsBeforeFetch}
         <div bind:this={fetchMarkerBefore} class="col-span-4"></div>
       {/if}
 
-      {#if i == currentData.length - elementsBeforeFetch}
+      {#if i == filteredList.length - elementsBeforeFetch}
         <div bind:this={fetchMarkerAfter} class="col-span-4"></div>
       {/if}
     {/each}
 
-    {#if currentData.length < elementsBeforeFetch && initialDataLoaded}
+    {#if filteredList.length < elementsBeforeFetch && initialDataLoaded}
       <div bind:this={fetchMarkerAfter} class="invisible col-span-4"></div>
     {/if}
   </div>
