@@ -6,16 +6,9 @@ leaderboard.
 import logging
 
 from metrics import EXPORTED_METRICS
-from _types import ChatLog
-from dataclasses import dataclass
-
-
-@dataclass
-class UserChatPerformance:
-    id: str
-    username: str
-    avatar: str
-    metrics: dict[str, int]
+from metadata import EXPORTED_METADATA
+from leaderboards import EXPORTED_LEADERBOARDS
+from _types import ChatLog, UserChatPerformance
 
 
 class ChatLogProcessor:
@@ -45,29 +38,52 @@ class ChatLogProcessor:
         chatlog = self._parse_to_log_object(chat_log_path)
         pre_performance = {}
 
-        # initialize all the metric classes
+        # initialize all the metric & metadata classes
         metric_instances = [m() for m in EXPORTED_METRICS]
+        metadata_instances = [m() for m in EXPORTED_METADATA]
 
         for seq_no, comment in enumerate(chatlog.comments):
-            logging.debug("Processing comment by %s", comment.commenter.display_name)
+            logging.debug("Processing comment by %s",
+                          comment.commenter.display_name)
             if comment.commenter._id not in pre_performance:
                 pre_performance[comment.commenter._id] = UserChatPerformance(
-                id=comment.commenter._id,
-                username=comment.commenter.display_name,
-                avatar=comment.commenter.logo,
-                metrics={m.get_name(): 0 for m in metric_instances})
+                    id=comment.commenter._id,
+                    username=comment.commenter.display_name,
+                    avatar=comment.commenter.logo,
+                    metrics={m.get_name(): 0 for m in metric_instances},
+                    metadata={m.get_name():
+                              m.get_default_value() for m in metadata_instances}
+                )
 
             metric_update_arr = {
                 metric.get_name(): metric.get_metric(comment, seq_no)
                 for metric in metric_instances}
+
+            metadata_update_arr = {
+                metadata.get_name(): metadata.get_metadata(comment, seq_no)
+                for metadata in metadata_instances
+            }
 
             for k, v in metric_update_arr.items():
                 for user_id, met_value in v.items():
                     # NOTE: the user_id will definitely exist
                     pre_performance[user_id].metrics[k] += met_value
 
+            for k, v in metadata_update_arr.items():
+                for user_id, meta_value in v.items():
+                    pre_performance[user_id].metadata[k] = meta_value
+
         return pre_performance.values()
+
+    @classmethod
+    def export_to_leaderboards(cls, performances: list[UserChatPerformance]):
+        leaderboards = [l() for l in EXPORTED_LEADERBOARDS]
+        for leaderboard in leaderboards:
+            for performance in performances:
+                leaderboard.update_leaderboard(performance)
+            leaderboard.save()
 
 if __name__ == '__main__':
     clp = ChatLogProcessor()
-    print(clp.parse('src/result.json'))
+    result = clp.parse('src/result.json')
+    clp.export_to_leaderboards(result)
