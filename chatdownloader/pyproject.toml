@@ -8,7 +8,6 @@ version = "0.1.0"
 description = "Downloads chat from the latest VOD"
 authors = ["vanorsigma"]
 packages = [{include="*", from="src"}]
-package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10.12"
