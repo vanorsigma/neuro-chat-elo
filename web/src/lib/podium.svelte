@@ -68,7 +68,7 @@
     context.font = eloFont;
     context.textAlign = 'center';
     context.fillText(
-      `Elo: ${elo}`,
+      `Elo: ${elo.toFixed(2)}`,
       avatarXOffset + avatarSize / 2,
       avatarSize + nameFontSize + 2 + eloFontSize
     );

@@ -2,15 +2,16 @@
   import RankingCard from './rankingCard.svelte';
   import Carousel from '$lib/carousel.svelte';
   import { fly } from 'svelte/transition';
-  import { ranks, altRanks } from '$lib/ranks';
+  import { overallRank, chatOnlyRank, copypastaRank, nonvipsRank } from '$lib/ranks';
   import { sanitizeString } from '$lib';
 
   let activeIndex =
     Number(sanitizeString(new URL(window.location.href).searchParams.get('index'))) || 0;
   let rankingTitles = ['Overall', 'Non-VIPS', 'Only Chat Messages', 'Copypasta Leaders'];
-  let ranking = [$ranks, $altRanks, undefined, undefined];
+  $: ranking = [$overallRank, $nonvipsRank, $chatOnlyRank, $copypastaRank];
 
   function navigatePage(offset: number) {
+    console.log($overallRank);
     activeIndex = (activeIndex + offset) % ranking.length;
     while (activeIndex < 0) {
       activeIndex = ranking.length + activeIndex;
@@ -28,7 +29,7 @@
 
 <Carousel previousPage={() => navigatePage(-1)} nextPage={() => navigatePage(1)}>
   {#each ranking as rankingInfo, index}
-    {#if index === activeIndex}
+    {#if index === activeIndex && rankingInfo.length > 0}
       <div
         in:fly={{ x: -window.innerWidth, duration: 200, delay: 201 }}
         out:fly={{ x: window.innerWidth, duration: 200 }}
