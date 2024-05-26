@@ -4,9 +4,13 @@ The copypasta leader metric.
 TODO: This guy is the reason why I can't do multi-processing just
 yet. Need a merge() function at some point to consolidate data between
 multiple processes somehow.
+
+TODO: To fix this, I probably need to perform a union-find
+TODO: To fix this^2, I think we might need to assume transitivity. Also it seems likely that I have to merge state or something, looks super troublesome smh my head
 """
 
 import heapq
+import logging
 import itertools
 from _types import Comment
 
@@ -65,6 +69,8 @@ class CopypastaLeader:
                                          comment.commenter._id,
                                          sequence_no))
 
+        logging.debug('Size of heap: %d', len(self.__heap))
+
         # go through everything in the heap and find the best matching string
         matching_scores = [self._lcs(
             self.padTo(item[1], item[1],
@@ -89,8 +95,13 @@ class CopypastaLeader:
             heapq.heapify(self.__heap)
 
         # evict old heap top
-        if len(self.__heap) > 0 and self.__heap[0][0] > CHAIN_GRACE:
+        # TODO: This needs to be a while loop
+        result = {}
+        logging.debug('First item on head has seq no: %d', self.__heap[0][0])
+        logging.debug('Last item on head has seq no: %d', self.__heap[-1][0])
+        while len(self.__heap) > 0 and (
+                sequence_no - self.__heap[0][0]) > CHAIN_GRACE:
             item = heapq.heappop(self.__heap)
-            return {item[2]: (item[0] - item[3]) * WEIGHT_COPYPASTA}
+            result[item[2]] = (item[0] - item[3]) * WEIGHT_COPYPASTA
 
-        return {}
+        return result
