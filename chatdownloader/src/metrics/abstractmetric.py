@@ -54,4 +54,4 @@ class AbstractMetric(ABC):
                  the score to add for the user involved in this
                  metric.
         """
-        return []
+        return {}
