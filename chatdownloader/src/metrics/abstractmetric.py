@@ -1,5 +1,7 @@
 """
 Provides the AbstractMethod class
+
+TODO: Metrics are assumed to be parallelizable
 """
 from _types import Comment
 

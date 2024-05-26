@@ -10,6 +10,8 @@ from metadata import EXPORTED_METADATA
 from leaderboards import EXPORTED_LEADERBOARDS
 from _types import ChatLog, UserChatPerformance
 
+logging.basicConfig(level=logging.DEBUG)
+
 
 class ChatLogProcessor:
     """
@@ -34,6 +36,7 @@ class ChatLogProcessor:
         :param chat_log_path: The path to the chat log file
         :return: A list of {UserChatPerformance} objects
         """
+        # TODO: code looks ugly, has duplication, 0/10 IGN
         logging.info("Parsing chat logs...")
         chatlog = self._parse_to_log_object(chat_log_path)
         pre_performance = {}
@@ -43,8 +46,9 @@ class ChatLogProcessor:
         metadata_instances = [m() for m in EXPORTED_METADATA]
 
         for seq_no, comment in enumerate(chatlog.comments):
-            logging.debug("Processing comment by %s",
-                          comment.commenter.display_name)
+            logging.debug("Processing comment by %s (message %d of %d)",
+                          comment.commenter.display_name, seq_no,
+                          len(chatlog.comments))
             if comment.commenter._id not in pre_performance:
                 pre_performance[comment.commenter._id] = UserChatPerformance(
                     id=comment.commenter._id,
@@ -57,7 +61,8 @@ class ChatLogProcessor:
 
             metric_update_arr = {
                 metric.get_name(): metric.get_metric(comment, seq_no)
-                for metric in metric_instances}
+                for metric in metric_instances
+            }
 
             metadata_update_arr = {
                 metadata.get_name(): metadata.get_metadata(comment, seq_no)
@@ -72,6 +77,26 @@ class ChatLogProcessor:
             for k, v in metadata_update_arr.items():
                 for user_id, meta_value in v.items():
                     pre_performance[user_id].metadata[k] = meta_value
+
+        # finalize
+        metric_update_arr = {
+            metric.get_name(): metric.finish()
+            for metric in metric_instances
+        }
+
+        metadata_update_arr = {
+            metadata.get_name(): metadata.get_metadata(comment, seq_no)
+            for metadata in metadata_instances
+        }
+
+        for k, v in metric_update_arr.items():
+            for user_id, met_value in v.items():
+                # NOTE: the user_id will definitely exist
+                pre_performance[user_id].metrics[k] += met_value
+
+        for k, v in metadata_update_arr.items():
+            for user_id, meta_value in v.items():
+                pre_performance[user_id].metadata[k] = meta_value
 
         return pre_performance.values()
 
