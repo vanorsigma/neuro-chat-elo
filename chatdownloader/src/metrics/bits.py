@@ -14,6 +14,10 @@ class Bits(AbstractMetric):
     """
 
     @classmethod
+    def can_parallelize(cls) -> bool:
+        return True
+
+    @classmethod
     def get_name(cls) -> str:
         return 'bits'
 

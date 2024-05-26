@@ -13,6 +13,10 @@ class Text(AbstractMetric):
     Text for a metric
     """
     @classmethod
+    def can_parallelize(cls) -> bool:
+        return False
+
+    @classmethod
     def get_name(cls) -> str:
         return 'text'
 

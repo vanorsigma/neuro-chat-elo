@@ -16,6 +16,10 @@ class Emote(AbstractMetric):
     """
 
     @classmethod
+    def can_parallelize(cls) -> bool:
+        return False
+
+    @classmethod
     def get_name(cls) -> str:
         return 'emote'
 

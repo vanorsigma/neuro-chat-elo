@@ -29,6 +29,10 @@ class CopypastaLeader:
     def __init__(self):
         self.__heap = []
 
+    @classmethod
+    def can_parallelize(cls) -> bool:
+        return False
+
     @staticmethod
     def _lcs(lhs: str, rhs: str) -> int:
         # the dp approach, copied from somewhere
@@ -44,7 +48,7 @@ class CopypastaLeader:
                 elif lhs[i - 1] == rhs[j - 1]:
                     L[i][j] = L[i - 1][j - 1] + 1
                 else:
-                    L[i][j] = max(L[i - 1][j] , L[i][j - 1])
+                    L[i][j] = max(L[i - 1][j], L[i][j - 1])
 
         return L[m][n]
 
@@ -85,8 +89,8 @@ class CopypastaLeader:
                                          comment.commenter._id,
                                          sequence_no))
         else:
-            # in-place updating of the tuple. TODO: find a better way
-            # to do this, i'm too lazy atm
+            # in-place updating of the tuple.
+            # TODO: find a better way to do this, i'm too lazy atm
             item = self.__heap[best_match[0]]
             self.__heap[best_match[0]] = (
                 sequence_no,
@@ -95,7 +99,6 @@ class CopypastaLeader:
             heapq.heapify(self.__heap)
 
         # evict old heap top
-        # TODO: This needs to be a while loop
         result = {}
         logging.debug('First item on head has seq no: %d', self.__heap[0][0])
         logging.debug('Last item on head has seq no: %d', self.__heap[-1][0])
