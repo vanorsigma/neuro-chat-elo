@@ -129,9 +129,6 @@ class TwitchChatDownloader:
         with open(self.chat_tempfile_name, "r") as f:
             json_data = json.load(f)
 
-        # TODO: Remove this, I'm just getting a sample for now
-        with open("result.json", "w") as f:
-            json.dump(json_data, f)
         return json_data
 
 

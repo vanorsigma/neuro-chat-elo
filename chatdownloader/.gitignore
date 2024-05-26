@@ -70,4 +70,4 @@ dmypy.json
 poetry.toml
 
 # intermediary files
-result.json
+*.json
