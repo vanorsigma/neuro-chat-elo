@@ -1,5 +1,5 @@
 """
-The overall leaderboard
+Chat-only leaderboard
 """
 
 from typing import Optional
@@ -9,15 +9,15 @@ from _types import UserChatPerformance
 from .abstractleaderboard import AbstractLeaderboard
 
 
-class Overall(AbstractLeaderboard):
+class ChatOnly(AbstractLeaderboard):
     """
-    Computes the overall leaderboard (Special + Non-Special).
+    Leaderboard for chat-only
     """
-
     @classmethod
     def get_name(cls):
-        return 'overall'
+        return 'chat-only'
 
     def calculate_score(self,
                         performance: UserChatPerformance) -> Optional[float]:
-        return sum(performance.metrics.values())
+        return sum(metric['text'] for metric in performance.metrics.values()
+                   if 'text' in performance.metrics.values())

@@ -20,7 +20,7 @@ WEIGHT_COPYPASTA = 0.3
 CHAIN_GRACE = 5
 MATCHING_THRESHOLD = 0.8
 
-class CopypastaLeader:
+class CopypastaLeader(AbstractMetric):
     """
     The Copypasta leader metric.
 
@@ -108,3 +108,7 @@ class CopypastaLeader:
             result[item[2]] = (item[0] - item[3]) * WEIGHT_COPYPASTA
 
         return result
+
+    def finish(self):
+        return {item[2]: (item[0] - item[3]) * WEIGHT_COPYPASTA
+                for item in self.__heap}

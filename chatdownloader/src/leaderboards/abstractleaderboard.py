@@ -7,8 +7,9 @@ import json
 import os
 
 from abc import ABC
-from typing import abstractmethod
-from _types import UserChatPerformance, LeaderboardInnerState, LeaderboardExportItem
+from typing import abstractmethod, Optional
+from _types import (UserChatPerformance, LeaderboardInnerState,
+                    LeaderboardExportItem)
 
 
 K = 0.5
@@ -30,9 +31,12 @@ class AbstractLeaderboard(ABC):
         """
 
     @abstractmethod
-    def calculate_score(self, performance: UserChatPerformance) -> float:
+    def calculate_score(self,
+                        performance: UserChatPerformance) -> Optional[float]:
         """
         Calculates the score given the performance
+        :param:performance:A normal performance
+        :returns:A float if there is a score, None otherwise
         """
 
     def read_initial_state(self):
@@ -72,7 +76,11 @@ class AbstractLeaderboard(ABC):
                 avatar=performance.avatar,
             )
 
-        self.state[performance.id].score = self.calculate_score(performance)
+        score = self.calculate_score(performance)
+        if score is None:
+            return
+
+        self.state[performance.id].score = score
 
     def __calculate_new_elo(self):
         # n^2 algorithm. For every user, make user 1 "fight" user 2
