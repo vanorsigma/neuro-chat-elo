@@ -137,4 +137,4 @@ class TwitchChatDownloader:
 
 if __name__ == "__main__":
     with TwitchChatDownloader() as tcd:
-        tcd.download_chat("2135499714")
+        tcd.download_chat("2153289858")
