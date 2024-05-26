@@ -4,9 +4,9 @@ Script entrypoint
 
 import logging
 
-from .twitch_utils import get_auth_twitch, get_latest_vod
-from .chatlogprocessor import ChatLogProcessor
-from .twitchdownloaderproxy import TwitchChatDownloader
+from twitch_utils import get_auth_twitch, get_latest_vod
+from chatlogprocessor import ChatLogProcessor
+from twitchdownloaderproxy import TwitchChatDownloader
 
 logging.basicConfig(level=logging.INFO)
 

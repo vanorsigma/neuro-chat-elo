@@ -3,13 +3,14 @@ A main script that does backfilling given video IDs
 """
 
 import logging
-from .chatlogprocessor import ChatLogProcessor
-from .twitchdownloaderproxy import TwitchChatDownloader
+from chatlogprocessor import ChatLogProcessor
+from twitchdownloaderproxy import TwitchChatDownloader
 
 logging.basicConfig(level=logging.DEBUG)
 
 VIDEO_IDS = [
-    ''
+    '2153289858',
+    '2135499714'
 ]
 
 with TwitchChatDownloader() as tdp:
