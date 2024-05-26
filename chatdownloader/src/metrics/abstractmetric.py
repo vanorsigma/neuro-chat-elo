@@ -19,6 +19,14 @@ class AbstractMetric(ABC):
 
     @classmethod
     @abstractmethod
+    def can_parallelize(cls) -> bool:
+        """
+        Indicates to the executor if this metric can be parallelized
+        TODO: Implement this
+        """
+
+    @classmethod
+    @abstractmethod
     def get_name(cls) -> str:
         """
         Name of the metric
