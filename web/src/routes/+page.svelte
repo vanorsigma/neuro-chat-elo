@@ -28,17 +28,15 @@
 
 <Carousel previousPage={() => navigatePage(-1)} nextPage={() => navigatePage(1)}>
   {#each ranking as rankingInfo, index}
-    {#if index === activeIndex && rankingInfo.length > 0}
-      <div
-        in:fly={{ x: -window.innerWidth, duration: 200, delay: 201 }}
-        out:fly={{ x: window.innerWidth, duration: 200 }}
-        class="flex flex-col w-full h-full md:h-[90%]"
+    <div
+      in:fly={{ x: -window.innerWidth, duration: 200, delay: 201 }}
+      out:fly={{ x: window.innerWidth, duration: 200 }}
+      class="flex flex-col w-full h-full md:h-[90%] {index === activeIndex ? '' : 'collapse'}"
       >
-        <h1 class="text-3xl flex-none font-bold my-5 md:my-0 text-center">
-          {rankingTitles[index]}
-        </h1>
-        <RankingCard {rankingInfo} />
-      </div>
-    {/if}
+      <h1 class="text-3xl flex-none font-bold my-5 md:my-0 text-center">
+        {rankingTitles[index]}
+      </h1>
+      <RankingCard {rankingInfo} />
+    </div>
   {/each}
 </Carousel>

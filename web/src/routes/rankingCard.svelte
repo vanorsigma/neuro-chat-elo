@@ -6,7 +6,8 @@
   import type { User } from '$lib/user';
   import { onMount } from 'svelte';
 
-  export let rankingInfo: RankingInfo;
+  export let rankingInfo: RankingInfo[];
+  $: rankingInfoLength = rankingInfo.length;
   let podiumCard: HTMLDivElement;
 
   // TODO: Placeholder function. This placeholder function attempts to emulate
@@ -31,8 +32,10 @@
     return [rankingInfo, '1', false];
   }
 
-  async function getTopUsers(): Promise<User[]> {
-    return rankingInfo
+  let topUsers: User[] | undefined;
+
+  $: {
+    topUsers = rankingInfo
       .slice()
       .sort((a, b) => a.rank > b.rank)
       .slice(0, 3)
@@ -42,12 +45,6 @@
         avatar: data.avatar
       }));
   }
-
-  let topUsers: User[] | undefined;
-
-  onMount(async () => {
-    topUsers = await getTopUsers();
-  });
 
   // Searching shenanigans
   let userSearchTextValue: string = new URL(window.location.href).searchParams.get('search') || '';
@@ -69,7 +66,7 @@
     class="bg-chat rounded-xl flex flex-col flex-none md:flex-1 items-center gap-2 p-5 h-min"
   >
     <h1 class="text-3xl">Top Chatters</h1>
-    {#if topUsers}
+    {#if rankingInfoLength >= 3}
       <Podium
         scaleToX={window.innerWidth < 768 ? podiumCard.clientWidth : 400}
         firstPlace={topUsers[0]}
