@@ -11,7 +11,6 @@
   $: ranking = [$overallRank, $nonvipsRank, $chatOnlyRank, $copypastaRank];
 
   function navigatePage(offset: number) {
-    console.log($overallRank);
     activeIndex = (activeIndex + offset) % ranking.length;
     while (activeIndex < 0) {
       activeIndex = ranking.length + activeIndex;
