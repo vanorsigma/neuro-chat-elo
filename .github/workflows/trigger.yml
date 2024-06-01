@@ -1,0 +1,82 @@
+name: Trigger
+
+on:
+  - workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'poetry'
+
+    - name: Install pip Dependencies
+      working-directory: chatdownloader/
+      run: |
+        python -m pip install --upgrade pip
+        pip install .
+
+    - name: Run score calculation
+      working-directory: chatdownloader/
+      run: |
+        if [ "${ACT}" == "1" ]; then
+          echo "On Act, backfilling instead."
+          python backfill.py
+        else
+          echo "On actual pipeline, running main"
+          python main.py
+        fi
+
+    - name: Stage files
+      run: |
+        ./stage.sh
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install npm dependencies
+      working-directory: web/
+      run: npm install
+
+    - name: Build website
+      working-directory: web/
+      run: npm run build
+
+    - name: Upload build Files
+      uses: actions/upload-artifact@v4
+      working-directory: web/
+      with:
+        name: build
+        path: ./.svelte-kit/output/client/*
+
+    - name: Clean Directory and Checkout to Another Branch
+      run: |
+        git reset --hard
+        git clean -fd
+
+    - name: Checkout to publish branch
+      uses: actions/checkout@v4
+      ref: 'publish'
+
+    - name: Download Build Files
+      uses: actions/download-artifact@v4
+      with:
+        name: build
+        path: .
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name 'Bot'
+        git config --global user.email 'bot@github.com'
+        git add . || exit 0
+        git commit -m "Update leaderboards" || exit 0
+        git push origin publish || exit 0
