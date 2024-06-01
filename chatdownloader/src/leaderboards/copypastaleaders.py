@@ -19,6 +19,5 @@ class CopypastaLeaders(AbstractLeaderboard):
 
     def calculate_score(self,
                         performance: UserChatPerformance) -> Optional[float]:
-        return sum(metric['copypasta'] for metric in
-                   performance.metrics.values()
-                   if 'copypasta' in performance.metrics.values())
+        return performance.metrics['copypasta'] if 'copypasta' in \
+            performance.metrics else 0
