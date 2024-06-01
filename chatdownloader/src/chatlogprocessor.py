@@ -76,6 +76,9 @@ class ChatLogProcessor:
                 for metadata in metadata_instances
             }
 
+            logging.debug('Metric Update Array: %s', metric_update_arr)
+            logging.debug('Metadata Update Array: %s', metadata_update_arr)
+
             for k, v in metric_update_arr.items():
                 for user_id, met_value in v.items():
                     # NOTE: the user_id will definitely exist
@@ -90,6 +93,8 @@ class ChatLogProcessor:
             metric.get_name(): metric.finish()
             for metric in metric_instances
         }
+
+        logging.debug('Finalize - Metric Update Array: %s', metric_update_arr)
 
         for k, v in metric_update_arr.items():
             for user_id, met_value in v.items():

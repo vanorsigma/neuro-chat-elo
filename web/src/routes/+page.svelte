@@ -4,6 +4,7 @@
   import { fly } from 'svelte/transition';
   import { overallRank, chatOnlyRank, copypastaRank, nonvipsRank } from '$lib/ranks';
   import { sanitizeString } from '$lib';
+  import { tweened } from 'svelte/motion';
 
   let activeIndex =
     Number(sanitizeString(new URL(window.location.href).searchParams.get('index'))) || 0;
@@ -31,7 +32,7 @@
     <div
       in:fly={{ x: -window.innerWidth, duration: 200, delay: 201 }}
       out:fly={{ x: window.innerWidth, duration: 200 }}
-      class="flex flex-col w-full h-full md:h-[90%] {index === activeIndex ? '' : 'collapse'}"
+      class="flex flex-col w-full h-full md:h-[90%] {index === activeIndex ? '' : 'hidden'}"
       >
       <h1 class="text-3xl flex-none font-bold my-5 md:my-0 text-center">
         {rankingTitles[index]}

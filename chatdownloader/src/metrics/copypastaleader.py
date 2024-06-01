@@ -17,8 +17,8 @@ from _types import Comment
 from .abstractmetric import AbstractMetric
 
 WEIGHT_COPYPASTA = 0.3
-CHAIN_GRACE = 5
-MATCHING_THRESHOLD = 0.8
+CHAIN_GRACE = 10
+MATCHING_THRESHOLD = 0.6
 
 class CopypastaLeader(AbstractMetric):
     """

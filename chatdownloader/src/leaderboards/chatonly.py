@@ -19,5 +19,5 @@ class ChatOnly(AbstractLeaderboard):
 
     def calculate_score(self,
                         performance: UserChatPerformance) -> Optional[float]:
-        return sum(metric['text'] for metric in performance.metrics.values()
-                   if 'text' in performance.metrics.values())
+        return performance.metrics['text'] if 'text' in performance.metrics \
+            else 0

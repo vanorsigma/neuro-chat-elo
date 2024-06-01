@@ -87,6 +87,8 @@
       alt="Username"
       bind:value={userSearchTextValue}
     />
-    <Leaderboard searchTerm={userSearchTextValue} fetchNextPage={getRankPage} />
+    {#if rankingInfoLength > 3}
+      <Leaderboard searchTerm={userSearchTextValue} fetchNextPage={getRankPage} />
+    {/if}
   </div>
 </div>
