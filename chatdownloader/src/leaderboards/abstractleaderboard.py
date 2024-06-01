@@ -143,6 +143,7 @@ class AbstractLeaderboard(ABC):
         for idx, item in enumerate(to_save[1:]):
             rank = to_save[idx].rank + (int(item.elo < to_save[idx].elo))
             item.delta = ((values[idx].previous_rank - rank) if
+                          values[idx].previous_rank is not None and
                           values[idx].previous_rank > 0 else 0)
             item.rank = rank
 
