@@ -10,28 +10,6 @@
   $: rankingInfoLength = rankingInfo.length;
   let podiumCard: HTMLDivElement;
 
-  // TODO: Placeholder function. This placeholder function attempts to emulate
-  // multi-page data, but I figured it wasn't worth it anymore
-  async function _legacy_getRankPage(curr: string, direction: boolean) {
-    const ranksLength = rankingInfo.length;
-    const indexNow = curr === undefined ? 0 : Number(curr);
-    const offset = !direction ? -1 : 1;
-    const indexToFetch = Math.max(1, indexNow + offset);
-    const shouldFetchMore = !direction ? indexNow * 30 != 0 : indexToFetch * 30 < ranksLength;
-    return [
-      rankingInfo.slice(
-        direction ? indexToFetch * 30 : (indexToFetch - 1) * 30,
-        direction ? (indexToFetch + 1) * 30 : indexToFetch * 30
-      ),
-      `${indexToFetch + offset}`,
-      shouldFetchMore
-    ];
-  }
-
-  function getRankPage(_curr: string, _direction: boolean) {
-    return [rankingInfo, '1', false];
-  }
-
   let topUsers: User[] | undefined;
 
   $: {
@@ -88,7 +66,7 @@
       bind:value={userSearchTextValue}
     />
     {#if rankingInfoLength > 3}
-      <Leaderboard searchTerm={userSearchTextValue} fetchNextPage={getRankPage} />
+      <Leaderboard searchTerm={userSearchTextValue} currentData={rankingInfo} />
     {/if}
   </div>
 </div>
