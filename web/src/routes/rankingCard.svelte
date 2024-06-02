@@ -4,8 +4,8 @@
   import Podium from '$lib/podium.svelte';
   import type { RankingInfo } from '$lib/ranks';
   import type { User } from '$lib/user';
-  import { onMount } from 'svelte';
 
+  export let isActive: boolean;
   export let rankingInfo: RankingInfo[];
   $: rankingInfoLength = rankingInfo.length;
   let podiumCard: HTMLDivElement;
@@ -66,7 +66,7 @@
       bind:value={userSearchTextValue}
     />
     {#if rankingInfoLength > 3}
-      <Leaderboard searchTerm={userSearchTextValue} currentData={rankingInfo} />
+      <Leaderboard {isActive} searchTerm={userSearchTextValue} currentData={rankingInfo} />
     {/if}
   </div>
 </div>
