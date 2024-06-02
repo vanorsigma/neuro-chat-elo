@@ -30,14 +30,12 @@
 <Carousel previousPage={() => navigatePage(-1)} nextPage={() => navigatePage(1)}>
   {#each ranking as rankingInfo, index}
     <div
-      in:fly={{ x: -window.innerWidth, duration: 200, delay: 201 }}
-      out:fly={{ x: window.innerWidth, duration: 200 }}
       class="flex flex-col w-full h-full md:h-[90%] {index === activeIndex ? '' : 'hidden'}"
       >
       <h1 class="text-3xl flex-none font-bold my-5 md:my-0 text-center">
         {rankingTitles[index]}
       </h1>
-      <RankingCard {rankingInfo} />
+      <RankingCard isActive={index === activeIndex} {rankingInfo} />
     </div>
   {/each}
 </Carousel>
