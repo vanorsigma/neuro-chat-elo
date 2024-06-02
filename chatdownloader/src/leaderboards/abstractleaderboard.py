@@ -73,17 +73,18 @@ class AbstractLeaderboard(ABC):
         """
         logging.debug('Updating %s leaderboard with performance: %s',
                       self.get_name(), performance)
+
+        score = self.calculate_score(performance)
+        logging.debug('Score for the above is %f', score)
+        if score is None:
+            return
+
         if performance.id not in self.state:
             self.state[performance.id] = LeaderboardInnerState(
                 id=performance.id,
                 username=performance.username,
                 avatar=performance.avatar,
             )
-
-        score = self.calculate_score(performance)
-        logging.debug('Score for the above is %f', score)
-        if score is None:
-            return
 
         self.state[performance.id].score = score
 
@@ -153,7 +154,7 @@ class AbstractLeaderboard(ABC):
             item.rank = rank
 
         with open(f'{self.get_name()}.json', 'w', encoding='utf8') as f:
-            logging.info(f'Now writing to {self.get_name()} leaderboard...')
+            logging.info('Now writing to %s leaderboard...', self.get_name())
             json.dump([data.to_dict() for data in to_save], f)
 
         logging.info('Export completed')

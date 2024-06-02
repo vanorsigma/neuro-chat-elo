@@ -7,6 +7,7 @@
 
   export let isActive: boolean;
   export let rankingInfo: RankingInfo[];
+  export let userSearchTextValue: string;
   $: rankingInfoLength = rankingInfo.length;
 
   let topUsers: User[] | undefined;
@@ -21,19 +22,6 @@
         elo: data.elo,
         avatar: data.avatar
       }));
-  }
-
-  // Searching shenanigans
-  let userSearchTextValue: string = new URL(window.location.href).searchParams.get('search') || '';
-
-  $: {
-    const url = new URL(window.location.href);
-    if (userSearchTextValue === undefined || userSearchTextValue === '') {
-      url.searchParams.set('search', '');
-    } else {
-      url.searchParams.set('search', sanitizeString(userSearchTextValue));
-    }
-    window.history.replaceState({}, '', url.toString());
   }
 </script>
 
