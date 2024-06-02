@@ -11,7 +11,7 @@ export interface RankingInfo {
 
 function makeRankingInfo(path: string) {
   return (set: (arg0: unknown) => void) => {
-    axios.get(`/${path}`).then(result => {
+    axios.get(`./${path}`).then(result => {
       if (result.status !== 200) {
         console.error(`Cannot fetch leaderboard from ${path}`);
       }
