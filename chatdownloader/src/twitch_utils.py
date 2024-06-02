@@ -10,6 +10,7 @@ from twitchAPI.twitch import Twitch
 TWITCH_APPID = os.getenv('TWITCH_APPID')
 TWITCH_APPSECRET = os.getenv('TWITCH_APPSECRET')
 
+
 def get_auth_twitch() -> Twitch:
     return Twitch(TWITCH_APPID, TWITCH_APPSECRET)
 

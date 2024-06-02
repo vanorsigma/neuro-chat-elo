@@ -19,8 +19,8 @@ class AbstractLeaderboard(ABC):
     """
     A Leaderboard tells the program how to export a leaderboard
     """
-    def __init__(self):
-        self.state = {}
+    def __init__(self) -> None:
+        self.state: list[LeaderboardInnerState] = {}
         self.read_initial_state()
 
     @classmethod
@@ -125,7 +125,6 @@ class AbstractLeaderboard(ABC):
         """
         logging.info('Saving %s leaderboard...', self.get_name())
         self.__calculate_new_elo()
-        values = list(self.state.values())
         to_save = [LeaderboardExportItem(
             id=inner_state.id,
             rank=0,
@@ -133,22 +132,28 @@ class AbstractLeaderboard(ABC):
             username=inner_state.username,
             delta=0,
             avatar=inner_state.avatar
-        ) for inner_state in values]
+        ) for inner_state in self.state.values()]
 
         # update rank and delta
         to_save.sort(key=lambda x: x.elo, reverse=True)
         assert len(to_save) > 1, 'Nothing to save!'
 
         to_save[0].rank = 1
+        to_save[0].delta = (
+            (self.state[to_save[0].id].previous_rank - 1) if
+            self.state[to_save[0].id].previous_rank is not None
+            and
+            self.state[to_save[0].id].previous_rank > 0 else 0)
         for idx, item in enumerate(to_save[1:]):
             rank = to_save[idx].rank + (int(item.elo < to_save[idx].elo))
-            item.delta = ((values[idx].previous_rank - rank) if
-                          values[idx].previous_rank is not None and
-                          values[idx].previous_rank > 0 else 0)
+            item.delta = ((self.state[item.id].previous_rank - rank) if
+                          self.state[item.id].previous_rank is not None
+                          and
+                          self.state[item.id].previous_rank > 0 else 0)
             item.rank = rank
 
         with open(f'{self.get_name()}.json', 'w', encoding='utf8') as f:
-            logging.info('Now writing to overall leaderboard...')
+            logging.info(f'Now writing to {self.get_name()} leaderboard...')
             json.dump([data.to_dict() for data in to_save], f)
 
         logging.info('Export completed')

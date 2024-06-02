@@ -19,7 +19,7 @@ class NonVIPS(AbstractLeaderboard):
 
     def calculate_score(self,
                         performance: UserChatPerformance) -> Optional[float]:
-        if 'special_role' not in performance.metadata \
-           and not performance.metadata['special_role']:
+        if 'special_role' in performance.metadata \
+           and performance.metadata['special_role']:
             return None
         return sum(performance.metrics.values())
