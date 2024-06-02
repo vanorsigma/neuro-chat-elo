@@ -17,7 +17,7 @@ def get_auth_twitch() -> Twitch:
 
 def get_latest_vod(twitch: Twitch, ch_id: str) -> str:
     logging.info('Getting latest VOD')
-    videos = twitch.get_videos(user_id=ch_id, first=1)
+    videos = list(twitch.get_videos(user_id=ch_id, first=1))
     assert len(videos) > 0
     logging.info('Will get chat for VOD %s', videos[0].id)
     return videos[0].id
