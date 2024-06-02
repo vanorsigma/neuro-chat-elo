@@ -33,7 +33,7 @@ async def on_offline(_event: StreamOnlineEvent) -> None:
 
     logging.info('Stream ended! Triggering workflow')
     g.get_repo(
-        'vanorsigma/neuro-elo'
+        'vanorsigma/neuro-chat-elo'
     ).get_workflow(
         'trigger.yml'
     ).create_dispatch(ref='main')
