@@ -53,6 +53,7 @@ jobs:
         ./stage.sh
 
     - name: Save leaderboards to cache
+      uses: actions/cache/save@v3
       with:
         path: |
           chatdownloader/*.json
