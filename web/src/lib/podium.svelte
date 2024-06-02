@@ -19,7 +19,7 @@
   const nameFontSize = 20;
   const nameFont = `${nameFontSize}px arial bold`;
 
-  const eloFontSize = 10;
+  const eloFontSize = 15;
   const eloFont = `${eloFontSize}px arial`;
 
   const colors = ['#C0C0C0', '#FFD700', '#CD7F32'];
@@ -125,7 +125,7 @@
     const context = canvas.getContext('2d');
 
     context.fillStyle = color;
-    context.fillRect(
+    context?.fillRect(
       xOffset,
       yOffset - height + avatarSize + nameFontSize + eloFontSize + 20,
       width,
