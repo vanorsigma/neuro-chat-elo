@@ -72,7 +72,8 @@ jobs:
 
     - name: Checkout to publish branch
       uses: actions/checkout@v4
-      ref: 'publish'
+      with:
+        ref: 'publish'
 
     - name: Clean directory again
       run: |
