@@ -52,6 +52,21 @@ jobs:
       run: |
         ./stage.sh
 
+    - name: Delete old cache
+      env:
+        CACHE_NAME: ${{ steps.restore-leaderboards.outputs.cache-primary-key }}
+        REPO: ${{ github.repository }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if [ "${ACT}" == "1" ]; then
+          echo "On Act, skipping."
+          exit 0
+        fi
+        set +e
+        echo "Deleting old cache"
+        gh extension install actions/gh-actions-cache
+        gh actions-cache delete ${CACHE_NAME} -R $REPO --confirm
+
     - name: Save leaderboards to cache
       uses: actions/cache/save@v3
       with:
