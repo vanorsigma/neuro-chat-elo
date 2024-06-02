@@ -62,10 +62,9 @@ jobs:
           echo "On Act, skipping."
           exit 0
         fi
-        set +e
         echo "Deleting old cache"
         gh extension install actions/gh-actions-cache
-        gh actions-cache delete ${CACHE_NAME} -R $REPO --confirm
+        gh actions-cache delete ${CACHE_NAME} -R $REPO --confirm || exit 0
 
     - name: Save leaderboards to cache
       uses: actions/cache/save@v3
