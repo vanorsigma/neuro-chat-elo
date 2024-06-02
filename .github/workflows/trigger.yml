@@ -10,6 +10,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Restore leaderboards
+      uses: actions/cache/restore@v3
+      id: restore-leaderboards
+      with:
+        path: |
+          chatdownloader/*.json
+        key: ${{ hashFiles('season.txt') }}
+
     - name: Install Poetry
       uses: snok/install-poetry@v1
 
@@ -43,6 +51,12 @@ jobs:
     - name: Stage files
       run: |
         ./stage.sh
+
+    - name: Save leaderboards to cache
+      with:
+        path: |
+          chatdownloader/*.json
+        key: ${{ steps.restore-leaderboards.outputs.cache-primary-key }}
 
     - name: Setup Node
       uses: actions/setup-node@v4

@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 VED_CH_ID = '85498365'
 
 
-if __name__ !='__main__':
+if __name__ != '__main__':
     print('This script is meant to be run independently')
 
 async def get_video_id():
