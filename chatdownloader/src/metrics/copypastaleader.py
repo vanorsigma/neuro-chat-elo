@@ -67,6 +67,9 @@ class CopypastaLeader(AbstractMetric):
         text = ' '.join(
             fragment.text for fragment in comment.message.fragments)
 
+        if len(text) == 0:
+            return []
+
         # if empty heap then just go for it
         if len(self.__heap) == 0:
             heapq.heappush(self.__heap, (sequence_no, text,
