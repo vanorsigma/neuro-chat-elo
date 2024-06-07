@@ -17,7 +17,6 @@ twitchapi = "^4.2.0"
 pygithub = "^2.3.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.0"
 pylint = "*"
 black = "^24.0.0"
 flake8 = "*"
