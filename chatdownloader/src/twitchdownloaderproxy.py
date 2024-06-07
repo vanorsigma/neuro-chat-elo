@@ -45,6 +45,7 @@ class TwitchChatDownloader:
         self.chat_tempfile_name = tempfile.mktemp(".json")
         self.chat_tempfile = open(self.chat_tempfile_name, "ab+")
         self.chat_tempfile.close()
+        os.remove(self.chat_tempfile_name)
 
     def __enter__(self):
         return self
