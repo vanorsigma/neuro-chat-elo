@@ -1,13 +1,13 @@
 <script lang="ts">
   import RankingCard from './rankingCard.svelte';
   import Carousel from '$lib/carousel.svelte';
-  import { overallRank, chatOnlyRank, copypastaRank, nonvipsRank } from '$lib/ranks';
+  import { overallRank, chatOnlyRank, copypastaRank, nonvipsRank, bitsRank, subsRank } from '$lib/ranks';
   import { sanitizeString } from '$lib';
 
   let activeIndex =
     Number(sanitizeString(new URL(window.location.href).searchParams.get('index'))) || 0;
-  let rankingTitles = ['Overall', 'Non-VIPS', 'Only Chat Messages', 'Copypasta Leaders'];
-  $: ranking = [$overallRank, $nonvipsRank, $chatOnlyRank, $copypastaRank];
+  let rankingTitles = ['Overall', 'Non-VIPS', 'Only Chat Messages', 'Copypasta Leaders', 'Bits', 'Subs'];
+  $: ranking = [$overallRank, $nonvipsRank, $chatOnlyRank, $copypastaRank, $bitsRank, $subsRank];
 
   function navigatePage(offset: number) {
     activeIndex = (activeIndex + offset) % ranking.length;

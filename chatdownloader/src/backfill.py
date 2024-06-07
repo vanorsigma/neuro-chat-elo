@@ -9,8 +9,7 @@ from twitchdownloaderproxy import TwitchChatDownloader
 logging.basicConfig(level=logging.DEBUG)
 
 VIDEO_IDS = [
-    '2153289858',
-    '2135499714'
+    '2163534622',
 ]
 
 with TwitchChatDownloader() as tdp:

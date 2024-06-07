@@ -25,3 +25,5 @@ export const overallRank = readable([], makeRankingInfo('overall.json'));
 export const chatOnlyRank = readable([], makeRankingInfo('chat-only.json'));
 export const nonvipsRank = readable([], makeRankingInfo('nonvips.json'));
 export const copypastaRank = readable([], makeRankingInfo('copypasta.json'));
+export const bitsRank = readable([], makeRankingInfo('bits-only.json'));
+export const subsRank = readable([], makeRankingInfo('subs-only.json'));
