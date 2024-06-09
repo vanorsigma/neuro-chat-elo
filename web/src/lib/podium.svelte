@@ -76,6 +76,11 @@
     const image = new Image(avatarSize, avatarSize);
     image.addEventListener('load', () => {
       const parentContext = parentCanvas.getContext('2d');
+      if (!parentContext) {
+        console.error('Parent context is null');
+        return;
+      }
+
       context.drawImage(image, avatarXOffset, 0, avatarSize, avatarSize);
       parentContext.drawImage(element, podium_x, podium_y - avatarYOffset);
 
@@ -124,8 +129,13 @@
     const height = 50 + ((user.elo - minElo) / (maxElo - minElo)) * 100;
     const context = canvas.getContext('2d');
 
+    if (context === null) {
+      console.error('Drawing context is null, cannot continue');
+      return;
+    }
+
     context.fillStyle = color;
-    context?.fillRect(
+    context.fillRect(
       xOffset,
       yOffset - height + avatarSize + nameFontSize + eloFontSize + 20,
       width,
