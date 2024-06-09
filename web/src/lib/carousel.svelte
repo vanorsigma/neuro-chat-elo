@@ -1,6 +1,13 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+
   export let previousPage: () => void;
   export let nextPage: () => void;
+  export let onload: () => void = () => {};
+
+  onMount(() => {
+    onload();
+  });
 </script>
 
 <div class="container flex flex-row justify-center items-center flex-1 w-full h-full gap-3">

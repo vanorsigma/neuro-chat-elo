@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import canvasConfetti from 'canvas-confetti';
   import { fade } from 'svelte/transition';
   let canvas: HTMLCanvasElement;
@@ -13,11 +13,16 @@
   let offscreenDone = false;
 
   let maxAvatarWidth = NaN;
+  let currentTimeout = NaN;
   const textSize = 30;
+  const titleShowTime = 500;
+  const avatarShowTime = 2000;
+  const revealTime = 3000;
 
-  export let avatar_url =
-    'https://64.media.tumblr.com/d55402ac7df5b658290fca647b1d4300/fa59626f4dee859b-14/s1280x1920/b86af79b7490871b668274dde83532bfc81d434b.jpg';
-  export let avatar_name = 'vanorsigma';
+  export let avatarUrl = '';
+  export let avatarName = '';
+  export let topChatterRevealTitle = 'he forgor to fill this in';
+  export let animationDoneCallback = () => {};
 
   function drawConfetti(canvas: HTMLCanvasElement) {
     canvasConfetti.create(canvas, {
@@ -36,13 +41,14 @@
     }
 
     const img = new Image();
-    img.src = avatar_url;
+    img.src = avatarUrl;
     return new Promise((resolve) => {
       img.onload = () => {
-        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, maxAvatarWidth, maxAvatarWidth);
+        const offset = (canvas.width - maxAvatarWidth) * 0.5;
+        ctx.drawImage(img, 0, 0, img.width, img.height, offset, 0, maxAvatarWidth, maxAvatarWidth);
         ctx.textAlign = 'center';
-        ctx.font = '30px arial bold';
-        ctx.fillText(avatar_name, maxAvatarWidth * 0.5, maxAvatarWidth + textSize / 2 + 10);
+        ctx.font = `${textSize}px arial bold`;
+        ctx.fillText(avatarName, canvas.width * 0.5, maxAvatarWidth + textSize / 2 + 10);
         offscreenDone = true;
         resolve(ctx);
       };
@@ -56,20 +62,35 @@
     }
 
     maxAvatarWidth = canvas.clientWidth;
-    canvas.width = maxAvatarWidth;
+    canvas.width = Math.max(maxAvatarWidth, avatarName.length * textSize);
     canvas.height = maxAvatarWidth + textSize / 2 + textSize;
 
-    offscreen = new OffscreenCanvas(maxAvatarWidth, maxAvatarWidth + textSize / 2 + textSize);
+    offscreen = new OffscreenCanvas(canvas.width, canvas.height);
     await drawOffscreen();
     drumAudio.play();
-    setTimeout(() => {
+
+    // fire and forget, surely it will be fine
+    currentTimeout = setTimeout(() => {
       titleHide = true;
-      setTimeout(() => {
+      currentTimeout = setTimeout(() => {
+        drumAudio.pause();
         yippieAudio.play();
         ctx.drawImage(offscreen, 0, 0);
         drawConfetti(confettiCanvas);
-      }, 500);
-    }, 4000);
+        currentTimeout = setTimeout(() => {
+          yippieAudio.pause();
+          animationDoneCallback();
+        }, revealTime);
+      }, titleShowTime);
+    }, avatarShowTime);
+  });
+
+  onDestroy(() => {
+    yippieAudio.pause();
+    drumAudio.pause();
+    if (clearTimeout) {
+      clearTimeout(currentTimeout);
+    }
   });
 </script>
 
@@ -79,13 +100,13 @@
   {/if}
 
   {#if offscreenDone && !titleHide}
-    <p transition:fade={{ duration: 200 }} class="text-4xl">Overall Top Chatter is...</p>
+    <p transition:fade={{ duration: 200 }} class="text-4xl">{topChatterRevealTitle}</p>
   {/if}
 
   <canvas
     bind:this={canvas}
     in:fade={{ duration: 200, delay: 1000 }}
-    class="absolute w-[60%] md:w-[20%] {offscreenDone ? '' : 'invisible'}"
+    class="absolute min-w-[60%] md:min-w-[20%] {offscreenDone ? '' : 'invisible'}"
   ></canvas>
   <canvas
     bind:this={confettiCanvas}
