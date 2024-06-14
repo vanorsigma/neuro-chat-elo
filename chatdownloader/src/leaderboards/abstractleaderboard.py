@@ -60,7 +60,8 @@ class AbstractLeaderboard(ABC):
                     username=item.username,
                     avatar=item.avatar,
                     elo=item.elo,
-                    previous_rank=item.rank
+                    previous_rank=item.rank,
+                    badges=item.badges,
                 )
         logging.info('%s leaderboard loading ok', self.get_name())
 
@@ -84,6 +85,7 @@ class AbstractLeaderboard(ABC):
                 id=performance.id,
                 username=performance.username,
                 avatar=performance.avatar,
+                badges=performance.metadata['badges'],
             )
 
         self.state[performance.id].score = score
@@ -132,7 +134,8 @@ class AbstractLeaderboard(ABC):
             elo=inner_state.elo,
             username=inner_state.username,
             delta=0,
-            avatar=inner_state.avatar
+            avatar=inner_state.avatar,
+            badges=inner_state.badges,
         ) for inner_state in self.state.values()]
 
         # update rank and delta

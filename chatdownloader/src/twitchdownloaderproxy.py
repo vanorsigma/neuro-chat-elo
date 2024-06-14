@@ -127,7 +127,7 @@ class TwitchChatDownloader:
         if exit_code != 0:
             raise RuntimeError("Error with chat download")
 
-        with open(self.chat_tempfile_name, "r") as f:
+        with open(self.chat_tempfile_name, "r", encoding='utf8') as f:
             json_data = json.load(f)
 
         return json_data
@@ -135,4 +135,6 @@ class TwitchChatDownloader:
 
 if __name__ == "__main__":
     with TwitchChatDownloader() as tcd:
-        tcd.download_chat("2153289858")
+        d = tcd.download_chat("2170316549")
+    with open('output.json', 'w', encoding='utf8') as f:
+        json.dump(d, f)

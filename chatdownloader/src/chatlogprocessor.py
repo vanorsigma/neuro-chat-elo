@@ -4,12 +4,14 @@ leaderboard.
 """
 
 import logging
-
 from typing import Any
-from metrics import EXPORTED_METRICS
-from metadata import EXPORTED_METADATA
-from leaderboards import EXPORTED_LEADERBOARDS
+
+from twitchAPI.twitch import Twitch
+
 from _types import ChatLog, UserChatPerformance
+from leaderboards import EXPORTED_LEADERBOARDS
+from metadata import EXPORTED_METADATA
+from metrics import EXPORTED_METRICS
 
 
 class ChatLogProcessor:
@@ -21,6 +23,9 @@ class ChatLogProcessor:
     and the leaderboards package to export the metrics / required user
     metadata to the right people
     """
+    def __init__(self, twitch: Twitch) -> None:
+        self.twitch = twitch
+
     def _parse_to_log_object(self, chat_log_path: str) -> ChatLog:
         with open(chat_log_path, "r", encoding="utf8") as f:
             chat_logs = ChatLog.from_json(f.read())
@@ -50,7 +55,7 @@ class ChatLogProcessor:
 
         # initialize all the metric & metadata classes
         metric_instances = [m() for m in EXPORTED_METRICS]
-        metadata_instances = [m() for m in EXPORTED_METADATA]
+        metadata_instances = [m(self.twitch) for m in EXPORTED_METADATA]
 
         for seq_no, comment in enumerate(chatlog.comments):
             logging.debug("Processing comment by %s (message %d of %d)",
