@@ -53,7 +53,7 @@ class AbstractLeaderboard(ABC):
         with open(f'{self.get_name()}.json', 'r', encoding='utf8') as f:
             data = json.load(f)
             items = [
-                LeaderboardExportItem.from_dict(item) for item in data]
+                LeaderboardExportItem.from_dict(item, infer_missing=True) for item in data]
             for item in items:
                 self.state[item.id] = LeaderboardInnerState(
                     id=item.id,
