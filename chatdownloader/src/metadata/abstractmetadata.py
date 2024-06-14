@@ -6,6 +6,7 @@ Represents an abstract metadata
 
 from abc import ABC, abstractmethod
 from typing import Any
+from twitchAPI.twitch import Twitch
 
 from _types import Comment
 
@@ -14,6 +15,9 @@ class AbstractMetadata(ABC):
     """
     Represents an abstract metadata class.
     """
+    def __init__(self, twitch: Twitch) -> None:
+        self.twitch = twitch
+
     @classmethod
     @abstractmethod
     def get_name(cls) -> str:
