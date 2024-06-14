@@ -1,12 +1,18 @@
 import { readable } from 'svelte/store';
 import axios from 'axios';
 
+export interface Badge {
+  description: string;
+  image_url: string;
+};
+
 export interface RankingInfo {
   rank: number;
   elo: number;
   username: string;
   delta: number;
   avatar: string;
+  badges: Badge[];
 }
 
 function makeRankingInfo(path: string) {
