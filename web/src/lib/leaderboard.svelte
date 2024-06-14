@@ -37,13 +37,20 @@ needed, so it no longer supports lazy loading. Please refer to commit
   let userWidth = userElement?.clientWidth;
   let eloWidth = eloElement?.clientWidth;
   let deltaWidth = deltaElement?.clientWidth;
+  $: setTimeout(() => {
+    isActive; // create dependency, so that widths get updated
+    rankWidth = rankElement?.clientWidth == 0 ? rankWidth : rankElement?.clientWidth;
+    userWidth = userElement?.clientWidth == 0 ? userWidth : userElement?.clientWidth;
+    eloWidth = eloElement?.clientWidth == 0 ? eloWidth : eloElement?.clientWidth;
+    deltaWidth = deltaElement?.clientWidth == 0 ? deltaWidth : deltaElement?.clientWidth;
+  }, 0);
 
   let headerWidth = 0;
   let headerTop = 0;
   let headerLeft = 0;
 
   interface LeaderboardIntersectionEntry {
-    readonly target: HTMLElement
+    readonly target: HTMLElement;
     readonly isIntersecting: boolean;
   }
 
@@ -78,20 +85,28 @@ needed, so it no longer supports lazy loading. Please refer to commit
 
   afterUpdate(() => {
     if (isActive !== lagIsActive && parentElement && containerElement) {
-      intersectionCallback([parentElement, containerElement].map(entry => ({
-        isIntersecting: isInView(entry),
-        target: entry
-      })));
+      intersectionCallback(
+        [parentElement, containerElement].map((entry) => ({
+          isIntersecting: isInView(entry),
+          target: entry
+        }))
+      );
       lagIsActive = isActive;
     }
-  })
+  });
 
   onMount(() => {
     headerObserver = new IntersectionObserver(
-      (entries) => intersectionCallback(entries.map(entry => ({
-        isIntersecting: entry.isIntersecting,
-        target: entry.target
-      }) as LeaderboardIntersectionEntry)),
+      (entries) =>
+        intersectionCallback(
+          entries.map(
+            (entry) =>
+              ({
+                isIntersecting: entry.isIntersecting,
+                target: entry.target
+              }) as LeaderboardIntersectionEntry
+          )
+        ),
       { threshold: [0, 1] }
     );
 
@@ -132,9 +147,9 @@ needed, so it no longer supports lazy loading. Please refer to commit
 
     return (
       rect.top < (window.innerHeight || document.documentElement.clientHeight) &&
-        rect.bottom > 0 &&
-        rect.left < (window.innerWidth || document.documentElement.clientWidth) &&
-        rect.right > 0
+      rect.bottom > 0 &&
+      rect.left < (window.innerWidth || document.documentElement.clientWidth) &&
+      rect.right > 0
     );
   }
 
@@ -146,7 +161,7 @@ needed, so it no longer supports lazy loading. Please refer to commit
 </script>
 
 <div bind:this={containerElement} class="relative w-full h-60 grow md:h-full overflow-y-scroll">
-  <div class="relative w-full" bind:this={parentElement}>
+  <div class="relative w-full z-50" bind:this={parentElement}>
     <div
       bind:this={stickyElement}
       class={leaderboardClasses}
@@ -165,11 +180,12 @@ needed, so it no longer supports lazy loading. Please refer to commit
         score={rank.elo}
         username={rank.username}
         delta={rank.delta}
+        badges={rank.badges}
         {rankWidth}
         {userWidth}
         {eloWidth}
         {deltaWidth}
-        />
+      />
     {/each}
   </div>
 </div>
