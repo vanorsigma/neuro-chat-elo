@@ -12,6 +12,7 @@ needed, so it no longer supports lazy loading. Please refer to commit
 
   import { onMount, onDestroy, afterUpdate } from 'svelte';
   import type { RankingInfo } from './ranks';
+  import Carousel from './carousel.svelte';
 
   export let currentData: RankingInfo[];
   export let isActive: boolean;
@@ -156,7 +157,34 @@ needed, so it no longer supports lazy loading. Please refer to commit
   /* Searchable Shenanigans */
   export let searchTerm = '';
   $: filteredList = currentData.filter((val) => {
+    // every time this has to run, we reset the slice end
+    sliceEnd = defaultEnd;
     return new RegExp(searchTerm, 'i').test(val.username);
+  });
+
+  /* Lazy Loading */
+  // NOTE: Browsers are really good at loading large data files into memory,
+  // but displaying them on the DOM is a completely different story
+  const defaultEnd = 50;
+  let sliceEnd = defaultEnd;
+  let endMarker: HTMLDivElement;
+
+  onMount(() => {
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        const isVisible = entries.every((val) => val.isIntersecting);
+
+        if (isVisible && sliceEnd < filteredList.length) {
+          sliceEnd += 50;
+        }
+      },
+      { threshold: 0.1 }
+    );
+    intersectionObserver.observe(endMarker);
+
+    return () => {
+      intersectionObserver.disconnect();
+    };
   });
 </script>
 
@@ -174,18 +202,19 @@ needed, so it no longer supports lazy loading. Please refer to commit
     </div>
   </div>
   <div class="grid auto-rows-auto grid-cols-4 w-full">
-    {#each filteredList as rank, i}
+    {#each filteredList.slice(0, sliceEnd) as rank}
       <RankItem
         rank={rank.rank}
         score={rank.elo}
         username={rank.username}
         delta={rank.delta}
-        badges={rank.badges}
-        {rankWidth}
+        badges={rank.badges == null ? [] : rank.badges}
         {userWidth}
+        {rankWidth}
         {eloWidth}
         {deltaWidth}
       />
     {/each}
+    <div class="h-1" bind:this={endMarker} />
   </div>
 </div>
