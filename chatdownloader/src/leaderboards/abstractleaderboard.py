@@ -89,6 +89,7 @@ class AbstractLeaderboard(ABC):
             )
 
         self.state[performance.id].score = score
+        self.state[performance.id].badges = performance.metadata['badges']
 
     def __calculate_new_elo(self):
         # n^2 algorithm. For every user, make user 1 "fight" user 2
