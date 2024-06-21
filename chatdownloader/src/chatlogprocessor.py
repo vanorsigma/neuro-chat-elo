@@ -4,7 +4,9 @@ leaderboard.
 """
 
 import logging
-from typing import Any
+import os
+from datetime import datetime
+from typing import Any, Callable
 
 from twitchAPI.twitch import Twitch
 
@@ -12,6 +14,8 @@ from _types import ChatLog, UserChatPerformance
 from leaderboards import EXPORTED_LEADERBOARDS
 from metadata import EXPORTED_METADATA
 from metrics import EXPORTED_METRICS
+
+debug_mode = os.getenv('DEBUG')
 
 
 class ChatLogProcessor:
@@ -25,6 +29,17 @@ class ChatLogProcessor:
     """
     def __init__(self, twitch: Twitch) -> None:
         self.twitch = twitch
+
+    @staticmethod
+    def _debug_timing(tag: str, func: Callable[[], None], *args) -> Any:
+        if debug_mode:
+            start_time = datetime.now()
+            ret_val = func(*args)
+            end_time = datetime.now()
+            logging.debug('%s took %f us to calculate',
+                          tag, (end_time - start_time).microseconds)
+            return ret_val
+        return func(*args)
 
     def _parse_to_log_object(self, chat_log_path: str) -> ChatLog:
         with open(chat_log_path, "r", encoding="utf8") as f:
@@ -72,12 +87,20 @@ class ChatLogProcessor:
                 )
 
             metric_update_arr = {
-                metric.get_name(): metric.get_metric(comment, seq_no)
+                metric.get_name(): self._debug_timing(
+                    metric.get_name(),
+                    metric.get_metric,
+                    comment,
+                    seq_no)
                 for metric in metric_instances
             }
 
             metadata_update_arr = {
-                metadata.get_name(): metadata.get_metadata(comment, seq_no)
+                metadata.get_name(): self._debug_timing(
+                    metadata.get_name(),
+                    metadata.get_metadata,
+                    comment,
+                    seq_no)
                 for metadata in metadata_instances
             }
 
@@ -95,7 +118,8 @@ class ChatLogProcessor:
 
         # finalize
         metric_update_arr = {
-            metric.get_name(): metric.finish()
+            metric.get_name(): self._debug_timing(
+                metric.get_name(), metric.finish)
             for metric in metric_instances
         }
 
