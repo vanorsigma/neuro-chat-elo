@@ -4,13 +4,15 @@ Script entrypoint
 
 import asyncio
 import logging
+import os
 
 from chatlogprocessor import ChatLogProcessor
 from consts import VED_CH_ID
 from twitch_utils import get_auth_twitch, get_latest_vod
 from twitchdownloaderproxy import TwitchChatDownloader
 
-logging.basicConfig(level=logging.INFO)
+debug_mode = os.getenv('DEBUG')
+logging.basicConfig(level=bool(debug_mode))
 
 
 if __name__ != '__main__':
