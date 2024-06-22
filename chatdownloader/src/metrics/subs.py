@@ -41,7 +41,8 @@ class Subs(AbstractMetric):
     def get_name(cls) -> str:
         return 'subs'
 
-    def get_metric(self, comment: Comment, sequence_no: int) -> int:
+    def get_metric(self, comment: Comment, sequence_no: int
+                   ) -> dict[str, float]:
         return self._shortcut_for_this_comment_user(
             comment,
             sum(self._no_of_gifted_subs(fragment)

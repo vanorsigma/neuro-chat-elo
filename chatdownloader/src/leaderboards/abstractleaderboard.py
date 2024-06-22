@@ -2,6 +2,7 @@
 Abstract Leaderboard
 """
 
+import numpy as np
 import logging
 import json
 import os
@@ -12,7 +13,7 @@ from _types import (UserChatPerformance, LeaderboardInnerState,
                     LeaderboardExportItem)
 
 
-K = 0.5
+K = 2.0
 
 
 class AbstractLeaderboard(ABC):
@@ -92,32 +93,31 @@ class AbstractLeaderboard(ABC):
         self.state[performance.id].badges = performance.metadata['badges']
 
     def __calculate_new_elo(self):
-        # n^2 algorithm. For every user, make user 1 "fight" user 2
-        # unlike a normal chess game, we use user 1's original elo to
-        # "fight" against all other users, and add the delta.
+        # For every user, we make them fight 1000 users
+        # (i.e. 1000 represented users)
+        all_scores = [state.score for state in self.state.values()]
+        mean = np.mean(all_scores)
+        std = np.std(all_scores)
+
+        sample_scores = np.random.normal(loc=mean, scale=std, size=500)
+        sample_elos = [
+            min(
+                map(
+                    lambda state: (state.elo, abs(state.score - score)),
+                    self.state.values()), key=lambda t: t[1])[0]
+            for score in sample_scores
+        ]
         score_differences = {k.id: 0 for k in self.state.values()}
-        versus_complete = set()
-        for inner_state_1 in self.state.values():
-            for inner_state_2 in list(self.state.values()):
-                if inner_state_1.id == inner_state_2.id:
-                    continue
 
-                if (inner_state_1.id, inner_state_2.id) in versus_complete \
-                   or (inner_state_2.id, inner_state_1.id) in versus_complete:
-                    continue
+        logging.debug('Mean: %s, STD: %s', mean, std)
+        logging.debug('Sample Scores: %s', sample_scores)
+        logging.debug('Sample Elos: %s', sample_scores)
 
-                p_1 = (1.0 / (1.0 + 10**(
-                    (inner_state_1.elo - inner_state_2.elo) / 400)))
-                p_2 = (1.0 / (1.0 + 10**(
-                    (inner_state_2.elo - inner_state_1.elo) / 400)))
-
-                # slight variant: if tie, we award elo to both
-                p1_won = int(inner_state_1.score >= inner_state_2.score)
-                p2_won = int(inner_state_2.score >= inner_state_1.score)
-                score_differences[inner_state_1.id] += K * (p1_won - p_1)
-                score_differences[inner_state_2.id] += K * (p2_won - p_2)
-
-                versus_complete.add((inner_state_1.id, inner_state_2.id))
+        for state in self.state.values():
+            for idx, sample_score in enumerate(sample_scores):
+                won = int(state.score > sample_score)
+                p = (1.0 / (1.0 + 10 ** ((state.elo - sample_elos[idx]) / 400)))
+                score_differences[state.id] += K * (won - p)
 
         # update all user's elo
         for uid, diff in score_differences.items():

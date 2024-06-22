@@ -14,7 +14,7 @@ class AbstractMetric(ABC):
     """
 
     def _shortcut_for_this_comment_user(
-            self, comment: Comment, score: int) -> list[dict[str, int]]:
+            self, comment: Comment, score: float) -> dict[str, float]:
         return {comment.commenter._id: score}
 
     @classmethod
@@ -34,7 +34,7 @@ class AbstractMetric(ABC):
 
     @abstractmethod
     def get_metric(self, comment: Comment,
-                   sequence_no: int) -> dict[str, int]:
+                   sequence_no: int) -> dict[str, float]:
         """
         Gets the score for a particular comment
 
@@ -45,7 +45,7 @@ class AbstractMetric(ABC):
                  metric.
         """
 
-    def finish(self) -> dict[str, int]:
+    def finish(self) -> dict[str, float]:
         """
         This method is called when there are no more comments to process.
         Useful for metrics that need to flush any remaining data.

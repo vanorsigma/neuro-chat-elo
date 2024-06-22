@@ -22,6 +22,6 @@ class Bits(AbstractMetric):
         return 'bits'
 
     def get_metric(self, comment: Comment, sequence_no: int \
-                   ) -> list[dict[str, int]]:
+                   ) -> dict[str, float]:
         return self._shortcut_for_this_comment_user(
             comment, comment.message.bits_spent * WEIGHT_BITS)

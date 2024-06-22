@@ -9,7 +9,7 @@ class UserChatPerformance:
     id: str
     username: str
     avatar: str
-    metrics: dict[str, int]
+    metrics: dict[str, float]
     metadata: dict[str, Any]
 
 
