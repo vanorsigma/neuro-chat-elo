@@ -75,7 +75,7 @@ class ChatLogProcessor:
 
         for seq_no, comment in enumerate(chatlog.comments):
             logging.debug("Processing comment by %s (message %d of %d)",
-                          comment.commenter.display_name, seq_no,
+                          comment.commenter.display_name, seq_no + 1,
                           len(chatlog.comments))
             if comment.commenter._id not in pre_performance:
                 pre_performance[comment.commenter._id] = UserChatPerformance(

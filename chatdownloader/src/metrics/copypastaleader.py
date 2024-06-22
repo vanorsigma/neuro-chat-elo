@@ -63,7 +63,7 @@ class CopypastaLeader(AbstractMetric):
         return 'copypasta'
 
     def get_metric(self, comment: Comment,
-                   sequence_no: int) -> list[dict[str, int]]:
+                   sequence_no: int) -> dict[str, float]:
         text = ' '.join(
             fragment.text for fragment in comment.message.fragments)
 

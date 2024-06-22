@@ -104,6 +104,13 @@
     return Math.max(128 + 5, Math.min(200, str.length * nameFontSize));
   }
 
+  function ifNoneDefault(x: number, def: number) {
+    if (isNaN(x)) {
+      return def;
+    }
+    return x;
+  }
+
   /**
    * Draws a podium based on the parameters given.
    *
@@ -126,7 +133,7 @@
     minElo: number
   ) {
     const width = widthFromString(user.name);
-    const height = 50 + ((user.elo - minElo) / (maxElo - minElo)) * 100;
+    const height = ifNoneDefault(50 + ((user.elo - minElo) / (maxElo - minElo)) * 100, 50);
     const context = canvas.getContext('2d');
 
     if (context === null) {
