@@ -64,6 +64,7 @@ class ChatLogProcessor:
         :param: chatlog The ChatLog
         :returns: The same return value as parse
         """
+        start_time = datetime.now()
         # TODO: Has a bunch of code duplication that I would rather
         # not have
         pre_performance = {}
@@ -129,6 +130,9 @@ class ChatLogProcessor:
             for user_id, met_value in v.items():
                 # NOTE: the user_id will definitely exist
                 pre_performance[user_id].metrics[k] += met_value
+
+        logging.debug('Chat log processor took %f seconds to process the logs',
+                      (datetime.now() - start_time).total_seconds())
 
         return pre_performance.values()
 

@@ -12,7 +12,7 @@ from twitch_utils import get_auth_twitch, get_latest_vod
 from twitchdownloaderproxy import TwitchChatDownloader
 
 debug_mode = os.getenv('DEBUG')
-logging.basicConfig(level=bool(debug_mode))
+logging.basicConfig(level=logging.DEBUG if bool(debug_mode) else logging.INFO)
 
 
 if __name__ != '__main__':
