@@ -15,6 +15,7 @@ requests = "^2.31.0"
 dataclasses-json = "0.6.5"
 twitchapi = "^4.2.0"
 pygithub = "^2.3.0"
+numpy = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "*"
