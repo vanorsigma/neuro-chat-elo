@@ -96,10 +96,9 @@ class AbstractLeaderboard(ABC):
         # For every user, we make them fight 1000 users
         # (i.e. 1000 represented users)
         all_scores = [state.score for state in self.state.values()]
-        mean = np.mean(all_scores)
-        std = np.std(all_scores)
 
-        sample_scores = np.random.normal(loc=mean, scale=std, size=500)
+        sample_scores = np.percentile(all_scores, [
+            i for i in np.arange(0.0, 100.0, 0.1)])
         sample_elos = [
             min(
                 map(
@@ -109,14 +108,14 @@ class AbstractLeaderboard(ABC):
         ]
         score_differences = {k.id: 0 for k in self.state.values()}
 
-        logging.debug('Mean: %s, STD: %s', mean, std)
         logging.debug('Sample Scores: %s', sample_scores)
-        logging.debug('Sample Elos: %s', sample_scores)
+        logging.debug('Sample Elos: %s', sample_elos)
 
         for state in self.state.values():
             for idx, sample_score in enumerate(sample_scores):
                 won = int(state.score > sample_score)
-                p = (1.0 / (1.0 + 10 ** ((state.elo - sample_elos[idx]) / 400)))
+                p = (1.0 / (
+                    1.0 + 10 ** ((state.elo - sample_elos[idx]) / 400)))
                 score_differences[state.id] += K * (won - p)
 
         # update all user's elo
