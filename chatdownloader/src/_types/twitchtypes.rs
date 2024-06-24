@@ -59,6 +59,7 @@ pub struct Comment {
     pub _id: String,
     pub message: ChatMessage,
     pub commenter: ChatUserInfo,
+    pub commenter_id: String,
 }
 
 #[derive(Deserialize, Serialize)]

@@ -1,3 +1,6 @@
+/*
+The subs metric
+*/
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
@@ -28,7 +31,7 @@ impl AbstractMetric for Subs {
         String::from("subs")
     }
 
-    fn get_metric(&self, comment: &Comment, _sequence_no: u32) -> HashMap<String, f32> {
+    fn get_metric(&mut self, comment: &Comment, _sequence_no: u32) -> HashMap<String, f32> {
         let total_subs: i32 = comment.message.fragments.iter()
             .map(|fragment| Self::no_of_gifted_subs(fragment))
             .sum();
