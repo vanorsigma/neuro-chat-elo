@@ -4,7 +4,7 @@ Contains all the Twitch types parsable from the chat log
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ChatMessageFragmentEmoticon {
     /* 
     Represents an emoticon in a chat message fragment.
@@ -12,7 +12,7 @@ pub struct ChatMessageFragmentEmoticon {
     pub emoticon_id: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ChatMessageFragment {
     /*
     Represents a fragment of a chat message.
@@ -21,7 +21,7 @@ pub struct ChatMessageFragment {
     pub emoticon: Option<ChatMessageFragmentEmoticon>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Badge {
     /*
     Represents a badge.
@@ -30,7 +30,7 @@ pub struct Badge {
     pub version: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ChatMessage {
     /*
     Represents a chat message.
@@ -41,7 +41,7 @@ pub struct ChatMessage {
     pub user_badges: Option<Vec<Badge>>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ChatUserInfo {
     /*
     Represents a user in a chat.
@@ -51,7 +51,7 @@ pub struct ChatUserInfo {
     pub logo: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Comment {
     /*
     Represents a comment in a chat.
@@ -59,10 +59,9 @@ pub struct Comment {
     pub _id: String,
     pub message: ChatMessage,
     pub commenter: ChatUserInfo,
-    pub commenter_id: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ChatLog {
     /*
     Represents a chat log.

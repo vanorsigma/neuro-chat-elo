@@ -14,17 +14,17 @@ pub(super) trait AbstractMetric {
         map
     }
 
-    pub fn can_parallelize() -> bool;
+    fn can_parallelize() -> bool;
         /*
         Indicates to the executor if this metric can be parallelized
         */
 
-    pub fn get_name() -> String;
+    fn get_name() -> String;
         /*
         Returns the name of the metric
         */
 
-    pub fn get_metric(&mut self, comment: &Comment, sequence_no: u32) -> HashMap<String, f32>;
+    fn get_metric(&mut self, comment: &Comment, sequence_no: u32) -> HashMap<String, f32>;
         /*
         Gets the score for a particular comment
 
@@ -35,7 +35,7 @@ pub(super) trait AbstractMetric {
                  metric.
         */
 
-    pub fn finish(&self) -> HashMap<String, f32> {
+    fn finish(&self) -> HashMap<String, f32> {
         /*
         This method is called when there are no more comments to process.
         Useful for metrics that need to flush any remaining data.

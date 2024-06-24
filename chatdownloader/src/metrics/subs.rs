@@ -45,7 +45,7 @@ impl Subs {
     fn no_of_gifted_subs(message: &ChatMessageFragment) -> i32 {
         let mut total = 0;
 
-        if let Some(caps) = GIFTED_SUB_REGEX_1.captures(&message.text) {
+        if let Some(_caps) = GIFTED_SUB_REGEX_1.captures(&message.text) {
             total += 1;
         }
 

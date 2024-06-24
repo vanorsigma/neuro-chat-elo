@@ -32,7 +32,7 @@ impl AbstractMetric for CopypastaLeader {
 
         // Evaluate or initialize the heap
         if self.heap.is_empty() {
-            self.heap.push((sequence_no, text.clone(), comment.commenter_id.clone(), sequence_no));
+            self.heap.push((sequence_no, text.clone(), comment.commenter._id.clone(), sequence_no));
         }
 
         // Find the best matching string in the heap
@@ -44,7 +44,7 @@ impl AbstractMetric for CopypastaLeader {
 
         if let Some(&max_score) = matching_scores.iter().max_by(|x, y| x.partial_cmp(y).unwrap()) {
             if max_score < MATCHING_THRESHOLD {
-                self.heap.push((sequence_no, text, comment.commenter_id.clone(), sequence_no));
+                self.heap.push((sequence_no, text, comment.commenter._id.clone(), sequence_no));
             }
         }
 
@@ -68,6 +68,7 @@ impl AbstractMetric for CopypastaLeader {
 }
 
 impl CopypastaLeader {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         CopypastaLeader {
             heap: BinaryHeap::new(),

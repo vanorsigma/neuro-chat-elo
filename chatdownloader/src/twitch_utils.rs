@@ -1,49 +1,58 @@
-use twitch_api::twitch_oauth2::{
-    tokens::errors::AppAccessTokenError, AppAccessToken, TwitchToken,
-};
-use twitch_api::{helix::channels::GetChannelInformationRequest, TwitchClient};
-use std::env;
+use reqwest;
 use dotenv::dotenv;
+use twitch_api::HelixClient;
+use twitch_api::twitch_oauth2::{ClientId, ClientSecret, AppAccessToken};
+use twitch_api::helix::videos::GetVideosRequest;
 
-#[tokio::main]
-async fn get_auth_twitch() -> Result<(), Box<dyn std::error::Error>> {
-    dotenv().ok(); // Load .env file if exists
-    let app_id = env::var("TWITCH_APPID")?;
-    let app_secret = env::var("TWITCH_APPSECRET")?;
+const USER_AGENT: &str = concat!(
+    "neuro-chat-elo/0.1 ",
+    env!("CARGO_PKG_NAME"),
+    "/",
+    env!("CARGO_PKG_VERSION"),
+    " (https://vanorsigma.github.io/neuro-chat-elo)"
+);
 
-    // Create the HelixClient, which is used to make requests to the Twitch API
-    let client: HelixClient<reqwest::Client> = HelixClient::default();
-    // Create a UserToken, which is used to authenticate requests
-    let token = UserToken::from_token(&client, AccessToken::from("mytoken")).await?;
-
-    println!(
-        "Channel: {:?}",
-        client.get_channel_from_login("twitchdev", &token).await?
-    );
-
-    Ok(())
+#[allow(dead_code)]
+pub struct Twitch {
+    pub twitch: HelixClient<'static, reqwest::Client>,
+    pub token: AppAccessToken
 }
 
-async fn get_latest_vod(client: &TwitchClient, ch_id: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let videos = client.get_videos()
-        .user_id(ch_id)
-        .first(1)
-        .execute()
-        .await?;
+impl Twitch {
+    #[allow(dead_code)]
+    pub async fn new() -> Result<Self, reqwest::Error>{
+        dotenv().ok();
+        let client_id: ClientId = std::env::var("TWITCH_APPID")
+            .map(ClientId::new)
+            .expect("TWITCH_APPID must be set");
 
-    let latest_vod_id = videos.data.first()
-        .ok_or("No VODs available for the given channel")?
-        .id.clone();
+        let client_secret: ClientSecret = std::env::var("TWITCH_APPSECRET")
+            .map(ClientSecret::new)
+            .expect("TWITCH_APPSECRET must be set");
 
-    println!("Latest VOD ID: {}", latest_vod_id);
-    Ok(latest_vod_id)
-}
+        let http_client = crate::twitch_utils::reqwest::ClientBuilder::new()
+            .user_agent(USER_AGENT)
+            .build()?;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let twitch_client = get_auth_twitch().await?;
-    let latest_vod_id = get_latest_vod(&twitch_client, "channel_id").await?;
-    println!("Latest VOD ID is: {}", latest_vod_id);
+        let twitch: HelixClient<'static, reqwest::Client> = twitch_api::HelixClient::with_client(http_client.clone());
 
-    Ok(())
+        let token = AppAccessToken::get_app_access_token(
+            &http_client,
+            client_id,
+            client_secret,
+            vec![]
+        ).await.unwrap();
+
+        Ok(Self {
+            twitch,
+            token
+        })
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_latest_vod_id(&self, ch_id: String) -> String {
+        let request = GetVideosRequest::user_id(ch_id.clone());
+        let response = self.twitch.req_get(request, &self.token);
+        response.await.unwrap().data[0].id.clone().to_string()
+    }
 }
