@@ -1,6 +1,7 @@
 mod _types;
 mod _constants;
 mod metrics;
+mod metadata;
 mod leaderboards;
 mod chatlogprocessor;
 mod twitchdownloaderproxy;
@@ -12,7 +13,7 @@ use log::info;
 async fn main() {
     info!("Authenticating with Twitch...");
 
-    let twitch = twitch_utils::Twitch::new().await.unwrap();
+    let twitch = twitch_utils::TwitchAPIWrapper::new().await.unwrap();
     let vod_id = twitch.get_latest_vod_id(_constants::VED_CH_ID.to_string()).await;
 
     info!("Script triggered, pulling logs for VOD ID: {}...", vod_id);

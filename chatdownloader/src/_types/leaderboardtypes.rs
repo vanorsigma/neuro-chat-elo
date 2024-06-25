@@ -11,7 +11,7 @@ pub struct LeaderboardExportItem {
     pub rank: u16,
     pub elo: f32,
     pub username: String,
-    pub delta: f32,
+    pub delta: u16,
     pub avatar: String,
     pub badges: Option<Vec<BadgeInformation>>
 }

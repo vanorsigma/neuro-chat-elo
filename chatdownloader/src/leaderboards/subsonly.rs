@@ -1,5 +1,5 @@
 /*
-Bits leaderboard
+Subs leaderboard
 */
 
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
@@ -7,13 +7,11 @@ use crate::_types::clptypes::UserChatPerformance;
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
 use std::collections::HashMap;
 
-const K: f32 = 2.0;
-
-pub struct BitsOnly {
+pub struct ChatOnly {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for BitsOnly {
+impl AbstractLeaderboard for ChatOnly {
     fn new() -> Self {
         Self {
             state: HashMap::new(),
@@ -21,7 +19,7 @@ impl AbstractLeaderboard for BitsOnly {
     }
 
     fn get_name(&self) -> &str {
-        "bits"
+        "subs-only"
     }
 
     fn __get_state(&mut self) -> &mut HashMap<String, LeaderboardInnerState> {
@@ -29,6 +27,9 @@ impl AbstractLeaderboard for BitsOnly {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        Some(performance.metrics.get("bits").unwrap_or(&0.0) * K)
+        if performance.metrics.contains_key("subs") && !performance.metadata["subs"].is_null() {
+            return Some(performance.metrics["subs"]);
+        }
+        return None;
     }
 }

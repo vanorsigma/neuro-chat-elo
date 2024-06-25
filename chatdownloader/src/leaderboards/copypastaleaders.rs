@@ -2,8 +2,10 @@
 Copypasta leaders leaderboard
 */
 
-use leaderboardtrait::AbstractLeaderboard;
-use crate::_types::twitchtypes::UserChatPerformance;
+use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
+use crate::_types::clptypes::UserChatPerformance;
+use crate::_types::leaderboardtypes::LeaderboardInnerState;
+use std::collections::HashMap;
 
 pub struct ChatOnly {
     state: HashMap<String, LeaderboardInnerState>,
@@ -25,6 +27,6 @@ impl AbstractLeaderboard for ChatOnly {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        Some(performance.metrics.get("copypasta").unwrap_or(&0.0))
+        Some(*performance.metrics.get("copypasta").unwrap_or(&0.0))
     }
 }

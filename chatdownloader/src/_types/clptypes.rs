@@ -7,7 +7,7 @@ pub struct UserChatPerformance {
     pub username: String,
     pub avatar: String,
     pub metrics: HashMap<String, f32>,
-    pub metadata: UserMetadata,
+    pub metadata: serde_json::Map<String, serde_json::Value>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -16,7 +16,8 @@ pub struct BadgeInformation {
     pub image_url: String,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct UserMetadata {
-    pub badges: Option<Vec<BadgeInformation>>,
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Metric<T>{
+    pub commenter_id: String,
+    pub value: T,
 }

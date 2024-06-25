@@ -91,11 +91,3 @@ impl ChatLogProcessor {
         }
     }
 }
-
-fn main() {
-    env_logger::builder().filter_level(LevelFilter::Debug).init();
-
-    let twitch = twitch_api::Twitch::new();
-    let clp = ChatLogProcessor::new(twitch);
-    let result = clp.parse("src/result.json");
-    ChatLogProcessor::export_to_leaderboards

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs;
 use serde_json::Value;
 use log::{info, debug};
-use crate::_types::clptypes::UserChatPerformance;
+use crate::_types::clptypes::{BadgeInformation, UserChatPerformance};
 use crate::_types::leaderboardtypes::{LeaderboardExportItem, LeaderboardInnerState};
 
 #[allow(dead_code)]
@@ -63,12 +63,80 @@ pub trait AbstractLeaderboard {
                 score: 0.0,
             });
 
+            let badges: Vec<BadgeInformation> = performance.metadata["badges"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|badge| {
+                    serde_json::from_value(badge.clone()).unwrap()
+                }).collect();
+
             entry.score = score;
-            entry.badges = performance.metadata.badges.clone();
+            entry.badges = Some(badges);
         }
     }
 
-    fn save(&mut self);
+    fn save(&mut self) {
+        info!("Saving {} leaderboard...", self.get_name());
+        self.__calculate_new_elo();
+        let to_save: Vec<LeaderboardExportItem> = self.__get_state().values().map(|inner_state| {
+            LeaderboardExportItem {
+                id: inner_state.id.clone(),
+                rank: 0,
+                elo: inner_state.elo,
+                username: inner_state.username.clone(),
+                delta: 0,
+                avatar: inner_state.avatar.clone(),
+                badges: inner_state.badges.clone(),
+            }
+        }).collect();
+
+        // Update rank and delta
+        let mut to_save = to_save;
+        to_save.sort_by(|a, b| b.elo.partial_cmp(&a.elo).unwrap());
+        assert!(to_save.len() > 1, "Nothing to save!");
+
+        to_save[0].rank = 1;
+        to_save[0].delta = match self.__get_state().get(&to_save[0].id) {
+            Some(state) => {
+                if let Some(previous_rank) = state.previous_rank {
+                    if previous_rank > 0 {
+                        previous_rank - 1
+                    } else {
+                        0
+                    }
+                } else {
+                    0
+                }
+            },
+            None => 0,
+        };
+
+        for (idx, item) in to_save.iter_mut().enumerate().skip(1) {
+            let rank = to_save[idx - 1].rank + (item.elo < to_save[idx - 1].elo) as u16;
+            item.delta = match self.__get_state().get(&item.id) {
+                Some(state) => {
+                    if let Some(previous_rank) = state.previous_rank {
+                        if previous_rank > 0 {
+                            previous_rank - rank
+                        } else {
+                            0
+                        }
+                    } else {
+                        0
+                    }
+                },
+                None => 0,
+            };
+            item.rank = rank;
+        }
+
+        // Save to file
+        let path = format!("{}.json", self.get_name());
+        let data = serde_json::to_string(&to_save).expect("Unable to serialize leaderboard data");
+        fs::write(&path, data).expect("Unable to write file");
+        info!("{} leaderboard saved", self.get_name());
+    }
 
     fn __calculate_new_elo(&mut self) {
         let all_scores: Vec<f32> = self.__get_state().values().map(|state| state.score).collect();
@@ -115,9 +183,4 @@ pub trait AbstractLeaderboard {
         }
         results
     }
-}
-
-#[allow(dead_code)]
-pub struct AbstractLeaderboard {
-    state: HashMap<u32, LeaderboardInnerState>,
 }

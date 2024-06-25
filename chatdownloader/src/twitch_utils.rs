@@ -1,8 +1,13 @@
+use std::collections::HashMap;
+
 use reqwest;
 use dotenv::dotenv;
 use twitch_api::HelixClient;
 use twitch_api::twitch_oauth2::{ClientId, ClientSecret, AppAccessToken};
 use twitch_api::helix::videos::GetVideosRequest;
+use twitch_api::helix::chat::{GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
+
+use crate::_types::clptypes::BadgeInformation;
 
 const USER_AGENT: &str = concat!(
     "neuro-chat-elo/0.1 ",
@@ -13,12 +18,12 @@ const USER_AGENT: &str = concat!(
 );
 
 #[allow(dead_code)]
-pub struct Twitch {
+pub struct TwitchAPIWrapper {
     pub twitch: HelixClient<'static, reqwest::Client>,
     pub token: AppAccessToken
 }
 
-impl Twitch {
+impl TwitchAPIWrapper {
     #[allow(dead_code)]
     pub async fn new() -> Result<Self, reqwest::Error>{
         dotenv().ok();
@@ -54,5 +59,39 @@ impl Twitch {
         let request = GetVideosRequest::user_id(ch_id.clone());
         let response = self.twitch.req_get(request, &self.token);
         response.await.unwrap().data[0].id.clone().to_string()
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_badges(&self, ch_id: String) -> Result<HashMap<String, HashMap<String, BadgeInformation>>, reqwest::Error> {
+        let request = GetChannelChatBadgesRequest::broadcaster_id(ch_id.clone());
+        let response = self.twitch.req_get(request, &self.token);
+        let channel_badges = response.await.unwrap().data;
+
+        let request = GetGlobalChatBadgesRequest::new();
+        let response = self.twitch.req_get(request, &self.token);
+        let global_badges = response.await.unwrap().data;
+
+        let all_badges = channel_badges.iter().chain(global_badges.iter());
+        drop(channel_badges);
+        drop(global_badges);
+
+        let mut badge_sets: HashMap<String, HashMap<String, BadgeInformation>> = HashMap::new();
+
+        for badge_set in all_badges {
+            let mut badges: HashMap<String, BadgeInformation> = HashMap::new();
+
+            for badge in badge_set.versions {
+
+                let badge_info = BadgeInformation {
+                    description: badge_set.set_id.to_string().clone(),
+                    image_url: badge.image_url_4x.clone()
+                };
+                badges.insert(badge.id.to_string().clone(), badge_info);
+            }
+            
+            badge_sets.insert(badge_set.set_id.to_string().clone(), badges);
+        }
+
+        badge_sets
     }
 }
