@@ -9,6 +9,7 @@ use std::collections::HashMap;
 
 const K: f32 = 2.0;
 
+#[derive(Default, Debug)]
 pub struct BitsOnly {
     state: HashMap<String, LeaderboardInnerState>,
 }

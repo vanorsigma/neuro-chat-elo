@@ -5,38 +5,37 @@ use log::error;
 use std::collections::HashMap;
 
 use crate::_types::twitchtypes::Comment;
-use crate::_types::clptypes::BadgeInformation;
+use crate::_types::clptypes::{BadgeInformation, MetadataTypes};
 use crate::_constants::VED_CH_ID;
 use crate::twitch_utils::TwitchAPIWrapper;
 use crate::metadata::metadatatrait::AbstractMetadata;
 
-struct Badges {
-    twitch: TwitchAPIWrapper,
+pub struct Badges {
     badges: HashMap<String, HashMap<String, BadgeInformation>>
 }
 
 impl AbstractMetadata for Badges {
-    type MetadataType = Vec<BadgeInformation>;
-    
-    #[tokio::main]
     async fn new(twitch: TwitchAPIWrapper) -> Self {
         let badges = twitch.get_badges(VED_CH_ID.to_string()).await.unwrap();
         Self {
-            twitch,
             badges
         }
     }
 
-    fn get_name() -> String {
+    fn get_name(&self) -> String {
         "Badges".to_string()
     }
 
-    fn get_metadata(&self, comment: Comment, sequence_no: u32) -> HashMap<String, Self::MetadataType> {
+    fn get_default_value(&self) -> MetadataTypes {
+        MetadataTypes::BadgeList(vec![])
+    }
+
+    fn get_metadata(&self, comment: Comment, _sequence_no: u32) -> HashMap<String, MetadataTypes> {
         let mut metadata: Vec<BadgeInformation> = vec![];
         let user_badges = comment.message.user_badges;
         if user_badges.is_none() {
-            let mut out: HashMap<String, Self::MetadataType> = HashMap::new();
-            out.insert(comment.commenter._id, vec![]);
+            let mut out: HashMap<String, MetadataTypes> = HashMap::new();
+            out.insert(comment.commenter._id, MetadataTypes::BadgeList(vec![]));
             return out;
         }
         let user_badges = user_badges.unwrap();
@@ -57,8 +56,6 @@ impl AbstractMetadata for Badges {
                 .clone()
             );
         };
-        let mut metadata_map: HashMap<String, Vec<BadgeInformation>> = HashMap::new();
-        metadata_map.insert(comment.commenter._id, metadata);
-        metadata_map
+        HashMap::from([(comment.commenter._id.clone(), MetadataTypes::BadgeList(metadata))])
     }
 }

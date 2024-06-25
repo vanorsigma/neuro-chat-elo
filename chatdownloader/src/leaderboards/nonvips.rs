@@ -7,11 +7,12 @@ use crate::_types::clptypes::UserChatPerformance;
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
 use std::collections::HashMap;
 
-pub struct ChatOnly {
+#[derive(Default, Debug)]
+pub struct NonVIPS {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for ChatOnly {
+impl AbstractLeaderboard for NonVIPS {
     fn new() -> Self {
         Self {
             state: HashMap::new(),
@@ -27,7 +28,7 @@ impl AbstractLeaderboard for ChatOnly {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        if performance.metadata.contains_key("special_role") && !performance.metadata["special_role"].is_null() {
+        if performance.metadata.contains_key("special_role") && *performance.metadata.get("special_role").unwrap().get_bool().unwrap() {
             return None;
         }
         return Some(performance.metrics.values().sum());

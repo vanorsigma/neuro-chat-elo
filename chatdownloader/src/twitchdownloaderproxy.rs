@@ -7,7 +7,7 @@ use log::info;
 use std::fs::{self, File};
 use std::io::{self, Read};
 use std::os::unix::fs::PermissionsExt;
-use std::process::{Command, Output};
+use std::process::Command;
 
 use crate::_types::twitchtypes::ChatLog;
 

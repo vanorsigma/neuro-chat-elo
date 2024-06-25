@@ -10,7 +10,7 @@ const K: f32 = 2.0;
 
 #[allow(dead_code)]
 pub trait AbstractLeaderboard {
-    fn new() -> Self;
+    fn new() -> Self where Self: Sized;
 
     fn get_name(&self) -> &str;
 
@@ -63,13 +63,11 @@ pub trait AbstractLeaderboard {
                 score: 0.0,
             });
 
-            let badges: Vec<BadgeInformation> = performance.metadata["badges"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .map(|badge| {
-                    serde_json::from_value(badge.clone()).unwrap()
-                }).collect();
+            let badges: Vec<BadgeInformation> = if let Some(badge_list) = performance.metadata.get("badges") {
+                badge_list.get_badge_list().unwrap().clone()
+            } else {
+                vec![]
+            };
 
             entry.score = score;
             entry.badges = Some(badges);
@@ -79,7 +77,7 @@ pub trait AbstractLeaderboard {
     fn save(&mut self) {
         info!("Saving {} leaderboard...", self.get_name());
         self.__calculate_new_elo();
-        let to_save: Vec<LeaderboardExportItem> = self.__get_state().values().map(|inner_state| {
+        let mut to_save: Vec<LeaderboardExportItem> = self.__get_state().values().map(|inner_state| {
             LeaderboardExportItem {
                 id: inner_state.id.clone(),
                 rank: 0,
@@ -92,7 +90,6 @@ pub trait AbstractLeaderboard {
         }).collect();
 
         // Update rank and delta
-        let mut to_save = to_save;
         to_save.sort_by(|a, b| b.elo.partial_cmp(&a.elo).unwrap());
         assert!(to_save.len() > 1, "Nothing to save!");
 
@@ -112,9 +109,9 @@ pub trait AbstractLeaderboard {
             None => 0,
         };
 
-        for (idx, item) in to_save.iter_mut().enumerate().skip(1) {
-            let rank = to_save[idx - 1].rank + (item.elo < to_save[idx - 1].elo) as u16;
-            item.delta = match self.__get_state().get(&item.id) {
+        for idx in 1..to_save.len() {
+            let rank = to_save[idx - 1].rank + (to_save[idx].elo < to_save[idx - 1].elo) as u16;
+            to_save[idx].delta = match self.__get_state().get(&to_save[idx].id) {
                 Some(state) => {
                     if let Some(previous_rank) = state.previous_rank {
                         if previous_rank > 0 {
@@ -128,7 +125,7 @@ pub trait AbstractLeaderboard {
                 },
                 None => 0,
             };
-            item.rank = rank;
+            to_save[idx].rank = rank;
         }
 
         // Save to file

@@ -2,29 +2,33 @@ use crate::_types::twitchtypes::Comment;
 use std::collections::HashMap;
 
 #[allow(dead_code)]
-pub(super) trait AbstractMetric {
+pub trait AbstractMetric {
     /*
     Defines the trait for a metric
     */
+    fn new() -> Self where Self: Sized;
+        /*
+        Initializes the metric
+        */
 
-    fn _shortcut_for_this_comment_user(&self, comment: &Comment, score: f32) -> HashMap<String, f32> {
+    fn _shortcut_for_this_comment_user(&self, comment: Comment, score: f32) -> HashMap<String, f32> {
         // return {comment.commenter._id: score}
         let mut map: HashMap<String, f32> = HashMap::new();
         map.insert(comment.commenter._id.clone(), score);
         map
     }
 
-    fn can_parallelize() -> bool;
+    fn can_parallelize(&self) -> bool;
         /*
         Indicates to the executor if this metric can be parallelized
         */
 
-    fn get_name() -> String;
+    fn get_name(&self) -> String;
         /*
         Returns the name of the metric
         */
 
-    fn get_metric(&mut self, comment: &Comment, sequence_no: u32) -> HashMap<String, f32>;
+    fn get_metric(&mut self, comment: Comment, sequence_no: u32) -> HashMap<String, f32>;
         /*
         Gets the score for a particular comment
 

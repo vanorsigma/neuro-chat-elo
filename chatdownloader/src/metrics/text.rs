@@ -8,18 +8,23 @@ use std::collections::HashMap;
 
 const WEIGHT_TEXT: f32 = 0.02;
 
+#[derive(Default, Debug)]
 pub struct Text;
 
 impl AbstractMetric for Text {
-    fn can_parallelize() -> bool {
+    fn new() -> Self {
+        Self
+    }
+
+    fn can_parallelize(&self) -> bool {
         false
     }
 
-    fn get_name() -> String {
+    fn get_name(&self) -> String {
         String::from("text")
     }
 
-    fn get_metric(&mut self, comment: &Comment, _sequence_no: u32) -> HashMap<String, f32> {
+    fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> HashMap<String, f32> {
         let score = f32::max(0.0, Self::calculate_score(comment.message.body.len()));
         self._shortcut_for_this_comment_user(comment, score)
     }

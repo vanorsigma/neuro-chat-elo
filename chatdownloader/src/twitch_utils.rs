@@ -18,6 +18,7 @@ const USER_AGENT: &str = concat!(
 );
 
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct TwitchAPIWrapper {
     pub twitch: HelixClient<'static, reqwest::Client>,
     pub token: AppAccessToken
@@ -71,9 +72,7 @@ impl TwitchAPIWrapper {
         let response = self.twitch.req_get(request, &self.token);
         let global_badges = response.await.unwrap().data;
 
-        let all_badges = channel_badges.iter().chain(global_badges.iter());
-        drop(channel_badges);
-        drop(global_badges);
+        let all_badges = [channel_badges, global_badges].concat();
 
         let mut badge_sets: HashMap<String, HashMap<String, BadgeInformation>> = HashMap::new();
 
@@ -92,6 +91,6 @@ impl TwitchAPIWrapper {
             badge_sets.insert(badge_set.set_id.to_string().clone(), badges);
         }
 
-        badge_sets
+        Ok(badge_sets)
     }
 }

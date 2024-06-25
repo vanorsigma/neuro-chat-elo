@@ -7,20 +7,27 @@ const WEIGHT_COPYPASTA: f32 = 0.3;
 const CHAIN_GRACE: u32 = 10;
 const MATCHING_THRESHOLD: f32 = 0.6;
 
+#[derive(Default, Debug)]
 pub struct CopypastaLeader {
     heap: BinaryHeap<(u32, String, String, u32)>,
 }
 
 impl AbstractMetric for CopypastaLeader {
-    fn can_parallelize() -> bool {
+    fn new() -> Self {
+        Self {
+            heap: BinaryHeap::new(),
+        }
+    }
+    
+    fn can_parallelize(&self) -> bool {
         false
     }
 
-    fn get_name() -> String {
+    fn get_name(&self) -> String {
         String::from("copypasta")
     }
 
-    fn get_metric(&mut self, comment: &Comment, sequence_no: u32) -> HashMap<String, f32> {
+    fn get_metric(&mut self, comment: Comment, sequence_no: u32) -> HashMap<String, f32> {
         let text = comment.message.fragments.iter()
             .map(|fragment| fragment.text.clone())
             .collect::<Vec<String>>()
@@ -38,7 +45,7 @@ impl AbstractMetric for CopypastaLeader {
         // Find the best matching string in the heap
         let matching_scores: Vec<_> = self.heap.iter()
             .map(|item| {
-                Self::lcs(&Self::pad_to(&item.1, &item.1, text.len()), &text) as f32 / text.len() as f32
+                Self::lcs(&text, &item.1).len() as f32 / text.len().max(item.1.len()) as f32
             })
             .collect();
 
@@ -68,36 +75,53 @@ impl AbstractMetric for CopypastaLeader {
 }
 
 impl CopypastaLeader {
-    #[allow(dead_code)]
-    pub fn new() -> Self {
-        CopypastaLeader {
-            heap: BinaryHeap::new(),
-        }
-    } 
-
-    fn lcs(lhs: &str, rhs: &str) -> usize {
-        let m = lhs.len();
-        let n = rhs.len();
-        let mut lcs_table = vec![vec![0; n + 1]; m + 1];
-
-        for i in 0..=m {
-            for j in 0..=n {
-                if i == 0 || j == 0 {
-                    lcs_table[i][j] = 0;
-                } else if lhs.chars().nth(i - 1) == rhs.chars().nth(j - 1) {
-                    lcs_table[i][j] = lcs_table[i - 1][j - 1] + 1;
-                } else {
-                    lcs_table[i][j] = usize::max(lcs_table[i - 1][j], lcs_table[i][j - 1]);
-                }
+    fn lcs(s1: &str, s2: &str) -> String {
+        let mut max: Option<String> = None; // Holds value of string with maximum length
+        let mut current = String::new(); // String container to hold current longest value
+        let mut s1_iter = s1.chars().peekable(); // Peekable iterator for string s1
+        let mut s2_iter = s2.chars(); //Iterator for string s2
+        let mut s2_prev_pos = s2_iter.clone(); // Iterator that holds position of previous location of first iterator
+        let mut s1_prev_pos = s1_iter.clone(); // Peekable iterator used to make sure all possible combinations are located.
+    
+        loop {
+            let s1_char = s1_iter.next(); // Get character in s1
+    
+            if current.is_empty() {
+                // If no consecutive string found yet store location of iterator
+                s1_prev_pos = s1_iter.clone()
+            }
+    
+            match s1_char {
+                Some(s1_char) => loop {
+                    match s2_iter.next() {
+                        Some(s2_char) if s1_char == s2_char => {
+                            current.push(s1_char);
+                            s2_prev_pos = s2_iter.clone();
+                            break;
+                        }
+                        Some(_) => continue,
+                        None => {
+                            s2_iter = s2_prev_pos.clone();
+                            break;
+                        }
+                    }
+                },
+                None => match s1_prev_pos.peek() {
+                    Some(_) => {
+                        if max.as_ref().map_or(true, |s| s.len() < current.len()) {
+                            max = Some(current.clone());
+                        }
+                        current.clear();
+    
+                        s1_iter = s1_prev_pos.clone();
+                        s2_iter = s2.chars();
+                    }
+                    None => break,
+                },
             }
         }
-        lcs_table[m][n]
-    }
-
-    fn pad_to(target: &str, padding: &str, maxlen: usize) -> String {
-        let repeat_count = (maxlen - target.len()) / padding.len() + 1;
-        let padded_string = padding.repeat(repeat_count);
-        format!("{}{}", target, padded_string)[..maxlen].to_string()
+    
+        max.unwrap_or_default()
     }
 
     pub fn finish(&self) -> HashMap<String, f32> {

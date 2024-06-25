@@ -7,11 +7,12 @@ use crate::_types::clptypes::UserChatPerformance;
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
 use std::collections::HashMap;
 
-pub struct ChatOnly {
+#[derive(Default, Debug)]
+pub struct Overall {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for ChatOnly {
+impl AbstractLeaderboard for Overall {
     fn new() -> Self {
         Self {
             state: HashMap::new(),

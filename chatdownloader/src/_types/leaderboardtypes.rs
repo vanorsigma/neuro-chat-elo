@@ -5,7 +5,7 @@ Publically accessible leaderboard types
 use serde::{Deserialize, Serialize};
 use super::clptypes::BadgeInformation;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct LeaderboardExportItem {
     pub id: String,
     pub rank: u16,
@@ -16,7 +16,7 @@ pub struct LeaderboardExportItem {
     pub badges: Option<Vec<BadgeInformation>>
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct LeaderboardInnerState {
     pub id: String,
     pub username: String,

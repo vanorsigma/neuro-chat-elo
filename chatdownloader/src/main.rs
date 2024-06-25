@@ -8,11 +8,17 @@ mod twitchdownloaderproxy;
 mod twitch_utils;
 
 use log::info;
+use env_logger::Env;
 
 #[tokio::main]
 async fn main() {
-    info!("Authenticating with Twitch...");
+    let env = Env::default()
+        .filter_or("MY_LOG_LEVEL", "info")
+        .write_style_or("MY_LOG_STYLE", "always");
 
+    env_logger::init_from_env(env);
+
+    info!("Authenticating with Twitch...");
     let twitch = twitch_utils::TwitchAPIWrapper::new().await.unwrap();
     let vod_id = twitch.get_latest_vod_id(_constants::VED_CH_ID.to_string()).await;
 
@@ -20,5 +26,9 @@ async fn main() {
 
     let mut downloader = twitchdownloaderproxy::TwitchChatDownloader::new();
     let chat_log = downloader.download_chat(&vod_id).await.unwrap();
-    println!("{:?}", chat_log);
+    
+    let processor = chatlogprocessor::ChatLogProcessor::new(twitch);
+    // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());
+    let user_performances = processor.parse_from_log_object(chat_log).await;
+    chatlogprocessor::ChatLogProcessor::export_to_leaderboards(user_performances);
 }
