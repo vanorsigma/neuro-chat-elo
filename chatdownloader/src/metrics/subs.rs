@@ -20,7 +20,7 @@ lazy_static! {
 }
 
 #[allow(dead_code)]
-struct Subs;
+pub struct Subs;
 
 impl AbstractMetric for Subs {
     fn can_parallelize() -> bool {

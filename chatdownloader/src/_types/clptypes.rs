@@ -15,9 +15,3 @@ pub struct BadgeInformation {
     pub description: String,
     pub image_url: String,
 }
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct Metric<T>{
-    pub commenter_id: String,
-    pub value: T,
-}

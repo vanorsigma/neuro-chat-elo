@@ -1,11 +1,11 @@
 /*
 Assigns badges to each user
 */
-use log::{info, debug, error};
+use log::error;
 use std::collections::HashMap;
 
 use crate::_types::twitchtypes::Comment;
-use crate::_types::clptypes::{BadgeInformation, Metric};
+use crate::_types::clptypes::BadgeInformation;
 use crate::_constants::VED_CH_ID;
 use crate::twitch_utils::TwitchAPIWrapper;
 use crate::metadata::metadatatrait::AbstractMetadata;
@@ -16,7 +16,10 @@ struct Badges {
 }
 
 impl AbstractMetadata for Badges {
-    fn new(twitch: TwitchAPIWrapper) -> Self {
+    type MetadataType = Vec<BadgeInformation>;
+    
+    #[tokio::main]
+    async fn new(twitch: TwitchAPIWrapper) -> Self {
         let badges = twitch.get_badges(VED_CH_ID.to_string()).await.unwrap();
         Self {
             twitch,
@@ -28,11 +31,13 @@ impl AbstractMetadata for Badges {
         "Badges".to_string()
     }
 
-    fn get_metadata(&self, comment: Comment, sequence_no: u32) -> HashMap<String, Vec<BadgeInformation>> {
+    fn get_metadata(&self, comment: Comment, sequence_no: u32) -> HashMap<String, Self::MetadataType> {
         let mut metadata: Vec<BadgeInformation> = vec![];
         let user_badges = comment.message.user_badges;
         if user_badges.is_none() {
-            return metadata;
+            let mut out: HashMap<String, Self::MetadataType> = HashMap::new();
+            out.insert(comment.commenter._id, vec![]);
+            return out;
         }
         let user_badges = user_badges.unwrap();
         for badge in user_badges {
@@ -47,7 +52,10 @@ impl AbstractMetadata for Badges {
                 error!("Badge info not found for badge id {} and version {}", badge._id, badge.version);
                 continue;
             }
-            metadata.push(badge_info.unwrap().clone());
+            metadata.push(
+                badge_info.unwrap()
+                .clone()
+            );
         };
         let mut metadata_map: HashMap<String, Vec<BadgeInformation>> = HashMap::new();
         metadata_map.insert(comment.commenter._id, metadata);

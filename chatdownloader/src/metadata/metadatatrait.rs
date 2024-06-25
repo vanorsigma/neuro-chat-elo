@@ -14,6 +14,8 @@ pub trait AbstractMetadata {
     Struct should ensure to set self.twtich to the twitch object passed
     if it needs to make API calls
     */
+    type MetadataType; // The type the metadata stores
+
     fn new(twitch: TwitchAPIWrapper) -> Self;
         /*
         Create a new metadata object
@@ -26,7 +28,7 @@ pub trait AbstractMetadata {
         Name of this piece of metadata
         */
 
-    fn get_metadata<T>(&self, comment: Comment, sequence_no: u32) -> HashMap<String, T>;
+    fn get_metadata(&self, comment: Comment, sequence_no: u32) -> HashMap<String, Self::MetadataType>;
         /*
         Get information about a user from a chat message
 
