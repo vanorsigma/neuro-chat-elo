@@ -131,7 +131,7 @@ pub trait AbstractLeaderboard {
         // Save to file
         let path = format!("{}.json", self.get_name());
         let data = serde_json::to_string(&to_save).expect("Unable to serialize leaderboard data");
-        fs::write(&path, data).expect("Unable to write file");
+        fs::write(path, data).expect("Unable to write file");
         info!("{} leaderboard saved", self.get_name());
     }
 

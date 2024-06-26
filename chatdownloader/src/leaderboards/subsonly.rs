@@ -31,6 +31,6 @@ impl AbstractLeaderboard for SubsOnly {
         if performance.metrics.contains_key("subs") {
             return Some(performance.metrics["subs"]);
         }
-        return Some(0.0);
+        Some(0.0)
     }
 }

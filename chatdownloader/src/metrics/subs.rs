@@ -38,7 +38,7 @@ impl AbstractMetric for Subs {
 
     fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> HashMap<String, f32> {
         let total_subs: i32 = comment.message.fragments.iter()
-            .map(|fragment| Self::no_of_gifted_subs(fragment))
+            .map(Self::no_of_gifted_subs)
             .sum();
 
         let score = total_subs as f32 * WEIGHT_SUBS;

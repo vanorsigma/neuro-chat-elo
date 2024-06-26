@@ -1,7 +1,6 @@
 use std::{fs, collections::HashMap};
 use std::time::Instant;
 use log::{debug, info};
-use serde_json;
 
 use crate::twitch_utils::TwitchAPIWrapper;
 use crate::_types::twitchtypes::ChatLog;

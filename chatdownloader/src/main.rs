@@ -6,19 +6,26 @@ mod leaderboards;
 mod chatlogprocessor;
 mod twitchdownloaderproxy;
 mod twitch_utils;
+mod backfill;
 
 use log::info;
 use env_logger::Env;
+use std::env;
 
 #[tokio::main]
 async fn main() {
     let env = Env::default()
-        .filter_or("MY_LOG_LEVEL", "info")
+        .filter_or("MY_LOG_LEVEL", "debug")
         .write_style_or("MY_LOG_STYLE", "always");
 
     env_logger::init_from_env(env);
 
+    if env::var("BACKFILL").as_deref() == Ok("1"){
+        backfill::backfill().await;
+    }
+
     info!("Authenticating with Twitch...");
+
     let twitch = twitch_utils::TwitchAPIWrapper::new().await.unwrap();
     let vod_id = twitch.get_latest_vod_id(_constants::VED_CH_ID.to_string()).await;
 

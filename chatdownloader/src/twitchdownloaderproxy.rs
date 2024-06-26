@@ -1,4 +1,3 @@
-use reqwest;
 use serde::{Deserialize, Serialize};
 use tempfile::{Builder, NamedTempFile, TempPath};
 use zip::ZipArchive;
@@ -94,7 +93,7 @@ impl TwitchChatDownloader {
         let output_path: String = output_file.to_str().unwrap().to_string().clone();
         output_file.close()?;
         let status = Command::new(&self.executable_path)
-            .args(&["chatdownload", "-u", vod_id, "-o", &output_path])
+            .args(["chatdownload", "-u", vod_id, "-o", &output_path])
             .status()?;
 
         if !status.success() {

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use reqwest;
 use dotenv::dotenv;
 use twitch_api::HelixClient;
 use twitch_api::twitch_oauth2::{ClientId, ClientSecret, AppAccessToken};
@@ -36,7 +35,7 @@ impl TwitchAPIWrapper {
             .map(ClientSecret::new)
             .expect("TWITCH_APPSECRET must be set");
 
-        let http_client = crate::twitch_utils::reqwest::ClientBuilder::new()
+        let http_client = reqwest::ClientBuilder::new()
             .user_agent(USER_AGENT)
             .build()?;
 

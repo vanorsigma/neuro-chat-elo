@@ -22,7 +22,7 @@ impl AbstractLeaderboard for BitsOnly {
     }
 
     fn get_name(&self) -> &str {
-        "bits"
+        "bits-only"
     }
 
     fn __get_state(&mut self) -> &mut HashMap<String, LeaderboardInnerState> {
