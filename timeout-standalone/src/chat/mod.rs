@@ -1,5 +1,6 @@
 ///! Package to handle chat. MUST run in an async context
 use tokio::{select, task::JoinHandle};
+use tokio_stream::Stream;
 use twitch_irc::login::StaticLoginCredentials;
 pub use twitch_irc::message::ServerMessage;
 use twitch_irc::TwitchIRCClient;
@@ -7,6 +8,8 @@ use twitch_irc::{ClientConfig, SecureTCPTransport};
 
 use tokio::sync::broadcast::{channel, Receiver};
 use tokio::sync::oneshot;
+
+pub struct ChatReceiver(Receiver<ServerMessage>);
 
 pub struct Chat {
     client: TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>,
@@ -48,7 +51,26 @@ impl Chat {
         }
     }
 
-    pub fn get_receiver(&self) -> Receiver<ServerMessage> {
-        self.receiver.resubscribe()
+    pub async fn get_receiver(&self) -> ChatReceiver {
+        ChatReceiver(self.receiver.resubscribe())
+    }
+}
+
+
+impl Stream for ChatReceiver {
+    type Item = ServerMessage;
+
+    fn poll_next(
+        self: std::pin::Pin<&mut Self>,
+        _cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        if self.0.is_empty() {
+            std::task::Poll::Pending
+        } else {
+            match self.get_mut().0.try_recv() {
+                Ok(v) => std::task::Poll::Ready(Some(v)),
+                Err(_) => std::task::Poll::Ready(None),
+            }
+        }
     }
 }

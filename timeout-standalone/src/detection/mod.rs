@@ -2,15 +2,21 @@
 
 pub use rustpotter::SampleFormat;
 use rustpotter::{Rustpotter, RustpotterConfig, ScoreMode};
-use tokio::sync::broadcast::{Sender, Receiver, channel};
+use tokio::sync::broadcast::{channel, Receiver, Sender};
+use tokio_stream::Stream;
 
 const DETECTION_NAME: &str = "timeout";
+
+pub struct TimeoutWordDetectorReceiver(Receiver<f32>);
 
 pub struct TimeoutWordDetector {
     rustpotter: Rustpotter,
     buffer: Vec<u8>,
-    sender: Sender<()>,
-    receiver: Receiver<()>
+    sender: Sender<f32>,
+    receiver: Receiver<f32>,
+    bytes_per_frame: usize,
+    chunk_number: usize,
+    sample_rate: usize,
 }
 
 impl TimeoutWordDetector {
@@ -28,41 +34,80 @@ impl TimeoutWordDetector {
         config.filters.band_pass.enabled = false;
         config.detector.score_mode = ScoreMode::Max;
         config.fmt.sample_rate = sample_rate;
-        config.fmt.sample_format = sample_format;
+        config.fmt.sample_format = sample_format.clone();
 
         let mut rustpotter = Rustpotter::new(&config).unwrap();
         rustpotter
             .add_wakeword_from_file("wakeword_key", wakeword_file_path)
             .unwrap();
-        let spf = rustpotter.get_samples_per_frame() * 4;
 
+        // TODO: use rustpotter.get_bytes_per_frame(), cause it does the same thing
+        let spf = rustpotter.get_samples_per_frame()
+            * match sample_format {
+                SampleFormat::I8 => 1,
+                SampleFormat::I16 => 2,
+                SampleFormat::I32 => 4,
+                SampleFormat::F32 => 4,
+            };
         let (sender, receiver) = channel(sample_rate * 5);
 
-        TimeoutWordDetector { rustpotter,
-                              buffer: Vec::with_capacity(spf),
-                              sender, receiver }
+        TimeoutWordDetector {
+            rustpotter,
+            buffer: Vec::with_capacity(spf),
+            sender,
+            receiver,
+            bytes_per_frame: spf,
+            chunk_number: 0,
+            sample_rate,
+        }
     }
 
     fn actually_consume(&mut self) {
         let result = self.rustpotter.process_bytes(self.buffer.as_slice());
-        // println!("{:#?}", self.buffer);
+        // println!("{:#?}", self.buffer); TODO: remove
         if let Some(detection) = result {
             if detection.name == DETECTION_NAME {
-                println!("{:#?}", detection.score);
-                let _ = self.sender.send(());
+                // println!("{:#?}", detection.score); TODO: remove
+                self.chunk_number += 1;
+                let _ = self.sender.send(self.calculate_time_elapsed_in_seconds());
+
             }
         }
         self.buffer.clear();
     }
 
-    pub fn ingest_byte(&mut self, b: u8) {
+    pub fn ingest_byte(&mut self, b: u8)  {
         self.buffer.push(b);
-        if self.buffer.len() >= self.rustpotter.get_samples_per_frame() * 4 {
+        if self.buffer.len() >= self.bytes_per_frame {
             self.actually_consume()
         }
     }
 
-    pub fn get_receiver(&mut self) -> Receiver<()> {
-        self.receiver.resubscribe()
+    /// The f32 is the time elapsed since the start of the stream
+    pub async fn get_receiver(&self) -> TimeoutWordDetectorReceiver {
+        TimeoutWordDetectorReceiver(self.receiver.resubscribe())
+    }
+
+    fn calculate_time_elapsed_in_seconds(&self) -> f32 {
+        (self.chunk_number * self.rustpotter.get_samples_per_frame()) as f32
+            / self.sample_rate as f32
+    }
+}
+
+impl Stream for TimeoutWordDetectorReceiver {
+    type Item = f32;
+
+    fn poll_next(
+        self: std::pin::Pin<&mut Self>,
+        _cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        if self.0.is_empty() {
+            std::task::Poll::Pending
+        } else {
+            match self.get_mut().0.try_recv() {
+                Ok(v) => std::task::Poll::Ready(Some(v)),
+                Err(_) => std::task::Poll::Ready(None),
+            }
+        }
     }
 }
