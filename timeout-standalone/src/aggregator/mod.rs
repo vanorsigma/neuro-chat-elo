@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 use std::io::Read;
 use std::time::SystemTime;
 
+use tokio::sync::broadcast;
 use tokio::{join, select};
 use tokio_stream::{Stream, StreamExt, StreamMap};
 use twitch_irc::message::ServerMessage;
@@ -15,8 +16,17 @@ use crate::detection::TimeoutWordDetector;
 use crate::stream::traits;
 use crate::{ChatReceiver, TimeoutWordDetectorReceiver};
 
-#[derive(Debug)]
+// We claim that timeouts can happen in a window of 10 seconds
+const ALLOWED_WINDOW: f32 = 10.0;
+
+#[derive(Debug, Clone)]
 struct ChatTimeoutInformation {
+    username: String,
+    relative_timestamp: f32,
+}
+
+#[derive(Debug)]
+pub struct ConfirmedTimeoutInformation {
     username: String,
     relative_timestamp: f32,
 }
@@ -82,10 +92,12 @@ impl Aggregator {
     pub fn new<R: traits::RemoteAudioSource>(remote: R, chat: Chat, detector: TimeoutWordDetector) {
     }
 
-    async fn perform_aggregation<R: traits::RemoteAudioSource>(
+    /// A blocking function that performs the aggregation
+    pub async fn perform_aggregation<R: traits::RemoteAudioSource>(
         remote: R,
         chat: Chat,
         mut detector: TimeoutWordDetector,
+        mut sender: broadcast::Sender<Vec<ConfirmedTimeoutInformation>>,
     ) {
         let mut detector_queue: VecDeque<f32> = VecDeque::new();
         let mut chat_queue: VecDeque<ChatTimeoutInformation> = VecDeque::new();
@@ -114,11 +126,14 @@ impl Aggregator {
             match aggregate_iter.get_next().await {
                 PossibleAggregateItems::Chat(chat_info) => {
                     println!("Chat information: {:#?}", chat_info);
+                    chat_queue.push_back(chat_info);
                 }
                 PossibleAggregateItems::DetectorTimestamp(ts) => {
                     println!("Timestamp: {:#?}", ts);
+                    detector_queue.push_back(ts);
                 }
             }
+            Self::confirm_timeouts_maybe(&mut chat_queue, &mut detector_queue, &mut sender);
         }
 
         // join!(join_handle, async move {
@@ -127,5 +142,72 @@ impl Aggregator {
         //         detector.ingest_byte(123);
         //     }
         // });
+    }
+
+    fn confirm_timeouts_maybe(
+        chat_queue: &mut VecDeque<ChatTimeoutInformation>,
+        detector_queue: &mut VecDeque<f32>,
+        sender: &mut broadcast::Sender<Vec<ConfirmedTimeoutInformation>>,
+    ) {
+        // invalidate any super old entries
+        Self::invalidate_old_entries(chat_queue, detector_queue);
+
+        // clone the detector queue. unlike chat, which is consumed
+        // per timeout, detections create an AOE of timeout ranges
+        let mut cloned_detector_queue = detector_queue.clone();
+        let mut result: Vec<ConfirmedTimeoutInformation> = Vec::new();
+
+        loop {
+            // have to use a loop because i'll be mutating the queue as I go
+            let oldest_chat = match chat_queue.front() {
+                Some(c) => c,
+                None => break,
+            };
+
+            let oldest_detected = match cloned_detector_queue.front() {
+                Some(d) => d,
+                None => break,
+            };
+
+            let comparison = oldest_chat.relative_timestamp - oldest_detected;
+            if -ALLOWED_WINDOW < comparison && comparison < ALLOWED_WINDOW {
+                result.push(ConfirmedTimeoutInformation {
+                    username: oldest_chat.username.to_string(),
+                    relative_timestamp: oldest_chat.relative_timestamp,
+                });
+                chat_queue.pop_front();
+            } else if comparison > ALLOWED_WINDOW {
+                cloned_detector_queue.pop_front();
+            }
+        }
+
+        sender.send(result);
+    }
+
+    fn invalidate_old_entries(
+        chat_queue: &mut VecDeque<ChatTimeoutInformation>,
+        detector_queue: &mut VecDeque<f32>,
+    ) {
+        loop {
+            let oldest_chat = match chat_queue.front() {
+                Some(c) => c,
+                None => return,
+            };
+
+            let oldest_detected = match detector_queue.front() {
+                Some(d) => d,
+                None => return,
+            };
+
+            let comparison = oldest_chat.relative_timestamp - oldest_detected;
+
+            if comparison > ALLOWED_WINDOW {
+                detector_queue.pop_front();
+            } else if comparison < -ALLOWED_WINDOW {
+                chat_queue.pop_front();
+            } else {
+                break;
+            }
+        }
     }
 }
