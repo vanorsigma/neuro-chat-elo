@@ -1,8 +1,15 @@
 //! TimeoutWordDetector only supports i16 audio streams
 
+use std::{future::Future, pin::Pin};
+
+use std::task::{Context, Poll};
+
 pub use rustpotter::SampleFormat;
 use rustpotter::{Rustpotter, RustpotterConfig, ScoreMode};
-use tokio::sync::broadcast::{channel, Receiver, Sender};
+use tokio::{
+    stream,
+    sync::broadcast::{channel, Receiver, Sender},
+};
 use tokio_stream::Stream;
 
 const DETECTION_NAME: &str = "timeout";
@@ -67,16 +74,15 @@ impl TimeoutWordDetector {
         // println!("{:#?}", self.buffer); TODO: remove
         if let Some(detection) = result {
             if detection.name == DETECTION_NAME {
-                // println!("{:#?}", detection.score); TODO: remove
+                // println!("{:#?}", detection.score); // TODO: remove
                 self.chunk_number += 1;
                 let _ = self.sender.send(self.calculate_time_elapsed_in_seconds());
-
             }
         }
         self.buffer.clear();
     }
 
-    pub fn ingest_byte(&mut self, b: u8)  {
+    pub fn ingest_byte(&mut self, b: u8) {
         self.buffer.push(b);
         if self.buffer.len() >= self.bytes_per_frame {
             self.actually_consume()
@@ -84,7 +90,7 @@ impl TimeoutWordDetector {
     }
 
     /// The f32 is the time elapsed since the start of the stream
-    pub async fn get_receiver(&self) -> TimeoutWordDetectorReceiver {
+    pub fn get_receiver(&self) -> TimeoutWordDetectorReceiver {
         TimeoutWordDetectorReceiver(self.receiver.resubscribe())
     }
 
@@ -98,16 +104,12 @@ impl Stream for TimeoutWordDetectorReceiver {
     type Item = f32;
 
     fn poll_next(
-        self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Option<Self::Item>> {
-        if self.0.is_empty() {
-            std::task::Poll::Pending
-        } else {
-            match self.get_mut().0.try_recv() {
-                Ok(v) => std::task::Poll::Ready(Some(v)),
-                Err(_) => std::task::Poll::Ready(None),
-            }
-        }
+        let recv_future = self.0.recv();
+        tokio::pin!(recv_future);
+        cx.waker().wake_by_ref(); // TODO: Figure out why this is needed. This shouldn't be needed. wtf.
+        recv_future.poll(cx).map(|v| v.ok())
     }
 }

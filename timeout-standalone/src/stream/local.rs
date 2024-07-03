@@ -1,14 +1,14 @@
 use tokio::sync::mpsc;
 
-use crate::traits::{panic_if_no_streamlink, RemoteAudioSource};
+use crate::traits::RemoteAudioSource;
 use std::process::{Child, Command, Stdio};
 use std::io::Read;
 
-pub struct TwitchVOD {
+pub struct Local {
     process: Child,
 }
 
-impl RemoteAudioSource for TwitchVOD {
+impl RemoteAudioSource for Local {
     fn get_out_channel(self) -> mpsc::Receiver<u8> {
         let (sender, receiver) = mpsc::channel(10000000);
         tokio::task::spawn_blocking(move || {
@@ -26,20 +26,22 @@ impl RemoteAudioSource for TwitchVOD {
     }
 }
 
-impl TwitchVOD {
-    pub fn new(vod_id: &str) -> Self {
-        panic_if_no_streamlink();
-
-        let streamlink = Command::new("streamlink")
-            .arg(format!("https://twitch.tv/videos/{vod_id}"))
-            .arg("audio")
-            .arg("-O")
+impl Local {
+    pub fn new(file_path: &str) -> Self {
+        let ffmpeg = Command::new("ffmpeg")
+            .arg("-i")
+            .arg(file_path)
+            .arg("-c:a")
+            .arg("copy")
+            .arg("-f")
+            .arg("wav")
+            .arg("-")
             .stdout(Stdio::piped())
             .spawn()
-            .expect("can launch streamlink");
+            .expect("can launch ffmpeg");
 
-        TwitchVOD {
-            process: streamlink,
+        Local {
+            process: ffmpeg,
         }
     }
 }

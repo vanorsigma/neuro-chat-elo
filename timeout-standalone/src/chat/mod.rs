@@ -1,12 +1,21 @@
 ///! Package to handle chat. MUST run in an async context
-use tokio::{select, task::JoinHandle};
+use std::{future::Future, pin::Pin};
+
+use std::task::{Context, Poll};
+
+pub use rustpotter::SampleFormat;
+use rustpotter::{Rustpotter, RustpotterConfig, ScoreMode};
+use tokio::{
+    stream,
+    sync::broadcast::{channel, Receiver, Sender},
+};
 use tokio_stream::Stream;
+use tokio::{select, task::JoinHandle};
 use twitch_irc::login::StaticLoginCredentials;
 pub use twitch_irc::message::ServerMessage;
 use twitch_irc::TwitchIRCClient;
 use twitch_irc::{ClientConfig, SecureTCPTransport};
 
-use tokio::sync::broadcast::{channel, Receiver};
 use tokio::sync::oneshot;
 
 pub struct ChatReceiver(Receiver<ServerMessage>);
@@ -51,7 +60,7 @@ impl Chat {
         }
     }
 
-    pub async fn get_receiver(&self) -> ChatReceiver {
+    pub fn get_receiver(&self) -> ChatReceiver {
         ChatReceiver(self.receiver.resubscribe())
     }
 }
@@ -61,16 +70,12 @@ impl Stream for ChatReceiver {
     type Item = ServerMessage;
 
     fn poll_next(
-        self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Option<Self::Item>> {
-        if self.0.is_empty() {
-            std::task::Poll::Pending
-        } else {
-            match self.get_mut().0.try_recv() {
-                Ok(v) => std::task::Poll::Ready(Some(v)),
-                Err(_) => std::task::Poll::Ready(None),
-            }
-        }
+        let recv = self.0.recv();
+        tokio::pin!(recv);
+        cx.waker().wake_by_ref();
+        recv.poll(cx).map(|v| v.ok())
     }
 }

@@ -1,7 +1,9 @@
 use std::process::{ChildStdout, Command};
 
-pub trait RemoteAudioSource {
-    fn get_compatible_stdout(&self) -> ChildStdout;
+use tokio::sync::mpsc;
+
+pub trait RemoteAudioSource : Send + Sync {
+    fn get_out_channel(self) -> mpsc::Receiver<u8>;
 }
 
 pub(super) fn panic_if_no_streamlink() {
