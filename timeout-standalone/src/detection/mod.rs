@@ -58,6 +58,8 @@ impl TimeoutWordDetector {
             };
         let (sender, receiver) = channel(sample_rate * 5);
 
+        log::info!("Wakeword detection prepared");
+
         TimeoutWordDetector {
             rustpotter,
             buffer: Vec::with_capacity(spf),
@@ -71,11 +73,10 @@ impl TimeoutWordDetector {
 
     fn actually_consume(&mut self) {
         let result = self.rustpotter.process_bytes(self.buffer.as_slice());
-        // println!("{:#?}", self.buffer); TODO: remove
+        self.chunk_number += 1;
         if let Some(detection) = result {
             if detection.name == DETECTION_NAME {
-                // println!("{:#?}", detection.score); // TODO: remove
-                self.chunk_number += 1;
+                log::debug!("Wake word score: {}", detection.score);
                 let _ = self.sender.send(self.calculate_time_elapsed_in_seconds());
             }
         }
@@ -95,6 +96,12 @@ impl TimeoutWordDetector {
     }
 
     fn calculate_time_elapsed_in_seconds(&self) -> f32 {
+        log::debug!(
+            "Time elapsed calculation (chunk_number, samples, sample_rate): {}, {}, {}",
+            self.chunk_number,
+            self.rustpotter.get_samples_per_frame(),
+            self.sample_rate
+        );
         (self.chunk_number * self.rustpotter.get_samples_per_frame()) as f32
             / self.sample_rate as f32
     }

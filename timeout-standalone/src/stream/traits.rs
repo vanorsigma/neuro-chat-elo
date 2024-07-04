@@ -1,4 +1,5 @@
 use std::process::{ChildStdout, Command};
+use log::info;
 
 use tokio::sync::mpsc;
 
@@ -9,7 +10,7 @@ pub trait RemoteAudioSource : Send + Sync {
 pub(super) fn panic_if_no_streamlink() {
     match Command::new("streamlink").arg("--version").output() {
         Ok(_) => {
-            println!("Found streamlink, continuing...")
+            info!("Found streamlink, continuing...")
         }
         Err(_) => {
             panic!(

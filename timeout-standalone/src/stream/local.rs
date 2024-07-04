@@ -40,6 +40,8 @@ impl Local {
             .spawn()
             .expect("can launch ffmpeg");
 
+        log::info!("Now reading {file_path} as stream");
+
         Local {
             process: ffmpeg,
         }

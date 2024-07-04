@@ -37,6 +37,8 @@ impl FFMPEGDecorator {
     pub fn wrap_around<T: traits::RemoteAudioSource>(remote: T) -> Self {
         let mut child_receiver = remote.get_out_channel();
 
+        log::info!("Creating FFMPEG proxy");
+
         let mut ffmpeg = Command::new("ffmpeg")
             .arg("-hide_banner")
             .arg("-loglevel")

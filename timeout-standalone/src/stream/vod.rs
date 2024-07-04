@@ -30,9 +30,11 @@ impl TwitchVOD {
     pub fn new(vod_id: &str) -> Self {
         panic_if_no_streamlink();
 
+        log::info!("Creating VOD source for {vod_id}");
         let streamlink = Command::new("streamlink")
             .arg(format!("https://twitch.tv/videos/{vod_id}"))
             .arg("audio")
+            .arg("-Q")
             .arg("-O")
             .stdout(Stdio::piped())
             .spawn()

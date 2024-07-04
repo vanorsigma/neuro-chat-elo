@@ -50,6 +50,8 @@ impl Chat {
             }
         });
 
+        log::info!("Begin listening to Twitch Chat...");
+
         client.join(channel_name.to_string()).unwrap();
 
         Chat {

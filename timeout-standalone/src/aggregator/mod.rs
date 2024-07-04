@@ -1,11 +1,13 @@
 use std::collections::VecDeque;
 use std::io::Read;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 
-use tokio::sync::broadcast;
 use tokio::select;
+use tokio::sync::broadcast;
 use tokio_stream::StreamExt;
-use twitch_irc::message::ServerMessage;
+use twitch_irc::message::{ClearChatMessage, ServerMessage};
+
+use log::{debug, info, warn};
 
 ///! The lord of the house. Based on live audio and chat, it figures
 ///! out what to do. Handles the threading stuff too.
@@ -42,6 +44,14 @@ struct AggregateIterator {
     start_timestamp: f32,
 }
 
+fn get_user_id_from_clear_chat_message(clear_chat_message: &ClearChatMessage) -> String {
+    match clear_chat_message.action.to_owned() {
+        twitch_irc::message::ClearChatAction::ChatCleared => String::new(),
+        twitch_irc::message::ClearChatAction::UserBanned { user_login, .. } => user_login,
+        twitch_irc::message::ClearChatAction::UserTimedOut { user_login, .. } => user_login,
+    }
+}
+
 impl AggregateIterator {
     async fn only_take_deletions(
         chat: &mut ChatReceiver,
@@ -49,11 +59,23 @@ impl AggregateIterator {
     ) -> ChatTimeoutInformation {
         while let Some(msg) = chat.next().await {
             match msg {
-                ServerMessage::ClearMsg(m) => {
+                ServerMessage::ClearChat(m) => {
+                    let time_now = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("can get system time")
+                        .as_secs_f32();
+                    log::trace!("[CLEAR_CHAT] Received at {} with start_timestamp at {}",
+                                time_now, start_timestamp);
                     return ChatTimeoutInformation {
-                        username: m.sender_login,
-                        relative_timestamp: start_timestamp - m.server_timestamp.timestamp() as f32,
-                    }
+                        username: get_user_id_from_clear_chat_message(&m),
+                        // NOTE: For some reason m.server_timestamp isn't accurate
+                        // surely we get IRC messages on time so we just use system time
+                        // relative_timestamp: m.server_timestamp.timestamp() as f32 - start_timestamp,
+                        relative_timestamp: time_now - start_timestamp,
+                    };
+                }
+                ServerMessage::Privmsg(m) => {
+                    log::trace!("[CHAT] {}: {}", m.sender.login, m.message_text);
                 }
                 _ => continue,
             }
@@ -65,7 +87,7 @@ impl AggregateIterator {
         while let Some(ts) = detector.next().await {
             return ts;
         }
-        unreachable!("is actually reachabnle");
+        unreachable!("is actually reachable");
     }
 
     async fn get_next(&mut self) -> PossibleAggregateItems {
@@ -98,8 +120,8 @@ pub async fn perform_aggregation<R: traits::RemoteAudioSource + 'static>(
         chat: chat.get_receiver(),
         detector: detector.get_receiver(),
         start_timestamp: SystemTime::now()
-            .elapsed()
-            .expect("can get system time")
+            .duration_since(UNIX_EPOCH)
+            .expect("can get time since epoch")
             .as_secs_f32(),
     };
 
@@ -115,11 +137,11 @@ pub async fn perform_aggregation<R: traits::RemoteAudioSource + 'static>(
     loop {
         match aggregate_iter.get_next().await {
             PossibleAggregateItems::Chat(chat_info) => {
-                println!("Chat information: {:#?}", chat_info);
+                debug!("Chat Information received: {:#?}", chat_info);
                 chat_queue.push_back(chat_info);
             }
             PossibleAggregateItems::DetectorTimestamp(ts) => {
-                println!("Detector Timestamp: {:#?}", ts);
+                debug!("Timeout Wakeword detected at {:#?}", ts);
                 detector_queue.push_back(ts);
             }
         }
@@ -160,7 +182,7 @@ fn confirm_timeouts_maybe(
         };
 
         let comparison = oldest_chat.relative_timestamp - oldest_detected;
-        if -ALLOWED_WINDOW < comparison && comparison < ALLOWED_WINDOW {
+        if -ALLOWED_WINDOW < comparison && comparison <= ALLOWED_WINDOW {
             result.push(ConfirmedTimeoutInformation {
                 username: oldest_chat.username.to_string(),
                 relative_timestamp: oldest_chat.relative_timestamp,
@@ -172,6 +194,7 @@ fn confirm_timeouts_maybe(
     }
 
     if result.len() > 0 {
+        debug!("Emitting timeout events {:#?}", result);
         let _ = sender.send(result);
     }
 }
@@ -180,6 +203,12 @@ fn invalidate_old_entries(
     chat_queue: &mut VecDeque<ChatTimeoutInformation>,
     detector_queue: &mut VecDeque<f32>,
 ) {
+    debug!(
+        "Now invalidating old queue items. Original sizes (chat, detector): {} {}",
+        chat_queue.len(),
+        detector_queue.len()
+    );
+
     loop {
         let oldest_chat = match chat_queue.front() {
             Some(c) => c,
