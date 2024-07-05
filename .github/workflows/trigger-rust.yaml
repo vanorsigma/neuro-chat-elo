@@ -1,10 +1,7 @@
 name: Trigger Rust
 
 on:
-  push:
-    branches:
-      - main
-      - feat/rust
+  - workflow_dispatch
 
 jobs:
   build:
@@ -21,12 +18,13 @@ jobs:
           chatdownloader/*.json
         key: ${{ hashFiles('season.txt') }}
     
-    - name: Download Artifact
-      uses: actions/download-artifact@v3
-      continue-on-error: true
+    - name: Restore Rust Builds
+      uses: actions/cache@v4
+      id: restore-rust-binary
       with:
-        name: rust-binary
-        path: chatdownloader/target/release/chatdownloader
+        path: |
+          chatdownloader/target
+        key: ${{ runner.os }}-rust-binary-${{ hashFiles('chatdownloader/Cargo.toml', 'chatdownloader/Cargo.lock') }}
 
     - name: Set up Rust
       uses: dtolnay/rust-toolchain@stable

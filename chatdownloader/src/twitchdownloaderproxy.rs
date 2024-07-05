@@ -37,7 +37,7 @@ impl TwitchChatDownloader {
         TwitchChatDownloader {
             executable_path: NamedTempFile::new().unwrap().into_temp_path(),
             downloaded: false,
-            download_threads: 8
+            download_threads: 16
         }
     }
 

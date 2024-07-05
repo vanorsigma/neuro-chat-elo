@@ -1,4 +1,4 @@
-name: Trigger Rust
+name: Compile Rust
 
 on:
   - workflow_dispatch
@@ -10,6 +10,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Restore Rust Builds
+      uses: actions/cache@v4
+      id: restore-rust-binary
+      with:
+        path: |
+          chatdownloader/target
+        key: ${{ runner.os }}-rust-binary-${{ hashFiles('chatdownloader/Cargo.toml', 'chatdownloader/Cargo.lock') }}
+
     - name: Set up Rust
       uses: dtolnay/rust-toolchain@stable
       with:
@@ -18,9 +26,3 @@ jobs:
     - name: Build Release
       working-directory: chatdownloader/
       run: cargo build --release
-
-    - name: Save Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: rust-binary
-        path: chatdownloader/target/release/chatdownloader
