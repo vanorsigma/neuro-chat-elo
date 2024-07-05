@@ -20,7 +20,7 @@ async fn main() {
 
     env_logger::init_from_env(env);
 
-    if env::var("ACT").as_deref() == Ok("1"){
+    if env::var("BACKFILL").as_deref() == Ok("1"){
         backfill::backfill().await;
     }
 

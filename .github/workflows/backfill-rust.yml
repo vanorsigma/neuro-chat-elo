@@ -1,0 +1,50 @@
+name: Delete Cache & Backfill Rust
+
+on:
+  - workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Restore Rust Builds
+      uses: actions/cache@v4
+      id: restore-rust-binary
+      with:
+        path: |
+          chatdownloader/target
+        key: ${{ runner.os }}-rust-binary-${{ hashFiles('chatdownloader/Cargo.toml', 'chatdownloader/Cargo.lock') }}
+
+    - name: Delete old cache
+      env:
+        CACHE_NAME: ${{ hashFiles('season.txt') }}
+        REPO: ${{ github.repository }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "Deleting old cache"
+        gh extension install actions/gh-actions-cache
+        gh actions-cache delete ${CACHE_NAME} -R $REPO --confirm || exit 0
+
+    - name: Run backfill
+      env:
+        BACKFILL: 1
+        TWITCH_APPID: ${{ secrets.TWITCH_APPID }}
+        TWITCH_APPSECRET: ${{ secrets.TWITCH_APPSECRET }}
+      working-directory: python-chatdownloader/
+      run: |
+        echo "Backfilling"
+        cargo run -r
+
+    - name: Stage files
+      run: |
+        ./stage.sh
+
+    - name: Save leaderboards to cache
+      uses: actions/cache/save@v3
+      with:
+        path: |
+          python-chatdownloader/*.json
+        key: ${{ hashFiles('season.txt') }}

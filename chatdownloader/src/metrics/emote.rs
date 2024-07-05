@@ -4,7 +4,7 @@ The emote metric
 
 use std::collections::{HashMap, HashSet};
 
-use log::info;
+use log::{info, debug};
 use serde::Deserialize;
 use lazy_static::lazy_static;
 
@@ -78,7 +78,7 @@ impl AbstractMetric for Emote {
             info!("Cannot access the required keys to get the emotes");
         }
 
-        info!("Got {} 7tv emotes", ret_val.len());
+        debug!("Got {} 7tv emotes", ret_val.len());
         let seventv_lookup: HashSet<String> = ret_val.iter().map(|emote| emote.name.clone()).collect();
         Self {
             seventv_emotes: ret_val,
