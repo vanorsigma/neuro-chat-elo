@@ -10,7 +10,7 @@ mod backfill;
 
 use log::info;
 use env_logger::Env;
-use std::env;
+use std::{env, process::exit};
 
 #[tokio::main]
 async fn main() {
@@ -22,6 +22,7 @@ async fn main() {
 
     if env::var("BACKFILL").as_deref() == Ok("1"){
         backfill::backfill().await;
+        exit(0);
     }
 
     info!("Authenticating with Twitch...");
