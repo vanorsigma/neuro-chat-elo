@@ -50,7 +50,7 @@ jobs:
 
     - name: Stage files
       run: |
-        ./stage.sh
+        ./stage_python.sh
 
     - name: Delete old cache
       env:
