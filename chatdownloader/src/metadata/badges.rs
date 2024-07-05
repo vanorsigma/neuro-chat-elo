@@ -23,7 +23,7 @@ impl AbstractMetadata for Badges {
     }
 
     fn get_name(&self) -> String {
-        "Badges".to_string()
+        "badges".to_string()
     }
 
     fn get_default_value(&self) -> MetadataTypes {

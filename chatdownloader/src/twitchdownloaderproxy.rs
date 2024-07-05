@@ -28,7 +28,6 @@ struct GithubRelease {
 pub struct TwitchChatDownloader {
     executable_path: TempPath,
     downloaded: bool,
-    download_threads: u8
 }
 
 impl TwitchChatDownloader {
@@ -37,7 +36,6 @@ impl TwitchChatDownloader {
         TwitchChatDownloader {
             executable_path: NamedTempFile::new().unwrap().into_temp_path(),
             downloaded: false,
-            download_threads: 16
         }
     }
 
@@ -94,10 +92,11 @@ impl TwitchChatDownloader {
             .into_temp_path();
         let output_path: String = output_file.to_str().unwrap().to_string().clone();
         output_file.close()?;
+        
         let status = Command::new(&self.executable_path)
-            .args(["chatdownload", "-u", vod_id, "-t", &self.download_threads.to_string(), "-o", &output_path])
+            .args(["chatdownload", "-u", vod_id, "-o", &output_path])
             .status()?;
-
+    
         if !status.success() {
             return Err(Box::new(io::Error::new(io::ErrorKind::Other, "Failed to download chat")));
         }

@@ -13,5 +13,6 @@ pub async fn get_metrics() -> Vec<Box<dyn AbstractMetric>> {
         Box::new(subs::Subs::new().await),
         Box::new(text::Text::new().await),
         Box::new(copypastaleader::CopypastaLeader::new().await),
+        Box::new(emote::Emote::new().await),
     ]
 }

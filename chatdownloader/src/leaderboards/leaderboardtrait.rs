@@ -138,33 +138,32 @@ pub trait AbstractLeaderboard {
     fn __calculate_new_elo(&mut self) {
         let all_scores: Vec<f32> = self.__get_state().values().map(|state| state.score).collect();
         let sample_scores = self.percentiles(&all_scores, 0.0, 100.0, 0.1);
-
-        let sample_elos: Vec<f32> = sample_scores.iter().map(|&score| {
-            self.__get_state().values()
-                .map(|state| (state.elo, (state.score - score).abs()))
-                .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
-                .map(|(elo, _)| elo)
-                .unwrap_or_default()
+        // Build a vector of sample users, where the first element is the score and the second element is the elo
+        // The elo is the elo of the user in state with the closest score
+        let sample_users: Vec<(f32, f32)> = sample_scores.iter().map(|score| {
+            let mut closest_user = None;
+            let mut closest_distance = f32::MAX;
+            for state in self.__get_state().values() {
+                let distance = (state.score - score).abs();
+                if distance < closest_distance {
+                    closest_user = Some(state);
+                    closest_distance = distance;
+                }
+            }
+            (score.clone(), closest_user.unwrap().elo)
         }).collect();
+        drop(all_scores);
+        drop(sample_scores);
 
-        let mut score_differences: HashMap<String, f32> = self.__get_state().keys().map(|id| (id.clone(), 0.0)).collect();
-
-        debug!("Sample Scores: {:?}", sample_scores);
-        debug!("Sample Elos: {:?}", sample_elos);
-
-        for state in self.__get_state().values() {
-            for (idx, &sample_score) in sample_scores.iter().enumerate() {
-                let won = (state.score > sample_score) as i32 as f32;
-                let p = 1.0 / (1.0 + 10f32.powf((sample_elos[idx] - state.elo) / 400.0));
-                *score_differences.get_mut(&state.id).unwrap() += K * (won - p);
+        // Calculate the new elo for each user
+        for state in self.__get_state().values_mut() {
+            let mut diff: f32 = 0.0;
+            for (score, elo) in sample_users.iter() {
+                let won = state.score > *score;
+                let expected = 1.0 / (1.0 + 10.0_f32.powf((elo - state.elo) / 400.0));
+                diff += K * (won as u8 as f32 - expected);
             }
-        }
-
-        // Update all user's elo
-        for (uid, &diff) in score_differences.iter() {
-            if let Some(state) = self.__get_state().get_mut(uid) {
-                state.elo += diff;
-            }
+            state.elo += diff;
         }
     }
 

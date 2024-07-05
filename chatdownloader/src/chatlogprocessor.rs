@@ -88,11 +88,13 @@ impl ChatLogProcessor {
                     // NOTE: the user_id will definitely exist
                     if let Some(user_chat_performance) = pre_performance.get_mut(user_id) {
                         if let Some(metadata_value) = user_chat_performance.metadata.get_mut(metadata_name) {
+                            debug!("Updating metadata: {} with value: {:?}", metadata_name, met_value);
                             *metadata_value = met_value.clone();
                         }
                     }
                 }
             }
+            debug!("User performance: {:?}", pre_performance.get(&comment.commenter._id).unwrap());
         }
 
         // Flush final metric updates
