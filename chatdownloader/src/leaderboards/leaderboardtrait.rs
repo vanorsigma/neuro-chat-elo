@@ -23,6 +23,7 @@ pub trait AbstractLeaderboard {
         let path = format!("{}.json", self.get_name());
         if !std::path::Path::new(&path).exists() {
             info!("{} leaderboard doesn't already exist.", self.get_name());
+            return;
         }
 
         let data = fs::read_to_string(&path).expect("Unable to read file");
