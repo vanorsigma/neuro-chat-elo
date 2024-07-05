@@ -1,11 +1,11 @@
 name: Trigger Rust
 
 on:
+  - workflow_dispatch
   push:
     branches:
       - main
       - feat/rust
-  - workflow_dispatch
 
 jobs:
   build:
