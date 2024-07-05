@@ -6,7 +6,7 @@ pub trait AbstractMetric {
     /*
     Defines the trait for a metric
     */
-    fn new() -> Self where Self: Sized;
+    async fn new() -> Self where Self: Sized;
         /*
         Initializes the metric
         */

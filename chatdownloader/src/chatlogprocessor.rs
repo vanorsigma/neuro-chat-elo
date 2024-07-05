@@ -42,7 +42,7 @@ impl ChatLogProcessor {
         info!("Parsing chat log object");
         let mut pre_performance: HashMap<String, UserChatPerformance> = HashMap::new();
 
-        let mut metric_structs = get_metrics();
+        let mut metric_structs = get_metrics().await;
         let metadata_structs = get_metadata(self.twitch.clone()).await;
 
         for (sequence_no, comment) in chat_log.comments.iter().enumerate() {

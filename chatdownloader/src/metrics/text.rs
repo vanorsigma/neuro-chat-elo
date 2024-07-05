@@ -12,7 +12,7 @@ const WEIGHT_TEXT: f32 = 0.02;
 pub struct Text;
 
 impl AbstractMetric for Text {
-    fn new() -> Self {
+    async fn new() -> Self {
         Self
     }
 

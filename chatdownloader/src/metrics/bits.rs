@@ -13,7 +13,7 @@ const WEIGHT_BITS: f32 = 0.1;
 pub struct Bits;
 
 impl AbstractMetric for Bits {
-    fn new() -> Self {
+    async fn new() -> Self {
         Self
     }
 

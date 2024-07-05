@@ -1,7 +1,9 @@
+use log::debug;
+
 use crate::_types::twitchtypes::Comment;
 use crate::metrics::metrictrait::AbstractMetric;
 
-use std::collections::{HashMap, BinaryHeap};
+use std::collections::HashMap;
 
 const WEIGHT_COPYPASTA: f32 = 0.3;
 const CHAIN_GRACE: u32 = 10;
@@ -9,13 +11,13 @@ const MATCHING_THRESHOLD: f32 = 0.6;
 
 #[derive(Default, Debug)]
 pub struct CopypastaLeader {
-    heap: BinaryHeap<(u32, String, String, u32)>,
+    history: Vec<(u32, String, String, u32)>,
 }
 
 impl AbstractMetric for CopypastaLeader {
-    fn new() -> Self {
+    async fn new() -> Self {
         Self {
-            heap: BinaryHeap::new(),
+            history: Vec::new(),
         }
     }
     
@@ -37,33 +39,45 @@ impl AbstractMetric for CopypastaLeader {
             return HashMap::new();
         }
 
-        // Evaluate or initialize the heap
-        if self.heap.is_empty() {
-            self.heap.push((sequence_no, text.clone(), comment.commenter._id.clone(), sequence_no));
+        // Evaluate or initialize the list
+        if self.history.is_empty() {
+            self.history.push((sequence_no, text.clone(), comment.commenter._id.clone(), sequence_no));
         }
 
-        // Find the best matching string in the heap
-        let matching_scores: Vec<_> = self.heap.iter()
-            .map(|item| {
-                Self::lcs(&text, &item.1).len() as f32 / text.len().max(item.1.len()) as f32
-            })
-            .collect();
+        debug!("Size of heap: {}", self.history.len());
 
-        if let Some(&max_score) = matching_scores.iter().max_by(|x, y| x.partial_cmp(y).unwrap()) {
-            if max_score < MATCHING_THRESHOLD {
-                self.heap.push((sequence_no, text, comment.commenter._id.clone(), sequence_no));
+        // Find the best matching string in the list 
+        let mut best_match = None;
+        let mut best_match_score = 0.0;
+        for item in self.history.iter() {
+            let lcs = Self::lcs(&text, &item.1);
+            let score = lcs.len() as f32 / text.len().max(item.1.len()) as f32;
+            if score > best_match_score {
+                best_match = Some(item);
+                best_match_score = score;
             }
         }
 
-        // Evict old heap top
+        // If the best match is above the threshold, update the list
+        if best_match_score > MATCHING_THRESHOLD {
+            let item = best_match.unwrap();
+            self.history.push((sequence_no, text.clone(), comment.commenter._id.clone(), item.3));
+        } else {
+            self.history.push((sequence_no, text.clone(), comment.commenter._id.clone(), sequence_no));
+        }
+
+        // Sort the list
+        self.history.sort_by_key(|item| item.0);
+        debug!("Items on heap: {:?}", self.history.iter().map(|item| item.0).collect::<Vec<u32>>());
+
+        debug!("First item on heap has seq no: {:?}", self.history.first().unwrap().0);
+        debug!("Last item on heap has seq no: {:?}", self.history.last().unwrap().0);
+
+        // Evict old list top
         let mut result = HashMap::new();
-        while let Some(top) = self.heap.peek() {
-            if sequence_no - top.0 > CHAIN_GRACE {
-                let item = self.heap.pop().unwrap();
-                result.insert(item.2.clone(), (item.0 - item.3) as f32 * WEIGHT_COPYPASTA);
-            } else {
-                break;
-            }
+        while self.history.len() > 0 && (sequence_no - self.history[0].0) > CHAIN_GRACE {
+            let item = self.history.remove(0);
+            result.insert(item.2.clone(), (item.0 - item.3) as f32 * WEIGHT_COPYPASTA);
         }
 
         result
@@ -125,7 +139,7 @@ impl CopypastaLeader {
     }
 
     pub fn finish(&self) -> HashMap<String, f32> {
-        self.heap.iter()
+        self.history.iter()
             .map(|item| (item.2.clone(), (item.0 - item.3) as f32 * WEIGHT_COPYPASTA))
             .collect()
     }

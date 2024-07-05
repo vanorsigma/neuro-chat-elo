@@ -24,7 +24,7 @@ lazy_static! {
 pub struct Subs;
 
 impl AbstractMetric for Subs {
-    fn new() -> Self {
+    async fn new() -> Self {
         Self
     }
 

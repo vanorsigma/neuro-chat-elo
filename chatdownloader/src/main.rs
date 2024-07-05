@@ -15,12 +15,12 @@ use std::env;
 #[tokio::main]
 async fn main() {
     let env = Env::default()
-        .filter_or("MY_LOG_LEVEL", "debug")
+        .filter_or("MY_LOG_LEVEL", "info")
         .write_style_or("MY_LOG_STYLE", "always");
 
     env_logger::init_from_env(env);
 
-    if env::var("BACKFILL").as_deref() == Ok("1"){
+    if env::var("ACT").as_deref() == Ok("1"){
         backfill::backfill().await;
     }
 
