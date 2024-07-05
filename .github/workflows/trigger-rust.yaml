@@ -33,16 +33,6 @@ jobs:
       with:
         toolchain: stable
 
-    - name: Build Release
-      working-directory: chatdownloader/
-      run: cargo build --release
-
-    - name: Save Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: rust-binary
-        path: chatdownloader/target/release/chatdownloader
-
     - name: Run score calculation
       env:
         ACT: ${{ vars.ACT }}
