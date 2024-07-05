@@ -24,10 +24,10 @@ jobs:
     
     - name: Download Artifact
       uses: actions/download-artifact@v3
+      continue-on-error: true
       with:
         name: rust-binary
         path: chatdownloader/target/release/chatdownloader
-        continue-on-error: true
 
     - name: Set up Rust
       uses: dtolnay/rust-toolchain@stable
