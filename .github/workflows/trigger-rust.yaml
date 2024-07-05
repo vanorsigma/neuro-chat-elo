@@ -24,10 +24,9 @@ jobs:
     
     - name: Download Artifact
       uses: actions/download-artifact@v3
-      working-directory: chatdownloader/
       with:
         name: rust-binary
-        path: target/release/chatdownloader
+        path: chatdownloader/target/release/chatdownloader
 
     - name: Set up Rust
       uses: dtolnay/rust-toolchain@stable
@@ -40,10 +39,9 @@ jobs:
 
     - name: Save Artifact
       uses: actions/upload-artifact@v3
-      working-directory: chatdownloader/
       with:
         name: rust-binary
-        path: target/release/chatdownloader
+        path: chatdownloader/target/release/chatdownloader
 
     - name: Run score calculation
       env:
