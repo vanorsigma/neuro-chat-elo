@@ -91,39 +91,13 @@ pub trait AbstractLeaderboard {
         to_save.sort_by(|a, b| b.elo.partial_cmp(&a.elo).unwrap());
         assert!(to_save.len() > 1, "Nothing to save!");
 
-        to_save[0].rank = 1;
-        to_save[0].delta = match self.__get_state().get(&to_save[0].id) {
-            Some(state) => {
+        for (i, item) in to_save.iter_mut().enumerate() {
+            item.rank = (i + 1) as u16;
+            if let Some(state) = self.__get_state().get(&item.id) {
                 if let Some(previous_rank) = state.previous_rank {
-                    if previous_rank > 0 {
-                        previous_rank - 1
-                    } else {
-                        0
-                    }
-                } else {
-                    0
+                    item.delta = previous_rank as i32 - item.rank as i32;
                 }
-            },
-            None => 0,
-        };
-
-        for idx in 1..to_save.len() {
-            let rank = to_save[idx - 1].rank + (to_save[idx].elo < to_save[idx - 1].elo) as u16;
-            to_save[idx].delta = match self.__get_state().get(&to_save[idx].id) {
-                Some(state) => {
-                    if let Some(previous_rank) = state.previous_rank {
-                        if previous_rank > 0 {
-                            previous_rank - rank
-                        } else {
-                            0
-                        }
-                    } else {
-                        0
-                    }
-                },
-                None => 0,
-            };
-            to_save[idx].rank = rank;
+            }
         }
 
         // Save to file
@@ -156,10 +130,10 @@ pub trait AbstractLeaderboard {
         // Calculate the new elo for each user
         for state in self.__get_state().values_mut() {
             let mut diff: f32 = 0.0;
-            for (score, elo) in sample_users.iter() {
-                let won = state.score > *score;
-                let expected = 1.0 / (1.0 + 10.0_f32.powf((elo - state.elo) / 400.0));
-                diff += K * (won as u8 as f32 - expected);
+            for (sample_score, sample_elo) in sample_users.iter() {
+                let won = state.score > *sample_score;
+                let p = 1.0 / (1.0 + 10.0_f32.powf((sample_elo - state.elo) / 400.0));
+                diff += K * (won as u8 as f32 - p);
             }
             state.elo += diff;
         }

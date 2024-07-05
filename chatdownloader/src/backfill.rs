@@ -8,13 +8,19 @@ use crate::twitch_utils::TwitchAPIWrapper;
 use crate::twitchdownloaderproxy::TwitchChatDownloader;
 use crate::chatlogprocessor::ChatLogProcessor;
 
-const VIDEO_IDS: [&str; 6] = [
+const VIDEO_IDS: [&str; 12] = [
     "2170316549",
     "2171991671",
     "2172878349",
     "2176205867",
     "2175349344",
-    "2178862405"
+    "2178862405",
+    "2188296968",
+    "2187465183",
+    "2182332760",
+    "2181468979",
+    "2180615386",
+    "2179780834",
 ];
 
 #[allow(dead_code)]
