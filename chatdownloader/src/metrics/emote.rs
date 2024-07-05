@@ -40,7 +40,7 @@ impl Emote {
                 count += 1;
             }
         }
-        info!("Found {} number of 7TV emotes in {}", count, fragment.text);
+        debug!("Found {} number of 7TV emotes in {}", count, fragment.text);
         count
     }
 }
