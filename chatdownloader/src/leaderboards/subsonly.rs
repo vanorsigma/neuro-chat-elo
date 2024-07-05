@@ -14,9 +14,11 @@ pub struct SubsOnly {
 
 impl AbstractLeaderboard for SubsOnly {
     fn new() -> Self {
-        Self {
+        let mut out = Self {
             state: HashMap::new(),
-        }
+        };
+        out.read_initial_state();
+        out
     }
 
     fn get_name(&self) -> &str {

@@ -16,9 +16,11 @@ pub struct BitsOnly {
 
 impl AbstractLeaderboard for BitsOnly {
     fn new() -> Self {
-        Self {
+        let mut out = Self {
             state: HashMap::new(),
-        }
+        };
+        out.read_initial_state();
+        out
     }
 
     fn get_name(&self) -> &str {

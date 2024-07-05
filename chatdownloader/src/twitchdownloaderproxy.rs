@@ -96,7 +96,7 @@ impl TwitchChatDownloader {
         output_file.close()?;
         
         let status = Command::new(&self.executable_path)
-            .args(["chatdownload", "-u", vod_id, "-t", &self.download_threads.to_string(), "-o", &output_path])
+            .args(["chatdownload", "-u", vod_id, "-o", &output_path])
             .status()?;
     
         if !status.success() {

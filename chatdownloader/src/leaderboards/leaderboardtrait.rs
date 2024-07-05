@@ -18,12 +18,11 @@ pub trait AbstractLeaderboard {
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32>;
 
-    fn read_initial_state(&mut self) -> Result<(), std::io::Error> {
+    fn read_initial_state(&mut self) {
         info!("Loading {} leaderboard...", self.get_name());
         let path = format!("{}.json", self.get_name());
         if !std::path::Path::new(&path).exists() {
             info!("{} leaderboard doesn't already exist.", self.get_name());
-            return Ok(());
         }
 
         let data = fs::read_to_string(&path).expect("Unable to read file");
@@ -43,8 +42,6 @@ pub trait AbstractLeaderboard {
         }));
 
         info!("{} leaderboard loading ok", self.get_name());
-
-        Ok(())
     }
 
     fn update_leaderboard(&mut self, performance: UserChatPerformance) {
