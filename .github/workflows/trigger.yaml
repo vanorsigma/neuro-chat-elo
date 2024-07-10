@@ -24,7 +24,7 @@ jobs:
       with:
         path: |
           chatdownloader/target
-        key: ${{ runner.os }}-rust-binary-${{ hashFiles('chatdownloader/Cargo.toml', 'chatdownloader/Cargo.lock') }}
+        key: ${{ runner.os }}-rust-binary-${{ hashFiles('chatdownloader/Cargo.toml') }}
 
     - name: Set up Rust
       uses: dtolnay/rust-toolchain@stable
