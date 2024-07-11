@@ -3,9 +3,13 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_CXX_STANDARD 14)
 
 # source files
-set(SOURCE_FILES main.cpp waveform_visualizer.cpp utils.cpp)
+set(SOURCE_FILES
+src/main.cpp
+src/waveform_visualizer.cpp
+src/utils.cpp
+src/controllers/timeout_triager_controller.cpp)
 
-# make an executable
+# makex an executable
 add_executable(timeout-triager ${SOURCE_FILES})
 
 # includes for wxwidgets
