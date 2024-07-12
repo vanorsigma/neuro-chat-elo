@@ -28,7 +28,8 @@ struct Options {
   const std::string evil_directory;
   const std::string none_directory;
 
-  static const Options parse_from_cmdline();
+  Options();
+  static const Options parse_from_cmdline(wxCmdLineParser &parser);
 
 protected:
   Options(const std::string &triage, const std::string &neuro,

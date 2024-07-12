@@ -44,27 +44,20 @@ void if_not_found_help_then_quit(wxCmdLineParser& parser,
                                  const wxString &option_name,
                                  wxString *variable) {
   if (!parser.Found(option_name, variable)) {
-    wxLogError("Option %s is required\n", option_name);
+    wxPrintf("Option %s is required\n", option_name);
     parser.Usage();
     exit(1);
   }
 }
+
+Options::Options::Options() {}
 
 Options::Options::Options(const std::string &triage, const std::string &neuro,
                           const std::string &evil, const std::string &none)
     : triage_directory(triage), neuro_directory(neuro), evil_directory(evil),
       none_directory(none) {}
 
-const Options::Options Options::Options::parse_from_cmdline() {
-  wxCmdLineParser parser;
-  parser.SetDesc(cmdLineDesc);
-
-  if (parser.Parse() == -1) {
-    // in theory we are supposed to pass this upwards, but i figured
-    // i may as well quit here
-    exit(0);
-  }
-
+const Options::Options Options::Options::parse_from_cmdline(wxCmdLineParser& parser) {
   wxString triage_directory, neuro_directory, evil_directory, none_directory;
   if_not_found_help_then_quit(parser, "t", &triage_directory);
   if_not_found_help_then_quit(parser, "n", &neuro_directory);

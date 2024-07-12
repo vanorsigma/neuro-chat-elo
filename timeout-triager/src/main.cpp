@@ -10,12 +10,24 @@
 using namespace std;
 
 static TimeoutTriagerController controller;
+
+// These are shared pointers created from a static variable on the stack, so
+// they shouldn't be deleting anything
 static shared_ptr<TimeoutTriagerControllerDelegate>
-    delegate(static_cast<TimeoutTriagerControllerDelegate *>(&controller));
+    delegate(static_cast<TimeoutTriagerControllerDelegate *>(&controller),
+             [](auto) {});
+static shared_ptr<TimeoutTriagerCMDLineDelegate> cmd_delegate_shared(
+    static_cast<TimeoutTriagerCMDLineDelegate *>(&controller), [](auto) {});
 
 class TimeoutTriagerGUIApp : public wxApp {
 public:
   bool OnInit() override;
+  void OnInitCmdLine(wxCmdLineParser &parser) override;
+  bool OnCmdLineParsed(wxCmdLineParser &parser) override;
+  void setDelegate(shared_ptr<TimeoutTriagerCMDLineDelegate> const &delegate);
+
+private:
+  weak_ptr<TimeoutTriagerCMDLineDelegate> cmd_delegate;
 };
 
 // We're doing a dialog because I don't want to configure i3 to make
@@ -48,8 +60,28 @@ private:
 wxIMPLEMENT_APP(TimeoutTriagerGUIApp);
 
 bool TimeoutTriagerGUIApp::OnInit() {
-  TimeoutTriagerDialog *frame = new TimeoutTriagerDialog("some title", delegate);
+  this->cmd_delegate = cmd_delegate_shared;
+
+  if (!wxApp::OnInit())
+    return false;
+
+  TimeoutTriagerDialog *frame =
+      new TimeoutTriagerDialog("some title", delegate);
   frame->Show(true);
+  SetTopWindow(frame);
+  return true;
+}
+
+void TimeoutTriagerGUIApp::OnInitCmdLine(wxCmdLineParser &parser) {
+  if (!cmd_delegate.expired()) {
+    cmd_delegate.lock().get()->onInitCmdLine(parser);
+  }
+}
+
+bool TimeoutTriagerGUIApp::OnCmdLineParsed(wxCmdLineParser &parser) {
+  if (!cmd_delegate.expired()) {
+    cmd_delegate.lock().get()->onCmdLineParsed(parser);
+  }
   return true;
 }
 
@@ -122,9 +154,16 @@ TimeoutTriagerDialog::TimeoutTriagerDialog(
   buttonSizers->Add(next_button);
   SetSizer(mainSizer);
 
-  if (!this->delegate.expired()) {
-    this->delegate.lock().get()->onViewShown();
-  }
+  this->Bind(wxEVT_SHOW, [this](wxShowEvent &) {
+    if (!this->delegate.expired()) {
+      this->delegate.lock().get()->onViewShown();
+    }
+  });
+
+  this->Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent &) {
+    // TODO: make a delegate for this?
+    exit(0);
+  });
 }
 
 void TimeoutTriagerDialog::setDelegate(
