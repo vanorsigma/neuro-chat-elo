@@ -24,7 +24,11 @@ impl AbstractMetric for Bits {
         String::from("bits")
     }
 
-    fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> HashMap<String, f32> {
+    fn get_metric(
+        &mut self,
+        comment: Comment,
+        _sequence_no: u32,
+    ) -> (String, HashMap<String, f32>) {
         let score = comment.message.bits_spent as f32 * WEIGHT_BITS;
         self._shortcut_for_this_comment_user(comment, score)
     }

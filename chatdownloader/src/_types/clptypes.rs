@@ -20,6 +20,7 @@ pub struct BadgeInformation {
 pub enum MetadataTypes {
     Bool(bool),
     BadgeList(Vec<BadgeInformation>),
+    BasicInfo(String, String),
 }
 
 impl MetadataTypes {
@@ -32,6 +33,14 @@ impl MetadataTypes {
     pub fn get_bool(&self) -> Option<&bool> {
         match self {
             MetadataTypes::Bool(b) => Some(b),
+            _ => None,
+        }
+    }
+    pub fn get_basic_info(&self) -> Option<(String, String)> {
+        match self {
+            MetadataTypes::BasicInfo(username, avatar) => {
+                Some((username.to_string(), avatar.to_string()))
+            }
             _ => None,
         }
     }

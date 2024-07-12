@@ -24,7 +24,11 @@ impl AbstractMetric for Text {
         String::from("text")
     }
 
-    fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> HashMap<String, f32> {
+    fn get_metric(
+        &mut self,
+        comment: Comment,
+        _sequence_no: u32,
+    ) -> (String, HashMap<String, f32>) {
         let score = f32::max(0.0, calculate_score(comment.message.body.len()));
         self._shortcut_for_this_comment_user(comment, score)
     }

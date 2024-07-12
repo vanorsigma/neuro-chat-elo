@@ -5,7 +5,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
 
-use crate::_types::twitchtypes::{Comment, ChatMessageFragment};
+use crate::_types::twitchtypes::{ChatMessageFragment, Comment};
 use crate::metrics::metrictrait::AbstractMetric;
 
 const WEIGHT_SUBS: f32 = 0.1;
@@ -35,8 +35,15 @@ impl AbstractMetric for Subs {
         String::from("subs")
     }
 
-    fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> HashMap<String, f32> {
-        let total_subs: i32 = comment.message.fragments.iter()
+    fn get_metric(
+        &mut self,
+        comment: Comment,
+        _sequence_no: u32,
+    ) -> (String, HashMap<String, f32>) {
+        let total_subs: i32 = comment
+            .message
+            .fragments
+            .iter()
             .map(no_of_gifted_subs)
             .sum();
 
