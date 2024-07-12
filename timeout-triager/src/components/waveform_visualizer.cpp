@@ -56,7 +56,7 @@ void WaveformVisualizer::OnPaint(wxPaintEvent &event) {
   gc->SetPen(*wxBLACK_PEN);
 
   float xStep = static_cast<float>(width) / m_waveform_data.size();
-  float centerY = height / 2;
+  float centerY = height / 2.0;
 
   for (size_t i = 1; i < m_waveform_data.size(); ++i) {
     float x1 = (i - 1) * xStep;

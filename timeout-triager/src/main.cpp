@@ -1,6 +1,6 @@
+#include "components/waveform_visualizer.hpp"
 #include "controllers/timeout_triager_controller.hpp"
 #include "utils.hpp"
-#include "waveform_visualizer.hpp"
 #include <cstdlib>
 #include <ctime>
 #include <memory>
@@ -22,7 +22,9 @@ public:
 // this a floating window by default
 class TimeoutTriagerDialog : public wxDialog {
 public:
-  TimeoutTriagerDialog(const wxString &title);
+  TimeoutTriagerDialog(
+      const wxString &title,
+      shared_ptr<TimeoutTriagerControllerDelegate> const &delegate = nullptr);
   void
   setDelegate(shared_ptr<TimeoutTriagerControllerDelegate> const &delegate);
 
@@ -46,18 +48,22 @@ private:
 wxIMPLEMENT_APP(TimeoutTriagerGUIApp);
 
 bool TimeoutTriagerGUIApp::OnInit() {
-  TimeoutTriagerDialog *frame = new TimeoutTriagerDialog("some title");
+  TimeoutTriagerDialog *frame = new TimeoutTriagerDialog("some title", delegate);
   frame->Show(true);
-  frame->setDelegate(delegate);
   return true;
 }
 
 enum { BUTTON_Prev, BUTTON_Neuro, BUTTON_None, BUTTON_Evil, BUTTON_Next };
 
-TimeoutTriagerDialog::TimeoutTriagerDialog(const wxString &title)
+TimeoutTriagerDialog::TimeoutTriagerDialog(
+    const wxString &title,
+    const shared_ptr<TimeoutTriagerControllerDelegate> &delegate)
     : wxDialog(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(800, 600)) {
+  if (delegate)
+    setDelegate(delegate);
+
   waveformVisualizer = new WaveformVisualizer(this);
-  auto data = squeeze(getWaveFormForAudioFile("something.wav"));
+  auto data = audio::squeeze(audio::getWaveFormForAudioFile("something.wav"));
   waveformVisualizer->setWaveformData(data);
 
   mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -115,6 +121,10 @@ TimeoutTriagerDialog::TimeoutTriagerDialog(const wxString &title)
   buttonSizers->AddSpacer(10);
   buttonSizers->Add(next_button);
   SetSizer(mainSizer);
+
+  if (!this->delegate.expired()) {
+    this->delegate.lock().get()->onViewShown();
+  }
 }
 
 void TimeoutTriagerDialog::setDelegate(
