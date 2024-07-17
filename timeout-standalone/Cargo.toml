@@ -6,9 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "4.5.9", features = ["derive"] }
 env_logger = "0.11.3"
+hound = "3.5.1"
 log = "0.4.22"
 rustpotter = "3.0.2"
+serde = { version = "1.0.204", features = ["serde_derive"] }
+serde_json = "1.0.120"
 tokio = { version = "1.38.0", features = ["sync", "signal", "rt-multi-thread", "rt"] }
 tokio-stream = "0.1.15"
 twitch-irc = "5.0.1"
+uuid = { version = "1.10.0", features = ["fast-rng", "v4"] }

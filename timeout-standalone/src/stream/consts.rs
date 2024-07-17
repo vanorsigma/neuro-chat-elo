@@ -1,0 +1,2 @@
+pub(crate) const MIDDLEMAN_FFMPEG_SAMPLE_RATE: u32 = 16000;
+pub(crate) const MIDDLEMAN_FFMPEG_CHANNELS: u8 = 1;

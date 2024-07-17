@@ -3,6 +3,7 @@ pub mod livestream;
 pub mod traits;
 pub mod vod;
 pub mod local;
+pub(crate) mod consts;
 
 use std::io::{Read, Write};
 use std::process::{Child, Command, Stdio};
@@ -46,9 +47,9 @@ impl FFMPEGDecorator {
             .arg("-i")
             .arg("-")
             .arg("-ac")
-            .arg("1")
+            .arg(format!("{}", consts::MIDDLEMAN_FFMPEG_CHANNELS))
             .arg("-ar")
-            .arg("16000")
+            .arg(format!("{}", consts::MIDDLEMAN_FFMPEG_SAMPLE_RATE))
             .arg("-f")
             .arg("f32le")
             .arg("-")

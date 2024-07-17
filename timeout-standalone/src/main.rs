@@ -1,6 +1,10 @@
+use clap::arg;
+use clap::command;
+use clap::Parser;
 use log::info;
 use rustpotter::RustpotterConfig;
 use rustpotter::ScoreMode;
+use timeout_standalone::TrainingDataSettings;
 use std::{
     io::Read,
     process::{Command, Stdio},
@@ -18,9 +22,26 @@ use tokio::sync::broadcast::channel;
 
 use log::set_logger;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, default_value_t = false)]
+    output_training_data: bool,
+
+    #[arg(short, long, default_value_t = 0.6)]
+    output_training_duration: f32,
+
+    #[arg(short, long, default_value =  "./training_files")]
+    output_training_path: String
+}
+
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+    env_logger::init_from_env(
+        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"),
+    );
+
+    let args = Args::parse();
 
     let mut chat = Chat::new("vedal987");
     let mut timedetector = TimeoutWordDetector::new(
@@ -35,7 +56,19 @@ async fn main() {
     /*let mut stream = FFMPEGDecorator::wrap_around(Local::new("./evil_trimmed.wav"));*/
     let (sender, mut receiver) = channel(1000);
 
-    let aggregation_handle = perform_aggregation(stream, chat, timedetector, sender);
+    // TODO: It should be possible to do this without spawning a blocking thread,
+    // but that requires some trial and error and I'm not willing to do that at the moment
+    let aggregation_handle = perform_aggregation(
+        stream,
+        chat,
+        timedetector,
+        sender,
+        TrainingDataSettings {
+            training_data_output_enabled: args.output_training_data,
+            duration_per_clip_in_seconds: args.output_training_duration,
+            directory: args.output_training_path.to_string()
+        }
+    );
     tokio::task::spawn_blocking(move || {
         while let Ok(data) = receiver.blocking_recv() {
             info!("FULL DETECTION: {:#?}", data);
