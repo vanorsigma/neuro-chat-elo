@@ -1,3 +1,14 @@
+///! The lord of the house. Based on live audio and chat, it figures
+///! out what to do. Handles the threading stuff too.
+///! Because of the chat module, this MUST run in an async context
+///! Aggregator will emit once every matching timeout
+///!
+///! Audio Dumping behaviour implicit assumptions:
+///! - Chat timeouts are as fast, if not faster than the audio stream
+///! - Timeout detection lags the audio stream, by not by much. This
+///!   is ideally caught by the window
+mod sliding_window;
+
 use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{Read, Write};
@@ -13,14 +24,12 @@ use twitch_irc::message::{ClearChatMessage, ServerMessage};
 
 use log::{debug, info, warn};
 
-///! The lord of the house. Based on live audio and chat, it figures
-///! out what to do. Handles the threading stuff too.
-///! Because of the chat module, this MUST run in an async context
-///! Aggregator will emit once every matching timeout
 use crate::chat::Chat;
 use crate::detection::TimeoutWordDetector;
 use crate::stream::traits;
 use crate::{ChatReceiver, TimeoutWordDetectorReceiver};
+
+use self::sliding_window::SlidingWindow;
 
 // We claim that timeouts can happen in a window of 10 seconds
 const ALLOWED_WINDOW: f32 = 10.0;
@@ -60,6 +69,7 @@ struct TrainingDataOutput {
     relative_timestamp: f32,
 }
 
+#[derive(Clone)]
 pub struct TrainingDataSettings {
     pub training_data_output_enabled: bool,
     pub duration_per_clip_in_seconds: f32,
@@ -137,6 +147,7 @@ pub async fn perform_aggregation<R: traits::RemoteAudioSource + 'static>(
     mut detector: TimeoutWordDetector,
     mut sender: broadcast::Sender<Vec<ConfirmedTimeoutInformation>>,
     output_training_data: TrainingDataSettings,
+    unconditional_purge_duration: u32,
 ) {
     let mut detector_queue: VecDeque<f32> = VecDeque::new();
     let mut chat_queue: VecDeque<ChatTimeoutInformation> = VecDeque::new();
@@ -145,9 +156,9 @@ pub async fn perform_aggregation<R: traits::RemoteAudioSource + 'static>(
     let window_size = output_training_data.duration_per_clip_in_seconds
         * crate::stream::consts::MIDDLEMAN_FFMPEG_SAMPLE_RATE as f32
         * crate::stream::consts::MIDDLEMAN_FFMPEG_CHANNELS as f32;
-    let mut audio_sliding_window = Arc::new(Mutex::new(VecDeque::with_capacity(
+    let mut audio_sliding_window = Arc::new(Mutex::new(SlidingWindow::with_capacity(
         if output_training_data.training_data_output_enabled {
-            window_size as usize
+            window_size as usize / 2
         } else {
             0
         },
@@ -173,7 +184,7 @@ pub async fn perform_aggregation<R: traits::RemoteAudioSource + 'static>(
             detector.ingest_byte(byte);
 
             if output_training_data.training_data_output_enabled {
-                cloned_window.lock().await.push_back(byte);
+                cloned_window.lock().await.push(byte);
             }
         }
     });
@@ -195,6 +206,7 @@ pub async fn perform_aggregation<R: traits::RemoteAudioSource + 'static>(
             &mut chat_queue,
             &mut detector_queue,
             &mut sender,
+            unconditional_purge_duration,
             &output_training_data,
             audio_sliding_window.clone(),
         )
@@ -213,14 +225,16 @@ async fn confirm_timeouts_maybe(
     chat_queue: &mut VecDeque<ChatTimeoutInformation>,
     detector_queue: &mut VecDeque<f32>,
     sender: &mut broadcast::Sender<Vec<ConfirmedTimeoutInformation>>,
+    unconditional_purge_duration: u32,
     output_training_data: &TrainingDataSettings,
-    audio_window: Arc<Mutex<VecDeque<u8>>>,
+    audio_window: Arc<Mutex<SlidingWindow<u8>>>,
 ) {
     // invalidate any super old entries
     invalidate_old_entries(
         chat_queue,
         detector_queue,
         output_training_data,
+        unconditional_purge_duration,
         audio_window.clone(),
     )
     .await;
@@ -250,7 +264,7 @@ async fn confirm_timeouts_maybe(
             });
             let res = chat_queue.pop_front();
             dump_audio_if_needed(
-                output_training_data,
+                output_training_data.clone(),
                 &*audio_window.lock().await,
                 Some(*oldest_detected),
                 res,
@@ -270,7 +284,8 @@ async fn invalidate_old_entries(
     chat_queue: &mut VecDeque<ChatTimeoutInformation>,
     detector_queue: &mut VecDeque<f32>,
     output_training_data: &TrainingDataSettings,
-    audio_window: Arc<Mutex<VecDeque<u8>>>,
+    unconditional_purge_duration: u32,
+    audio_window: Arc<Mutex<SlidingWindow<u8>>>,
 ) {
     debug!(
         "Now invalidating old queue items. Original sizes (chat, detector): {} {}",
@@ -279,24 +294,63 @@ async fn invalidate_old_entries(
     );
 
     loop {
-        let oldest_chat = match chat_queue.front() {
-            Some(c) => c,
-            None => return,
+        let oldest_chat = chat_queue.front();
+        let oldest_detected = detector_queue.front();
+        let newest_chat = chat_queue.back();
+        let newest_detected = detector_queue.back();
+
+        debug!("Oldest Chat is: {:#?}", oldest_chat);
+        debug!("Newest Chat is: {:#?}", newest_chat);
+        debug!("Oldest Detected is: {:#?}", oldest_detected);
+        debug!("Newest Detected is: {:#?}", newest_detected);
+
+        let chat_detected_comparison = if let (Some(c), Some(d)) = (oldest_chat, oldest_detected) {
+            Some(c.relative_timestamp - d)
+        } else {
+            None
         };
 
-        let oldest_detected = match detector_queue.front() {
-            Some(d) => d,
-            None => return,
+        let chat_span_comparison = if let (Some(new_c), Some(old_c)) = (newest_chat, oldest_chat) {
+            Some(new_c.relative_timestamp - old_c.relative_timestamp)
+        } else {
+            None
         };
 
-        let comparison = oldest_chat.relative_timestamp - oldest_detected;
+        let detected_span_comparison =
+            if let (Some(new_d), Some(old_d)) = (newest_detected, oldest_detected) {
+                Some(new_d - old_d)
+            } else {
+                None
+            };
 
-        if comparison >= ALLOWED_WINDOW {
+        if chat_detected_comparison
+            .map(|cd| cd > ALLOWED_WINDOW)
+            .unwrap_or(false)
+            || detected_span_comparison
+                .map(|d| d > unconditional_purge_duration as f32)
+                .unwrap_or(false)
+        {
             let res = detector_queue.pop_front();
-            dump_audio_if_needed(output_training_data, &*audio_window.lock().await, res, None)
-        } else if comparison < -ALLOWED_WINDOW {
+            dump_audio_if_needed(
+                output_training_data.clone(),
+                &*audio_window.lock().await,
+                res,
+                None,
+            )
+        } else if chat_detected_comparison
+            .map(|cd| cd < -ALLOWED_WINDOW)
+            .unwrap_or(false)
+            || chat_span_comparison
+                .map(|c| c > unconditional_purge_duration as f32)
+                .unwrap_or(false)
+        {
             let res = chat_queue.pop_front();
-            dump_audio_if_needed(output_training_data, &*audio_window.lock().await, None, res)
+            dump_audio_if_needed(
+                output_training_data.clone(),
+                &*audio_window.lock().await,
+                None,
+                res,
+            )
         } else {
             break;
         }
@@ -305,8 +359,8 @@ async fn invalidate_old_entries(
 
 // Requires: either detector_timeout_info or chat_timeout_info is populated.
 fn dump_audio_if_needed(
-    output_training_data: &TrainingDataSettings,
-    audio_window: &VecDeque<u8>,
+    output_training_data: TrainingDataSettings,
+    audio_window: &SlidingWindow<u8>,
     detector_timeout_info: Option<f32>,
     chat_timeout_info: Option<ChatTimeoutInformation>,
 ) {
@@ -314,50 +368,60 @@ fn dump_audio_if_needed(
         return;
     }
 
-    debug!(
-        "Dumping {}s of audio for training purposes; has chat: {}, has sound: {}",
-        output_training_data.duration_per_clip_in_seconds,
-        chat_timeout_info.is_some(),
-        detector_timeout_info.is_some()
-    );
+    let take_size = output_training_data.duration_per_clip_in_seconds
+        * crate::stream::consts::MIDDLEMAN_FFMPEG_SAMPLE_RATE as f32
+        * crate::stream::consts::MIDDLEMAN_FFMPEG_CHANNELS as f32;
+    let take_double_iterator = audio_window.take(take_size as usize);
 
-    if let Some(ts) = detector_timeout_info {
-        let filename = format!("{}{}", ts as u32, uuid::Uuid::new_v4().urn());
-        _dump_audio(
-            audio_window,
-            &TrainingDataOutput {
-                sound_filename: format!("{}.wav", filename),
-                detected: true,
-                username: chat_timeout_info.map(|info| info.username),
-                relative_timestamp: ts,
-            },
-            output_training_data,
-            &filename,
-        )
-    } else if let Some(chat) = chat_timeout_info {
-        let filename = format!(
-            "{}{}",
-            chat.relative_timestamp as u32,
-            uuid::Uuid::new_v4().urn()
+    // NOTE: fire-and-forget, intentional spawn
+    tokio::spawn(async move {
+        let window: Vec<u8> = take_double_iterator.collect().await;
+
+        debug!(
+            "Dumping {}s of audio for training purposes; has chat: {}, has sound: {}",
+            output_training_data.duration_per_clip_in_seconds,
+            chat_timeout_info.is_some(),
+            detector_timeout_info.is_some()
         );
-        _dump_audio(
-            audio_window,
-            &TrainingDataOutput {
-                sound_filename: format!("{}.wav", filename),
-                detected: false,
-                username: Some(chat.username),
-                relative_timestamp: chat.relative_timestamp,
-            },
-            output_training_data,
-            &filename,
-        )
-    } else {
-        warn!("dump_audio_if_needed doesn't seem to be used correctly");
-    }
+
+        if let Some(ts) = detector_timeout_info {
+            let filename = format!("{}{}", ts as u32, uuid::Uuid::new_v4().urn());
+            _dump_audio(
+                &window,
+                &TrainingDataOutput {
+                    sound_filename: format!("{}.wav", filename),
+                    detected: true,
+                    username: chat_timeout_info.map(|info| info.username),
+                    relative_timestamp: ts,
+                },
+                &output_training_data,
+                &filename,
+            )
+        } else if let Some(chat) = chat_timeout_info {
+            let filename = format!(
+                "{}{}",
+                chat.relative_timestamp as u32,
+                uuid::Uuid::new_v4().urn()
+            );
+            _dump_audio(
+                &window,
+                &TrainingDataOutput {
+                    sound_filename: format!("{}.wav", filename),
+                    detected: false,
+                    username: Some(chat.username),
+                    relative_timestamp: chat.relative_timestamp,
+                },
+                &output_training_data,
+                &filename,
+            )
+        } else {
+            warn!("dump_audio_if_needed doesn't seem to be used correctly");
+        }
+    });
 }
 
 fn _dump_audio(
-    audio_window: &VecDeque<u8>,
+    audio_window: &Vec<u8>,
     training_data_output: &TrainingDataOutput,
     training_data_settings: &TrainingDataSettings,
     filename: &str,
@@ -379,8 +443,6 @@ fn _dump_audio(
     .unwrap();
 
     audio_window
-        .clone()
-        .make_contiguous()
         .chunks_exact(2)
         .map(|chunk| i16::from_le_bytes([chunk[0], chunk[1]]))
         .for_each(|data| {

@@ -4,7 +4,6 @@ use clap::Parser;
 use log::info;
 use rustpotter::RustpotterConfig;
 use rustpotter::ScoreMode;
-use timeout_standalone::TrainingDataSettings;
 use std::{
     io::Read,
     process::{Command, Stdio},
@@ -17,6 +16,7 @@ use timeout_standalone::local::Local;
 use timeout_standalone::vod::TwitchVOD;
 use timeout_standalone::FFMPEGDecorator;
 use timeout_standalone::TimeoutWordDetector;
+use timeout_standalone::TrainingDataSettings;
 use tokio::select;
 use tokio::sync::broadcast::channel;
 
@@ -25,14 +25,30 @@ use log::set_logger;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[arg(short, long, default_value_t = false)]
+    #[arg(
+        short,
+        long,
+        default_value_t = 30,
+        help = "If the newest item in either chat / wakeword detection queue is this duration away from the oldest item in the queue, purge it from the queue unconditionally"
+    )]
+    unconditional_purge_duration: u32,
+
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Whether to output training data"
+    )]
     output_training_data: bool,
 
-    #[arg(short, long, default_value_t = 0.6)]
+    #[arg(long, default_value_t = 1.2, help = "Duration of audio clip to dump")]
     output_training_duration: f32,
 
-    #[arg(short, long, default_value =  "./training_files")]
-    output_training_path: String
+    #[arg(
+        long,
+        default_value = "./training_files",
+        help = "Output location of audio clips and supporting JSON files"
+    )]
+    output_training_path: String,
 }
 
 #[tokio::main]
@@ -50,8 +66,8 @@ async fn main() {
         rustpotter::SampleFormat::F32,
         "./models/unpolished_neuro.rpw",
     );
-    let mut stream = FFMPEGDecorator::wrap_around(TwitchLiveStream::new("vedal987", None));
-    // let mut stream = FFMPEGDecorator::wrap_around(TwitchVOD::new("2182332760"));
+    // let mut stream = FFMPEGDecorator::wrap_around(TwitchLiveStream::new("vedal987", None));
+    let mut stream = FFMPEGDecorator::wrap_around(TwitchVOD::new("2182332760"));
     // let mut stream = FFMPEGDecorator::wrap_around(TwitchVOD::new("2188296968"));
     /*let mut stream = FFMPEGDecorator::wrap_around(Local::new("./evil_trimmed.wav"));*/
     let (sender, mut receiver) = channel(1000);
@@ -66,8 +82,9 @@ async fn main() {
         TrainingDataSettings {
             training_data_output_enabled: args.output_training_data,
             duration_per_clip_in_seconds: args.output_training_duration,
-            directory: args.output_training_path.to_string()
-        }
+            directory: args.output_training_path.to_string(),
+        },
+        args.unconditional_purge_duration
     );
     tokio::task::spawn_blocking(move || {
         while let Ok(data) = receiver.blocking_recv() {
