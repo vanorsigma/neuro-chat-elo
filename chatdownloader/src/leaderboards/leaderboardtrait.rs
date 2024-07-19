@@ -173,13 +173,9 @@ pub trait AbstractLeaderboard {
         let mut sorted_scores = scores.to_vec();
         sorted_scores.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let step_count = ((end - start) / step) as usize + 1;
-        (0..step_count)
-            .map(|i| {
-                let percentile = start + (i as f32) * step;
-                let index =
-                    ((sorted_scores.len() - 1) as f32 * percentile / 100.0).round() as usize;
-                sorted_scores[index]
-            })
-            .collect()
+        let chunk_size = (sorted_scores.len() as f32 / step_count as f32).ceil() as usize;
+        let chunks = sorted_scores.chunks(chunk_size);
+        let percentiles: Vec<f32> = chunks.map(|chunk| chunk[chunk.len() / 2]).collect();
+        percentiles
     }
 }

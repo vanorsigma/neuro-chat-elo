@@ -39,6 +39,6 @@ pub async fn backfill() {
             .parse_from_log_object(chat_log)
             .await;
 
-        ChatLogProcessor::export_to_leaderboards(user_performances);
+        ChatLogProcessor::export_to_leaderboards(user_performances).await;
     }
 }

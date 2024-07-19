@@ -6,79 +6,82 @@ mod nonvips;
 mod overall;
 mod subsonly;
 
-use tokio::{sync::broadcast, task::JoinHandle};
+use futures::join;
 
-use crate::{_types::clptypes::UserChatPerformance, leaderboards::leaderboardtrait::AbstractLeaderboard};
+use log::error;
+use tokio::sync::broadcast;
 
-fn spawn_thread<M>(
-    mut leaderboard: M,
+use crate::{
+    _types::clptypes::UserChatPerformance, leaderboards::leaderboardtrait::AbstractLeaderboard,
+};
+
+async fn calc_leaderboard<M: AbstractLeaderboard + Sync + Send + 'static>(
+    leaderboard: &mut M,
     mut reciever: broadcast::Receiver<UserChatPerformance>,
-) -> JoinHandle<()>
-where
-    M: AbstractLeaderboard + Sync + Send + 'static,
-{
-    /*
-    Spawn a thread to update the metadata based on chat messages sent by a tokio broadcast channel
-    */
-    tokio::task::spawn(async move {
-        loop {
-            let user_chat_performance: UserChatPerformance = match reciever.recv().await {
-                Ok(user_chat_performance) => user_chat_performance,
-                Err(_) => break,
-            };
-            leaderboard.update_leaderboard(user_chat_performance);
-        }
-        leaderboard.save()
-    })
-}
-
-/// Spawn threads to process metadata
-/// Returns a vector of join handles, a sender to send messages to the threads, and a receiver to recieve messages from the threads
-pub fn get_leaderboards() -> (
-    Vec<JoinHandle<()>>,
-    broadcast::Sender<UserChatPerformance>,
 ) {
     /*
-    Spawn threads to process leaderboard
-    Returns a vector of join handles and a sender to send messages to the threads
+    Update the leaderboard based on chat messages sent by a tokio broadcast channel
     */
-    let mut handles = vec![];
-    let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);
+    loop {
+        let user_chat_performance: UserChatPerformance = match reciever.recv().await {
+            Ok(user_chat_performance) => user_chat_performance,
+            Err(_) => break,
+        };
+        leaderboard.update_leaderboard(user_chat_performance);
+    }
+    leaderboard.save();
+}
 
-    
-    // Initialize the leaderboards
-    let bitsonly = bitsonly::BitsOnly::new();
-    let chatonly = chatonly::ChatOnly::new();
-    let copypasta = copypastaleaders::CopypastaLeaders::new();
-    let nonvips = nonvips::NonVIPS::new();
-    let overall = overall::Overall::new();
-    let subsonly = subsonly::SubsOnly::new();
+pub struct LeaderboardProcessor {
+    bitsonly: bitsonly::BitsOnly,
+    chatonly: chatonly::ChatOnly,
+    copypasta: copypastaleaders::CopypastaLeaders,
+    nonvips: nonvips::NonVIPS,
+    overall: overall::Overall,
+    subsonly: subsonly::SubsOnly,
+}
 
-    // Spawn threads for each metadata
-    handles.push(spawn_thread(
-        bitsonly,
-        broadcast_receiver.resubscribe(),
-    ));
-    handles.push(spawn_thread(
-        chatonly,
-        broadcast_receiver.resubscribe(),
-    ));
-    handles.push(spawn_thread(
-        copypasta,
-        broadcast_receiver.resubscribe(),
-    ));
-    handles.push(spawn_thread(
-        nonvips,
-        broadcast_receiver.resubscribe(),
-    ));
-    handles.push(spawn_thread(
-        overall,
-        broadcast_receiver.resubscribe(),
-    ));
-    handles.push(spawn_thread(
-        subsonly,
-        broadcast_receiver.resubscribe(),
-    ));
+impl LeaderboardProcessor {
+    pub fn new() -> Self {
+        let bitsonly = bitsonly::BitsOnly::new();
+        let chatonly = chatonly::ChatOnly::new();
+        let copypasta = copypastaleaders::CopypastaLeaders::new();
+        let nonvips = nonvips::NonVIPS::new();
+        let overall = overall::Overall::new();
+        let subsonly = subsonly::SubsOnly::new();
 
-    (handles, broadcast_sender)
+        Self {
+            bitsonly,
+            chatonly,
+            copypasta,
+            nonvips,
+            overall,
+            subsonly,
+        }
+    }
+
+    pub async fn run(&mut self, performances: Vec<UserChatPerformance>) {
+        let (broadcast_sender, broadcast_reciever) = broadcast::channel(100000);
+
+        join!(
+            send_performances(broadcast_sender, performances),
+            calc_leaderboard(&mut self.bitsonly, broadcast_reciever.resubscribe()),
+            calc_leaderboard(&mut self.chatonly, broadcast_reciever.resubscribe()),
+            calc_leaderboard(&mut self.copypasta, broadcast_reciever.resubscribe()),
+            calc_leaderboard(&mut self.nonvips, broadcast_reciever.resubscribe()),
+            calc_leaderboard(&mut self.overall, broadcast_reciever.resubscribe()),
+            calc_leaderboard(&mut self.subsonly, broadcast_reciever.resubscribe()),
+        );
+    }
+}
+
+pub async fn send_performances(
+    sender: broadcast::Sender<UserChatPerformance>,
+    performances: Vec<UserChatPerformance>,
+) {
+    for performance in performances {
+        if let Err(e) = sender.send(performance) {
+            error!("Error sending performance to leaderboards: {}", e);
+        }
+    }
 }

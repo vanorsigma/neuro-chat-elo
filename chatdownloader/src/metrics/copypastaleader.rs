@@ -67,22 +67,18 @@ impl AbstractMetric for CopypastaLeader {
             .unwrap();
 
         // If the best match is above the threshold, update the list
-        if best_match_score > MATCHING_THRESHOLD {
-            let item = best_match;
-            self.history.push((
-                sequence_no,
-                text.clone(),
-                comment.commenter._id.clone(),
-                item.3,
-            ));
+        let parent_sequence = if best_match_score > MATCHING_THRESHOLD {
+            best_match.3
         } else {
-            self.history.push((
-                sequence_no,
-                text.clone(),
-                comment.commenter._id.clone(),
-                sequence_no,
-            ));
-        }
+            sequence_no
+        };
+
+        self.history.push((
+            sequence_no,
+            text.clone(),
+            comment.commenter._id.clone(),
+            parent_sequence,
+        ));
 
         // Sort the list
         self.history.sort_by_key(|item| item.0);
