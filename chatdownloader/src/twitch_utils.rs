@@ -63,7 +63,7 @@ impl TwitchAPIWrapper {
         let response = self.twitch.req_get(request, &self.token);
         let global_badges = response.await.unwrap().data;
 
-        let all_badges = [channel_badges, global_badges].concat();
+        let all_badges = [global_badges, channel_badges].concat();
 
         let mut badge_sets: HashMap<String, HashMap<String, BadgeInformation>> = HashMap::new();
 
