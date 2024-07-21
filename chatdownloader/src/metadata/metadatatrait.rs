@@ -2,10 +2,9 @@
 Represents an abstract metadata
 */
 
-use crate::_types::clptypes::MetadataTypes;
+use crate::_types::clptypes::{MetadataTypes, MetadataUpdate};
 use crate::_types::twitchtypes::Comment;
 use crate::twitch_utils::TwitchAPIWrapper;
-use std::collections::HashMap;
 
 pub trait AbstractMetadata: Sized {
     /*
@@ -38,7 +37,7 @@ pub trait AbstractMetadata: Sized {
         &self,
         comment: Comment,
         sequence_no: u32,
-    ) -> (String, HashMap<String, MetadataTypes>);
+    ) -> MetadataUpdate;
     /*
     Get information about a user from a chat message
 

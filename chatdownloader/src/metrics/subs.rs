@@ -3,8 +3,8 @@ The subs metric
 */
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::collections::HashMap;
 
+use crate::_types::clptypes::MetricUpdate;
 use crate::_types::twitchtypes::{ChatMessageFragment, Comment};
 use crate::metrics::metrictrait::AbstractMetric;
 
@@ -39,7 +39,7 @@ impl AbstractMetric for Subs {
         &mut self,
         comment: Comment,
         _sequence_no: u32,
-    ) -> (String, HashMap<String, f32>) {
+    ) -> MetricUpdate {
         let total_subs: i32 = comment
             .message
             .fragments

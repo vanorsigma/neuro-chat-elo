@@ -5,13 +5,13 @@ use std::{collections::HashMap, fs};
 use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 
-use crate::_types::clptypes::{MetadataTypes, UserChatPerformance};
+use crate::_types::clptypes::{MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
 use crate::_types::twitchtypes::{ChatLog, Comment};
 use crate::twitch_utils::TwitchAPIWrapper;
 
 use crate::leaderboards::LeaderboardProcessor;
-use crate::metadata::MetadataProcessor;
-use crate::metrics::MetricProcessor;
+use crate::metadata::setup_metadata_and_channels;
+use crate::metrics::setup_metrics_and_channels;
 
 pub struct ChatLogProcessor<'a> {
     /*
@@ -40,35 +40,31 @@ impl<'a> ChatLogProcessor<'a> {
         let start_time = Instant::now();
         debug!("Starting chat log processing");
 
-        let mut metric_processor = MetricProcessor::new().await;
-        let mut metadata_processor = MetadataProcessor::new(self.twitch).await;
-
         debug!("Instantiated metric and metadata processors");
 
         debug!("Setting up channels for metric and metadata processors");
-        let (metrics, metric_sender, metric_receiver) =
-            metric_processor.get_defaults_and_setup_channels();
+        let (mut metric_processor, metric_sender, metric_receiver) =
+            setup_metrics_and_channels().await;
 
-        let (metadatas, metadata_sender, metadata_receiver) =
-            metadata_processor.get_defaults_and_setup_channels();
+        let (mut metadata_processor, metadata_sender, metadata_receiver) =
+            setup_metadata_and_channels(self.twitch).await;
 
         info!("Parsing chat log object");
         let chat_adder =
-            chatlog_to_receiver(chat_log.clone(), vec![metric_sender, metadata_sender]);
-        let performances =
-            user_chat_performance_processor(metrics, metric_receiver, metadatas, metadata_receiver);
+            chatlog_to_receiver(chat_log, vec![metric_sender, metadata_sender]);
+        let performances = user_chat_performance_processor(metric_processor.defaults.clone(), metric_receiver, metadata_processor.defaults.clone(), metadata_receiver);
 
         let (_, _, _, performances) = join!(
             chat_adder,
-            metric_processor.run(),
-            metadata_processor.run(),
+            async move {metric_processor.run().await; drop(metric_processor)},
+            async move {metadata_processor.run().await; drop(metadata_processor)},
             performances,
         );
         info!(
-            "Chat log processing took: {}ms",
-            start_time.elapsed().as_millis()
+            "Chat log processing took: {:#?}",
+            start_time.elapsed()
         );
-        performances.values().cloned().collect()
+        performances.into_values().collect()
     }
 
     #[allow(dead_code)]
@@ -92,52 +88,50 @@ pub async fn chatlog_to_receiver(
     for (sequence_no, comment) in chat_log.comments.iter().enumerate() {
         for sender in senders.iter() {
             sender.send((comment.clone(), sequence_no as u32)).unwrap();
-            tokio::task::yield_now().await;
         }
+        tokio::task::yield_now().await;
     }
     debug!("Finished adding comments to receivers");
 }
 
 /// A function to spawn a thread that takes two recievers and processes metrics / metadata from them and updates the user performances
 pub async fn user_chat_performance_processor(
-    metrics: HashMap<String, f32>,
-    mut metric_receiver: mpsc::Receiver<(String, HashMap<String, f32>)>,
-    metadatas: HashMap<String, MetadataTypes>,
-    mut metadata_receiver: mpsc::Receiver<(String, HashMap<String, MetadataTypes>)>,
+    metric_defaults: HashMap<String, f32>,
+    mut metric_receiver: mpsc::Receiver<MetricUpdate>,
+    metadata_defaults: HashMap<String, MetadataTypes>,
+    mut metadata_receiver: mpsc::Receiver<MetadataUpdate>,
 ) -> HashMap<String, UserChatPerformance> {
     let mut user_performances: HashMap<String, UserChatPerformance> = HashMap::new();
     loop {
         tokio::select! {
-            Some((metric_name, metric_update)) = metric_receiver.recv() => {
-                for (user_id, met_value) in metric_update.iter() {
-                    get_performance_or_default(&mut user_performances, user_id, &metrics, &metadatas);
+            Some(metric_update) = metric_receiver.recv() => {
+                for (user_id, met_value) in metric_update.updates.iter() {
+                    get_performance_or_default(&mut user_performances, user_id, &metric_defaults, &metadata_defaults);
                     if let Some(user_chat_performance) = user_performances.get_mut(user_id) {
-                        if let Some(metric_value) = user_chat_performance.metrics.get_mut(&metric_name) {
+                        if let Some(metric_value) = user_chat_performance.metrics.get_mut(&metric_update.metric_name) {
                             *metric_value += met_value;
-                            debug!("Updating metric: {} with value: {:?}", metric_name, met_value);
+                            debug!("Updating metric: {} with value: {:?}", metric_update.metric_name, met_value);
                         }
                     }
                 }
-                tokio::task::yield_now().await;
             }
-            Some((metadata_name, metadata_update)) = metadata_receiver.recv() => {
-                for (user_id, met_value) in metadata_update.iter() {
-                    get_performance_or_default(&mut user_performances, user_id, &metrics, &metadatas);
+            Some(metadata_update) = metadata_receiver.recv() => {
+                for (user_id, met_value) in metadata_update.updates.iter() {
+                    get_performance_or_default(&mut user_performances, user_id, &metric_defaults, &metadata_defaults);
                     if let Some(user_chat_performance) = user_performances.get_mut(user_id) {
-                        if metadata_name == "basic_info" {
+                        if metadata_update.metadata_name == "basic_info" {
                             let (username, avatar) = match met_value.get_basic_info() {
                                 Some((username, avatar)) => (username, avatar),
                                 None => {warn!("Could not get username and/or url for user_id {}. Skipping", user_id); continue;}
                             };
                             user_chat_performance.username = username;
                             user_chat_performance.avatar = avatar;
-                        } else if let Some(metadata_value) = user_chat_performance.metadata.get_mut(&metadata_name) {
+                        } else if let Some(metadata_value) = user_chat_performance.metadata.get_mut(&metadata_update.metadata_name) {
                             *metadata_value = met_value.clone();
-                            debug!("Updating metadata: {} with value: {:?}", metadata_name, met_value);
+                            debug!("Updating metadata: {} with value: {:?}", metadata_update.metadata_name, met_value);
                         }
                     }
                 }
-                tokio::task::yield_now().await;
             }
             else => break,
         }

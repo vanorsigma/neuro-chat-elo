@@ -35,10 +35,7 @@ async fn main() {
     info!("Script triggered, pulling logs for VOD ID: {}...", vod_id);
 
     let mut downloader = twitchdownloaderproxy::TwitchChatDownloader::new();
-    let chat_log = match downloader.download_chat(&vod_id).await {
-        Ok(chat_log) => chat_log,
-        Err(e) => panic!("Failed to download chat: {e:?}"),
-    };
+    let chat_log = downloader.download_chat(&vod_id).await.expect("Failed to download chat: {e:?}");
 
     let processor = chatlogprocessor::ChatLogProcessor::new(&twitch);
     // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());

@@ -4,7 +4,7 @@ Get the username and avatar of the user
 
 use std::collections::HashMap;
 
-use crate::_types::clptypes::MetadataTypes;
+use crate::_types::clptypes::{MetadataTypes, MetadataUpdate};
 use crate::_types::twitchtypes::Comment;
 use crate::metadata::metadatatrait::AbstractMetadata;
 use crate::twitch_utils::TwitchAPIWrapper;
@@ -33,7 +33,7 @@ impl AbstractMetadata for BasicInfo {
         &self,
         comment: Comment,
         _sequence_no: u32,
-    ) -> (String, HashMap<String, MetadataTypes>) {
+    ) -> MetadataUpdate {
         let mut metadata: HashMap<String, MetadataTypes> = HashMap::new();
         metadata.insert(
             comment.commenter._id.clone(),
@@ -42,6 +42,9 @@ impl AbstractMetadata for BasicInfo {
                 comment.commenter.logo.clone(),
             ),
         );
-        (self.get_name(), metadata)
+        MetadataUpdate {
+            metadata_name: self.get_name(),
+            updates: metadata
+        }
     }
 }

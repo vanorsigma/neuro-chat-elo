@@ -1,10 +1,6 @@
-/*
-The bits metric
-*/
+use crate::_types::clptypes::MetricUpdate;
 use crate::_types::twitchtypes::Comment;
 use crate::metrics::metrictrait::AbstractMetric;
-
-use std::collections::HashMap;
 
 const WEIGHT_BITS: f32 = 0.1;
 
@@ -28,7 +24,7 @@ impl AbstractMetric for Bits {
         &mut self,
         comment: Comment,
         _sequence_no: u32,
-    ) -> (String, HashMap<String, f32>) {
+    ) -> MetricUpdate {
         let score = comment.message.bits_spent as f32 * WEIGHT_BITS;
         self._shortcut_for_this_comment_user(comment, score)
     }

@@ -33,7 +33,7 @@ pub trait AbstractLeaderboard {
             (
                 export_item.id.clone(),
                 LeaderboardInnerState {
-                    id: export_item.id.clone(),
+                    id: export_item.id,
                     username: export_item.username,
                     avatar: export_item.avatar,
                     badges: export_item.badges,
@@ -56,14 +56,13 @@ pub trait AbstractLeaderboard {
         if let Some(score) = self.calculate_score(&performance) {
             debug!("Score for the above is {}", score);
 
-            let id = performance.id.clone();
             let entry = self
                 .__get_state()
-                .entry(performance.id)
+                .entry(performance.id.clone())
                 .or_insert(LeaderboardInnerState {
-                    id,
-                    username: performance.username.clone(),
-                    avatar: performance.avatar.clone(),
+                    id: performance.id,
+                    username: performance.username,
+                    avatar: performance.avatar,
                     badges: None,
                     previous_rank: None,
                     elo: 1200.0,
@@ -104,17 +103,16 @@ pub trait AbstractLeaderboard {
         assert!(sorted_to_save.len() > 1, "Nothing to save!");
 
         let updated_to_save: Vec<LeaderboardExportItem> = sorted_to_save
-            .iter()
+            .into_iter()
             .enumerate()
-            .map(|(i, item)| {
-                let mut updated_item = item.clone();
-                updated_item.rank = (i + 1) as u32;
+            .map(|(i, mut item)| {
+                item.rank = (i + 1) as u32;
                 if let Some(state) = self.__get_state().get(&item.id) {
                     if let Some(previous_rank) = state.previous_rank {
-                        updated_item.delta = previous_rank as i64 - updated_item.rank as i64;
+                        item.delta = previous_rank as i64 - item.rank as i64;
                     }
                 }
-                updated_item
+                item
             })
             .collect();
 
@@ -138,33 +136,22 @@ pub trait AbstractLeaderboard {
         let sample_users: Vec<(f32, f32)> = sample_scores
             .iter()
             .map(|score| {
-                let (closest_user, _closest_distance) = self.__get_state().values().fold(
-                    (None, f32::MAX),
-                    |(closest_user, closest_distance), state| {
-                        let distance = (state.score - score).abs();
-                        if distance < closest_distance {
-                            (Some(state), distance)
-                        } else {
-                            (closest_user, closest_distance)
-                        }
-                    },
-                );
-                (*score, closest_user.unwrap().elo)
-            })
-            .collect();
-        drop(all_scores);
-        drop(sample_scores);
+            let closest_user = self.__get_state().values()
+                .min_by(|a, b| (a.score - score).abs().partial_cmp(&(b.score - score).abs()).unwrap())
+                .unwrap();
+            (*score, closest_user.elo)
+            }).collect();
 
         // Calculate the new elo for each user
         self.__get_state().values_mut().for_each(|state| {
             let diff: f32 = sample_users
-                .iter()
-                .map(|(sample_score, sample_elo)| {
-                    let won = state.score > *sample_score;
-                    let p = 1.0 / (1.0 + 10.0_f32.powf((sample_elo - state.elo) / 400.0));
-                    K * (won as u8 as f32 - p)
-                })
-                .sum();
+            .iter()
+            .map(|(sample_score, sample_elo)| {
+                let won = state.score > *sample_score;
+                let p = 1.0 / (1.0 + 10.0_f32.powf((sample_elo - state.elo) / 400.0));
+                K * (won as u8 as f32 - p)
+            })
+            .sum();
             state.elo += diff;
         });
     }

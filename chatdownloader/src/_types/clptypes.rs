@@ -45,3 +45,15 @@ impl MetadataTypes {
         }
     }
 }
+
+#[derive(Default)]
+pub struct MetricUpdate {
+    pub metric_name: String,
+    pub updates: HashMap<String, f32>
+}
+
+#[derive(Default)]
+pub struct MetadataUpdate {
+    pub metadata_name: String,
+    pub updates: HashMap<String, MetadataTypes>
+}

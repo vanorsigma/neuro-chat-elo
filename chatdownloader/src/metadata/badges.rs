@@ -5,7 +5,7 @@ use log::error;
 use std::collections::HashMap;
 
 use crate::_constants::VED_CH_ID;
-use crate::_types::clptypes::{BadgeInformation, MetadataTypes};
+use crate::_types::clptypes::{BadgeInformation, MetadataTypes, MetadataUpdate};
 use crate::_types::twitchtypes::Comment;
 use crate::metadata::metadatatrait::AbstractMetadata;
 use crate::twitch_utils::TwitchAPIWrapper;
@@ -32,7 +32,7 @@ impl AbstractMetadata for Badges {
         &self,
         comment: Comment,
         _sequence_no: u32,
-    ) -> (String, HashMap<String, MetadataTypes>) {
+    ) -> MetadataUpdate {
         let mut metadata: Vec<BadgeInformation> = vec![];
         let user_badges = if let Some(user_badges) = comment.message.user_badges {
             user_badges
@@ -42,7 +42,10 @@ impl AbstractMetadata for Badges {
                 comment.commenter._id.clone(),
                 MetadataTypes::BadgeList(vec![]),
             );
-            return (self.get_name(), out);
+            return MetadataUpdate {
+                metadata_name: self.get_name(),
+                updates: out
+            };
         };
         for badge in user_badges {
             let badge_set = self.badges.get(&badge._id);
@@ -61,12 +64,12 @@ impl AbstractMetadata for Badges {
             }
             metadata.push(badge_info.unwrap().clone());
         }
-        (
-            self.get_name(),
-            HashMap::from([(
+        MetadataUpdate {
+            metadata_name: self.get_name(),
+            updates: HashMap::from([(
                 comment.commenter._id.clone(),
                 MetadataTypes::BadgeList(metadata),
             )]),
-        )
+        }
     }
 }

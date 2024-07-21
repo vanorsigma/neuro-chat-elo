@@ -2,13 +2,14 @@
 The emote metric
 */
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use lazy_static::lazy_static;
 use log::{debug, info};
 use serde::Deserialize;
 
 use crate::_constants::VED_CH_ID;
+use crate::_types::clptypes::MetricUpdate;
 use crate::_types::twitchtypes::{ChatMessageFragment, Comment};
 
 use super::metrictrait::AbstractMetric;
@@ -99,7 +100,7 @@ impl AbstractMetric for Emote {
         &mut self,
         comment: Comment,
         _sequence_no: u32,
-    ) -> (String, HashMap<String, f32>) {
+    ) -> MetricUpdate {
         let score: f32 = comment
             .message
             .fragments

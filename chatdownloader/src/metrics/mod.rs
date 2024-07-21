@@ -12,13 +12,14 @@ use std::collections::HashMap;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 
+use crate::_types::clptypes::MetricUpdate;
 use crate::_types::twitchtypes::Comment;
 use crate::metrics::metrictrait::AbstractMetric;
 
 pub struct MetricProcessor {
-    metric_defaults: HashMap<String, f32>,
-    broadcast_receiver: Option<broadcast::Receiver<(Comment, u32)>>,
-    mpsc_sender: Option<mpsc::Sender<(String, HashMap<String, f32>)>>,
+    pub defaults: HashMap<String, f32>,
+    broadcast_receiver: broadcast::Receiver<(Comment, u32)>,
+    mpsc_sender: mpsc::Sender<MetricUpdate>,
     bits: bits::Bits,
     subs: subs::Subs,
     text: text::Text,
@@ -29,8 +30,8 @@ pub struct MetricProcessor {
 impl MetricProcessor {
     /// Create a new MetricProcessor
     /// get_defaults_and_setup_channels must be called before run
-    pub async fn new() -> Self {
-        let mut metric_defaults: HashMap<String, f32> = HashMap::new();
+    pub async fn new(broadcast_receiver: broadcast::Receiver<(Comment, u32)>, mpsc_sender: mpsc::Sender<MetricUpdate>) -> Self {
+        let mut defaults: HashMap<String, f32> = HashMap::new();
 
         let bits = bits::Bits::new().await;
         let subs = subs::Subs::new().await;
@@ -38,16 +39,16 @@ impl MetricProcessor {
         let copypastaleader = copypastaleader::CopypastaLeader::new().await;
         let emote = emote::Emote::new().await;
 
-        metric_defaults.insert(bits.get_name(), 0.0);
-        metric_defaults.insert(subs.get_name(), 0.0);
-        metric_defaults.insert(text.get_name(), 0.0);
-        metric_defaults.insert(copypastaleader.get_name(), 0.0);
-        metric_defaults.insert(emote.get_name(), 0.0);
+        defaults.insert(bits.get_name(), 0.0);
+        defaults.insert(subs.get_name(), 0.0);
+        defaults.insert(text.get_name(), 0.0);
+        defaults.insert(copypastaleader.get_name(), 0.0);
+        defaults.insert(emote.get_name(), 0.0);
 
         Self {
-            metric_defaults,
-            broadcast_receiver: None,
-            mpsc_sender: None,
+            defaults,
+            broadcast_receiver,
+            mpsc_sender,
             bits,
             subs,
             text,
@@ -56,75 +57,41 @@ impl MetricProcessor {
         }
     }
 
-    #[allow(clippy::type_complexity)]
-    /// Get the default values for the metrics and set up the channels
-    /// This must be called before run
-    pub fn get_defaults_and_setup_channels(
-        &mut self,
-    ) -> (
-        HashMap<String, f32>,
-        broadcast::Sender<(Comment, u32)>,
-        mpsc::Receiver<(String, HashMap<String, f32>)>,
-    ) {
-        let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);
-        let (mpsc_sender, mpsc_receiver) = mpsc::channel(100000);
-        self.broadcast_receiver.replace(broadcast_receiver);
-        self.mpsc_sender.replace(mpsc_sender);
-        (
-            self.metric_defaults.clone(),
-            broadcast_sender,
-            mpsc_receiver,
-        )
-    }
-
     pub async fn run(&mut self) {
-        let mpsc_sender = match &self.mpsc_sender {
-            Some(sender) => sender,
-            None => {
-                panic!("No mpsc sender found, did you run get_defaults_and_setup_channels?");
-            }
-        };
-        let broadcast_receiver = match &self.broadcast_receiver {
-            Some(receiver) => receiver,
-            None => {
-                panic!("No broadcast receiver found, did you run get_defaults_and_setup_channels?");
-            }
-        };
         join!(
             calc_metric(
                 &mut self.bits,
-                mpsc_sender.clone(),
-                broadcast_receiver.resubscribe(),
+                self.mpsc_sender.clone(),
+                self.broadcast_receiver.resubscribe(),
             ),
             calc_metric(
                 &mut self.subs,
-                mpsc_sender.clone(),
-                broadcast_receiver.resubscribe(),
+                self.mpsc_sender.clone(),
+                self.broadcast_receiver.resubscribe(),
             ),
             calc_metric(
                 &mut self.text,
-                mpsc_sender.clone(),
-                broadcast_receiver.resubscribe(),
+                self.mpsc_sender.clone(),
+                self.broadcast_receiver.resubscribe(),
             ),
             calc_metric(
                 &mut self.copypastaleader,
-                mpsc_sender.clone(),
-                broadcast_receiver.resubscribe(),
+                self.mpsc_sender.clone(),
+                self.broadcast_receiver.resubscribe(),
             ),
             calc_metric(
                 &mut self.emote,
-                mpsc_sender.clone(),
-                broadcast_receiver.resubscribe(),
+                self.mpsc_sender.clone(),
+                self.broadcast_receiver.resubscribe(),
             ),
         );
         debug!("All metrics finished");
-        drop(self.mpsc_sender.take());
     }
 }
 
 async fn calc_metric<M: AbstractMetric + Sync + Send + 'static>(
     metric: &mut M,
-    sender: mpsc::Sender<(String, HashMap<String, f32>)>,
+    sender: mpsc::Sender<MetricUpdate>,
     mut reciever: broadcast::Receiver<(Comment, u32)>,
 ) {
     /*
@@ -145,4 +112,21 @@ async fn calc_metric<M: AbstractMetric + Sync + Send + 'static>(
     if let Err(e) = sender.send(metric_result).await {
         warn!("Failed to send final metric result: {}", e)
     };
+}
+
+#[allow(clippy::type_complexity)]
+/// Get the default values for the metrics and set up the channels
+pub async fn setup_metrics_and_channels() -> (
+    MetricProcessor,
+    broadcast::Sender<(Comment, u32)>,
+    mpsc::Receiver<MetricUpdate>,
+) {
+    let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);
+    let (mpsc_sender, mpsc_receiver) = mpsc::channel(100000);
+    let metric_processor = MetricProcessor::new(broadcast_receiver, mpsc_sender).await;
+    (
+        metric_processor,
+        broadcast_sender,
+        mpsc_receiver,
+    )
 }

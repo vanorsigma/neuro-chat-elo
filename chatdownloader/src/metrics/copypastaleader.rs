@@ -1,9 +1,8 @@
 use log::debug;
 
+use crate::_types::clptypes::MetricUpdate;
 use crate::_types::twitchtypes::Comment;
 use crate::metrics::metrictrait::AbstractMetric;
-
-use std::collections::HashMap;
 
 const WEIGHT_COPYPASTA: f32 = 0.3;
 const CHAIN_GRACE: u32 = 10;
@@ -29,7 +28,7 @@ impl AbstractMetric for CopypastaLeader {
         String::from("copypasta")
     }
 
-    fn get_metric(&mut self, comment: Comment, sequence_no: u32) -> (String, HashMap<String, f32>) {
+    fn get_metric(&mut self, comment: Comment, sequence_no: u32) -> MetricUpdate {
         let text = comment
             .message
             .fragments
@@ -39,7 +38,7 @@ impl AbstractMetric for CopypastaLeader {
             .join(" ");
 
         if text.is_empty() {
-            return (self.get_name(), HashMap::new());
+            return MetricUpdate::default();
         }
 
         // Evaluate or initialize the list
@@ -111,17 +110,20 @@ impl AbstractMetric for CopypastaLeader {
             .cloned()
             .collect();
 
-        (self.get_name(), result)
+        MetricUpdate {
+            metric_name: self.get_name(),
+            updates: result,
+        }
     }
 
-    fn finish(&self) -> (String, HashMap<String, f32>) {
-        (
-            self.get_name(),
-            self.history
+    fn finish(&self) -> MetricUpdate {
+        MetricUpdate {
+            metric_name: self.get_name(),
+            updates: self.history
                 .iter()
                 .map(|item| (item.2.clone(), (item.0 - item.3) as f32 * WEIGHT_COPYPASTA))
                 .collect(),
-        )
+        }
     }
 }
 
