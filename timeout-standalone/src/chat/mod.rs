@@ -5,12 +5,14 @@ use std::task::{Context, Poll};
 
 pub use rustpotter::SampleFormat;
 use rustpotter::{Rustpotter, RustpotterConfig, ScoreMode};
+use tokio::sync::broadcast::error::RecvError;
+use tokio::{select, task::JoinHandle};
 use tokio::{
     stream,
     sync::broadcast::{channel, Receiver, Sender},
 };
 use tokio_stream::Stream;
-use tokio::{select, task::JoinHandle};
+use tokio_util::sync::ReusableBoxFuture;
 use twitch_irc::login::StaticLoginCredentials;
 pub use twitch_irc::message::ServerMessage;
 use twitch_irc::TwitchIRCClient;
@@ -18,13 +20,15 @@ use twitch_irc::{ClientConfig, SecureTCPTransport};
 
 use tokio::sync::oneshot;
 
-pub struct ChatReceiver(Receiver<ServerMessage>);
+pub struct ChatReceiver(
+    ReusableBoxFuture<'static, (Result<ServerMessage, RecvError>, Receiver<ServerMessage>)>,
+);
 
 pub struct Chat {
     client: TwitchIRCClient<SecureTCPTransport, StaticLoginCredentials>,
     receiver: Receiver<ServerMessage>,
     chat_thread: JoinHandle<()>,
-    cancel_receiver: oneshot::Receiver<()>,
+    cancel_receiver: oneshot::Receiver<()>, // TODO: might weant to do a notify here
 }
 
 impl Chat {
@@ -63,10 +67,11 @@ impl Chat {
     }
 
     pub fn get_receiver(&self) -> ChatReceiver {
-        ChatReceiver(self.receiver.resubscribe())
+        ChatReceiver(ReusableBoxFuture::new(crate::make_future_from_rx(
+            self.receiver.resubscribe(),
+        )))
     }
 }
-
 
 impl Stream for ChatReceiver {
     type Item = ServerMessage;
@@ -75,9 +80,16 @@ impl Stream for ChatReceiver {
         mut self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Option<Self::Item>> {
-        let recv = self.0.recv();
-        tokio::pin!(recv);
-        cx.waker().wake_by_ref();
-        recv.poll(cx).map(|v| v.ok())
+        let (result, rx) = futures::ready!(self.0.poll(cx));
+        self.0.set(crate::make_future_from_rx(rx));
+
+        match result {
+            Ok(v) => std::task::Poll::Ready(Some(v)),
+            Err(RecvError::Lagged(_)) => {
+                cx.waker().wake_by_ref();
+                std::task::Poll::Pending
+            }
+            Err(RecvError::Closed) => std::task::Poll::Ready(None),
+        }
     }
 }

@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5.9", features = ["derive"] }
 env_logger = "0.11.3"
+futures = "0.3.30"
 hound = "3.5.1"
 log = "0.4.22"
 rustpotter = "3.0.2"
@@ -15,5 +16,6 @@ serde = { version = "1.0.204", features = ["serde_derive"] }
 serde_json = "1.0.120"
 tokio = { version = "1.38.0", features = ["sync", "signal", "rt-multi-thread", "rt"] }
 tokio-stream = "0.1.15"
+tokio-util = "0.7.11"
 twitch-irc = "5.0.1"
 uuid = { version = "1.10.0", features = ["fast-rng", "v4"] }

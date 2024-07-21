@@ -6,15 +6,19 @@ use std::task::{Context, Poll};
 
 pub use rustpotter::SampleFormat;
 use rustpotter::{Rustpotter, RustpotterConfig, ScoreMode};
+use tokio::sync::broadcast::error::RecvError;
 use tokio::{
     stream,
     sync::broadcast::{channel, Receiver, Sender},
 };
 use tokio_stream::Stream;
+use tokio_util::sync::ReusableBoxFuture;
 
 const DETECTION_NAME: &str = "timeout";
 
-pub struct TimeoutWordDetectorReceiver(Receiver<f32>);
+pub struct TimeoutWordDetectorReceiver(
+    ReusableBoxFuture<'static, (Result<f32, RecvError>, Receiver<f32>)>,
+);
 
 pub struct TimeoutWordDetector {
     rustpotter: Rustpotter,
@@ -92,7 +96,9 @@ impl TimeoutWordDetector {
 
     /// The f32 is the time elapsed since the start of the stream
     pub fn get_receiver(&self) -> TimeoutWordDetectorReceiver {
-        TimeoutWordDetectorReceiver(self.receiver.resubscribe())
+        TimeoutWordDetectorReceiver(ReusableBoxFuture::new(crate::make_future_from_rx(
+            self.receiver.resubscribe(),
+        )))
     }
 
     fn calculate_time_elapsed_in_seconds(&self) -> f32 {
@@ -114,9 +120,15 @@ impl Stream for TimeoutWordDetectorReceiver {
         mut self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Option<Self::Item>> {
-        let recv_future = self.0.recv();
-        tokio::pin!(recv_future);
-        cx.waker().wake_by_ref(); // TODO: Figure out why this is needed. This shouldn't be needed. wtf.
-        recv_future.poll(cx).map(|v| v.ok())
+        let (result, rx) = futures::ready!(self.0.poll(cx));
+        self.0.set(crate::make_future_from_rx(rx));
+        match result {
+            Ok(v) => std::task::Poll::Ready(Some(v)),
+            Err(RecvError::Lagged(_)) => {
+                cx.waker().wake_by_ref();
+                std::task::Poll::Pending
+            }
+            Err(RecvError::Closed) => std::task::Poll::Ready(None),
+        }
     }
 }
