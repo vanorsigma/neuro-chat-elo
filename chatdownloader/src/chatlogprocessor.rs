@@ -88,8 +88,8 @@ pub async fn chatlog_to_receiver(
     for (sequence_no, comment) in chat_log.comments.iter().enumerate() {
         for sender in senders.iter() {
             sender.send((comment.clone(), sequence_no as u32)).unwrap();
+            tokio::task::yield_now().await;
         }
-        tokio::task::yield_now().await;
     }
     debug!("Finished adding comments to receivers");
 }
