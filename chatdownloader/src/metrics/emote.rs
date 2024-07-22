@@ -2,14 +2,15 @@
 The emote metric
 */
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
-use log::{info, debug};
-use serde::Deserialize;
 use lazy_static::lazy_static;
+use log::{debug, info};
+use serde::Deserialize;
 
-use crate::_types::twitchtypes::{ChatMessageFragment, Comment};
 use crate::_constants::VED_CH_ID;
+use crate::_types::clptypes::MetricUpdate;
+use crate::_types::twitchtypes::{ChatMessageFragment, Comment};
 
 use super::metrictrait::AbstractMetric;
 
@@ -79,7 +80,8 @@ impl AbstractMetric for Emote {
         }
 
         debug!("Got {} 7tv emotes", ret_val.len());
-        let seventv_lookup: HashSet<String> = ret_val.iter().map(|emote| emote.name.clone()).collect();
+        let seventv_lookup: HashSet<String> =
+            ret_val.iter().map(|emote| emote.name.clone()).collect();
         Self {
             seventv_emotes: ret_val,
             seventv_lookup,
@@ -94,8 +96,12 @@ impl AbstractMetric for Emote {
         String::from("emote")
     }
 
-    fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> HashMap<String, f32> {
-        let metric = comment
+    fn get_metric(
+        &mut self,
+        comment: Comment,
+        _sequence_no: u32,
+    ) -> MetricUpdate {
+        let score: f32 = comment
             .message
             .fragments
             .iter()
@@ -105,8 +111,6 @@ impl AbstractMetric for Emote {
                     * WEIGHT_EMOTES
             })
             .sum();
-        let mut result = HashMap::new();
-        result.insert("emote".to_owned(), metric);
-        result
+        self._shortcut_for_this_comment_user(comment, score)
     }
 }

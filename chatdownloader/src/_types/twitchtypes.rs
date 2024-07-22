@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ChatMessageFragmentEmoticon {
-    /* 
+    /*
     Represents an emoticon in a chat message fragment.
     */
     pub emoticon_id: String,
@@ -61,7 +61,7 @@ pub struct Comment {
     pub commenter: ChatUserInfo,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ChatLog {
     /*
     Represents a chat log.

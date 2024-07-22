@@ -2,9 +2,9 @@
 Bits leaderboard
 */
 
-use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
 use crate::_types::clptypes::UserChatPerformance;
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
+use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
 use std::collections::HashMap;
 
 const K: f32 = 2.0;
