@@ -56,8 +56,8 @@ impl<'a> ChatLogProcessor<'a> {
 
         let (_, _, _, performances) = join!(
             chat_adder,
-            async move {metric_processor.run().await; drop(metric_processor)},
-            async move {metadata_processor.run().await; drop(metadata_processor)},
+            async move {metric_processor.run().await;},
+            async move {metadata_processor.run().await;},
             performances,
         );
         info!(
