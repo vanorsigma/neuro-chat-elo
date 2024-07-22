@@ -105,33 +105,31 @@ pub async fn user_chat_performance_processor(
     loop {
         tokio::select! {
             Some(metric_update) = metric_receiver.recv() => {
-                for (user_id, met_value) in metric_update.updates.iter() {
-                    get_performance_or_default(&mut user_performances, user_id, &metric_defaults, &metadata_defaults);
-                    if let Some(user_chat_performance) = user_performances.get_mut(user_id) {
-                        if let Some(metric_value) = user_chat_performance.metrics.get_mut(&metric_update.metric_name) {
-                            *metric_value += met_value;
-                            debug!("Updating metric: {} with value: {:?}", metric_update.metric_name, met_value);
-                        }
-                    }
-                }
+                metric_update.updates.iter().for_each(|(user_id, met_value)| {
+                    let user_chat_performance = get_performance_or_default(&mut user_performances, user_id, &metric_defaults, &metadata_defaults);
+                    user_chat_performance.metrics.entry(metric_update.metric_name.clone()).and_modify(|metric_value| *metric_value += met_value);
+                });
             }
             Some(metadata_update) = metadata_receiver.recv() => {
-                for (user_id, met_value) in metadata_update.updates.iter() {
-                    get_performance_or_default(&mut user_performances, user_id, &metric_defaults, &metadata_defaults);
-                    if let Some(user_chat_performance) = user_performances.get_mut(user_id) {
-                        if metadata_update.metadata_name == "basic_info" {
-                            let (username, avatar) = match met_value.get_basic_info() {
-                                Some((username, avatar)) => (username, avatar),
-                                None => {warn!("Could not get username and/or url for user_id {}. Skipping", user_id); continue;}
-                            };
-                            user_chat_performance.username = username;
-                            user_chat_performance.avatar = avatar;
-                        } else if let Some(metadata_value) = user_chat_performance.metadata.get_mut(&metadata_update.metadata_name) {
-                            *metadata_value = met_value.clone();
-                            debug!("Updating metadata: {} with value: {:?}", metadata_update.metadata_name, met_value);
+                metadata_update.updates.iter().for_each(|(user_id, met_value)| {
+                    let user_chat_performance = get_performance_or_default(&mut user_performances, user_id, &metric_defaults, &metadata_defaults);
+                    match metadata_update.metadata_name.as_str() {
+                        "basic_info" => {
+                            if let Some((username, avatar)) = met_value.get_basic_info() {
+                                user_chat_performance.username = username;
+                                user_chat_performance.avatar = avatar;
+                            } else {
+                                warn!("Could not get username and/or url for user_id {}. Skipping", user_id);
+                            }
+                        }
+                        _ => {
+                            if let Some(metadata_value) = user_chat_performance.metadata.get_mut(&metadata_update.metadata_name) {
+                                *metadata_value = met_value.clone();
+                                debug!("Updating metadata: {} with value: {:?}", metadata_update.metadata_name, met_value);
+                            }
                         }
                     }
-                }
+                });
             }
             else => break,
         }
