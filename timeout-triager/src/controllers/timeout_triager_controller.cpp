@@ -1,15 +1,19 @@
 #include "timeout_triager_controller.hpp"
+#include "triage_folder_controller.hpp"
 #include <memory>
 #include <utility>
+#include <iostream>
 
 void TimeoutTriagerController::onViewShown() {
-    get_options(); // initialize once
+  auto options = get_options();
+
+  TriageFolderController training_data_outputs(options->triage_directory);
+  for (auto &data : training_data_outputs.getTrainingFileModels()) {
+      wxPrintf("sound filename %s\n", data.sound_filename);
+  }
 }
 
-void TimeoutTriagerController::onNeuroConfirm() {
-  auto options = get_options();
-  wxPrintf("xdd %s\n", options->neuro_directory);
-}
+void TimeoutTriagerController::onNeuroConfirm() {}
 
 void TimeoutTriagerController::onEvilConfirm() {}
 

@@ -6,6 +6,7 @@
 #include <memory>
 #include <wx/gdicmn.h>
 #include <wx/wx.h>
+#include <optional>
 
 using namespace std;
 
