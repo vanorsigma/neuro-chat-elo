@@ -1,19 +1,14 @@
 use elo::MessageProcessor;
-use elo::_types::clptypes::{MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
+use elo::_types::clptypes::UserChatPerformance;
 use elo::leaderboards::LeaderboardProcessor;
-use elo::metadata::setup_metadata_and_channels;
-use elo::metrics::setup_metrics_and_channels;
-use futures::join;
-use log::{debug, info, warn};
+use log::{debug, info};
+use std::fs;
 use std::time::Instant;
-use std::{collections::HashMap, fs};
-use tokio::sync::broadcast;
-use tokio::sync::mpsc;
 use twitch_utils::TwitchAPIWrapper;
 
-use twitch_utils::twitchtypes::{ChatLog, Comment};
+use twitch_utils::twitchtypes::ChatLog;
 
-pub struct ChatLogProcessor<'a> {
+pub struct ChatLogProcessor {
     /*
     Processes the chat logs.
 
@@ -22,18 +17,14 @@ pub struct ChatLogProcessor<'a> {
     and the leaderboards package to export the metrics / required user
     metadata to the right people
     */
-    twitch: &'a TwitchAPIWrapper,
     message_processor: MessageProcessor,
 }
 
-impl<'a> ChatLogProcessor<'a> {
-    pub async fn new(twitch: &'a TwitchAPIWrapper) -> Self {
-        let message_processor = MessageProcessor::new(&twitch).await;
+impl ChatLogProcessor {
+    pub async fn new(twitch: &TwitchAPIWrapper) -> Self {
+        let message_processor = MessageProcessor::new(twitch).await;
 
-        Self {
-            twitch,
-            message_processor,
-        }
+        Self { message_processor }
     }
 
     pub fn __parse_to_log_struct(&self, chat_log_path: String) -> ChatLog {
@@ -69,80 +60,4 @@ impl<'a> ChatLogProcessor<'a> {
         let mut leaderboard_processor = LeaderboardProcessor::new();
         leaderboard_processor.run(performances).await;
     }
-}
-
-/// A function to apwn a thread to take a ChatLog and add its comments to a receiver
-pub async fn chatlog_to_receiver(
-    chat_log: ChatLog,
-    senders: Vec<broadcast::Sender<(Comment, u32)>>,
-) {
-    for (sequence_no, comment) in chat_log.comments.iter().enumerate() {
-        for sender in senders.iter() {
-            sender.send((comment.clone(), sequence_no as u32)).unwrap();
-            tokio::task::yield_now().await;
-        }
-    }
-    debug!("Finished adding comments to receivers");
-}
-
-/// A function to spawn a thread that takes two recievers and processes metrics / metadata from them and updates the user performances
-pub async fn user_chat_performance_processor(
-    metric_defaults: HashMap<String, f32>,
-    mut metric_receiver: mpsc::Receiver<MetricUpdate>,
-    metadata_defaults: HashMap<String, MetadataTypes>,
-    mut metadata_receiver: mpsc::Receiver<MetadataUpdate>,
-) -> HashMap<String, UserChatPerformance> {
-    let mut user_performances: HashMap<String, UserChatPerformance> = HashMap::new();
-    loop {
-        tokio::select! {
-            Some(metric_update) = metric_receiver.recv() => {
-                metric_update.updates.iter().for_each(|(user_id, met_value)| {
-                    let user_chat_performance = get_performance_or_default(&mut user_performances, user_id, &metric_defaults, &metadata_defaults);
-                    user_chat_performance.metrics.entry(metric_update.metric_name.clone()).and_modify(|metric_value| *metric_value += met_value);
-                });
-            }
-            Some(metadata_update) = metadata_receiver.recv() => {
-                metadata_update.updates.iter().for_each(|(user_id, met_value)| {
-                    let user_chat_performance = get_performance_or_default(&mut user_performances, user_id, &metric_defaults, &metadata_defaults);
-                    match metadata_update.metadata_name.as_str() {
-                        "basic_info" => {
-                            if let Some((username, avatar)) = met_value.get_basic_info() {
-                                user_chat_performance.username = username;
-                                user_chat_performance.avatar = avatar;
-                            } else {
-                                warn!("Could not get username and/or url for user_id {}. Skipping", user_id);
-                            }
-                        }
-                        _ => {
-                            if let Some(metadata_value) = user_chat_performance.metadata.get_mut(&metadata_update.metadata_name) {
-                                *metadata_value = met_value.clone();
-                                debug!("Updating metadata: {} with value: {:?}", metadata_update.metadata_name, met_value);
-                            }
-                        }
-                    }
-                });
-            }
-            else => break,
-        }
-    }
-    debug!("Finished processing user performances");
-    user_performances
-}
-
-/// Get a user performance or create a new one if it doesn't exist
-fn get_performance_or_default<'a>(
-    user_performances: &'a mut HashMap<String, UserChatPerformance>,
-    user_id: &'a str,
-    metrics: &'a HashMap<String, f32>,
-    metadatas: &'a HashMap<String, MetadataTypes>,
-) -> &'a mut UserChatPerformance {
-    user_performances
-        .entry(user_id.to_owned())
-        .or_insert(UserChatPerformance {
-            id: user_id.to_owned(),
-            username: user_id.to_owned(),
-            avatar: "".to_string(),
-            metrics: metrics.clone(),
-            metadata: metadatas.clone(),
-        })
 }
