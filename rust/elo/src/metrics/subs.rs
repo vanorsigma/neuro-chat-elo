@@ -5,7 +5,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 use crate::_types::clptypes::MetricUpdate;
-use crate::_types::twitchtypes::{ChatMessageFragment, Comment};
+use twitch_utils::twitchtypes::{ChatMessageFragment, Comment};
 use crate::metrics::metrictrait::AbstractMetric;
 
 const WEIGHT_SUBS: f32 = 0.1;

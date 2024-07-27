@@ -2,13 +2,21 @@ use std::collections::HashMap;
 
 use dotenv::dotenv;
 use log::debug;
+use serde::{Deserialize, Serialize};
 use twitch_api::helix::chat::{GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
 use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
 use twitch_api::HelixClient;
 
-use crate::_constants::USER_AGENT;
-use crate::_types::clptypes::BadgeInformation;
+pub const USER_AGENT: &str = concat!(
+    "neuro-chat-elo/0.1 ",
+    env!("CARGO_PKG_NAME"),
+    "/",
+    env!("CARGO_PKG_VERSION"),
+    " (https://vanorsigma.github.io/neuro-chat-elo)"
+);
+
+pub mod twitchtypes;
 
 #[derive(Clone)]
 pub struct TwitchAPIWrapper {
@@ -82,4 +90,10 @@ impl TwitchAPIWrapper {
 
         Ok(badge_sets)
     }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct BadgeInformation {
+    pub description: String,
+    pub image_url: String,
 }

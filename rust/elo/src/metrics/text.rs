@@ -2,7 +2,7 @@ use crate::_types::clptypes::MetricUpdate;
 /*
 The text metric
 */
-use crate::_types::twitchtypes::Comment;
+use twitch_utils::twitchtypes::Comment;
 use crate::metrics::metrictrait::AbstractMetric;
 
 const WEIGHT_TEXT: f32 = 0.02;

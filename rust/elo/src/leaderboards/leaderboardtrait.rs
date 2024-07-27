@@ -1,9 +1,10 @@
-use crate::_types::clptypes::{BadgeInformation, UserChatPerformance};
+use crate::_types::clptypes::UserChatPerformance;
 use crate::_types::leaderboardtypes::{LeaderboardExportItem, LeaderboardInnerState};
 use log::{debug, info};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
+use twitch_utils::BadgeInformation;
 
 const K: f32 = 2.0;
 
@@ -56,18 +57,18 @@ pub trait AbstractLeaderboard {
         if let Some(score) = self.calculate_score(&performance) {
             debug!("Score for the above is {}", score);
 
-            let entry = self
-                .__get_state()
-                .entry(performance.id.clone())
-                .or_insert(LeaderboardInnerState {
-                    id: performance.id,
-                    username: performance.username,
-                    avatar: performance.avatar,
-                    badges: None,
-                    previous_rank: None,
-                    elo: 1200.0,
-                    score: 0.0,
-                });
+            let entry =
+                self.__get_state()
+                    .entry(performance.id.clone())
+                    .or_insert(LeaderboardInnerState {
+                        id: performance.id,
+                        username: performance.username,
+                        avatar: performance.avatar,
+                        badges: None,
+                        previous_rank: None,
+                        elo: 1200.0,
+                        score: 0.0,
+                    });
 
             let badges: Vec<BadgeInformation> = performance
                 .metadata
@@ -136,22 +137,30 @@ pub trait AbstractLeaderboard {
         let sample_users: Vec<(f32, f32)> = sample_scores
             .iter()
             .map(|score| {
-            let closest_user = self.__get_state().values()
-                .min_by(|a, b| (a.score - score).abs().partial_cmp(&(b.score - score).abs()).unwrap())
-                .unwrap();
-            (*score, closest_user.elo)
-            }).collect();
+                let closest_user = self
+                    .__get_state()
+                    .values()
+                    .min_by(|a, b| {
+                        (a.score - score)
+                            .abs()
+                            .partial_cmp(&(b.score - score).abs())
+                            .unwrap()
+                    })
+                    .unwrap();
+                (*score, closest_user.elo)
+            })
+            .collect();
 
         // Calculate the new elo for each user
         self.__get_state().values_mut().for_each(|state| {
             let diff: f32 = sample_users
-            .iter()
-            .map(|(sample_score, sample_elo)| {
-                let won = state.score > *sample_score;
-                let p = 1.0 / (1.0 + 10.0_f32.powf((sample_elo - state.elo) / 400.0));
-                K * (won as u8 as f32 - p)
-            })
-            .sum();
+                .iter()
+                .map(|(sample_score, sample_elo)| {
+                    let won = state.score > *sample_score;
+                    let p = 1.0 / (1.0 + 10.0_f32.powf((sample_elo - state.elo) / 400.0));
+                    K * (won as u8 as f32 - p)
+                })
+                .sum();
             state.elo += diff;
         });
     }

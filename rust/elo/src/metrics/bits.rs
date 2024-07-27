@@ -1,5 +1,5 @@
 use crate::_types::clptypes::MetricUpdate;
-use crate::_types::twitchtypes::Comment;
+use twitch_utils::twitchtypes::Comment;
 use crate::metrics::metrictrait::AbstractMetric;
 
 const WEIGHT_BITS: f32 = 0.1;

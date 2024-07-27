@@ -1,4 +1,4 @@
-use crate::_types::twitchtypes::Comment;
+use twitch_utils::twitchtypes::Comment;
 use crate::_types::clptypes::MetricUpdate;
 use std::collections::HashMap;
 

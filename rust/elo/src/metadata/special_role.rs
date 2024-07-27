@@ -5,9 +5,9 @@ Figures out if the user is a special role
 use std::collections::HashMap;
 
 use crate::_types::clptypes::{MetadataTypes, MetadataUpdate};
-use crate::_types::twitchtypes::Comment;
+use twitch_utils::twitchtypes::Comment;
 use crate::metadata::metadatatrait::AbstractMetadata;
-use crate::twitch_utils::TwitchAPIWrapper;
+use twitch_utils::TwitchAPIWrapper;
 
 const SPECIAL_ROLES: [&str; 3] = ["moderator", "vip", "broadcaster"];
 

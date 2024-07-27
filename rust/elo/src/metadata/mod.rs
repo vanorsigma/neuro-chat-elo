@@ -12,9 +12,9 @@ use tokio::sync::mpsc;
 
 use crate::_types::clptypes::MetadataTypes;
 use crate::_types::clptypes::MetadataUpdate;
-use crate::_types::twitchtypes::Comment;
+use twitch_utils::twitchtypes::Comment;
 use crate::metadata::metadatatrait::AbstractMetadata;
-use crate::twitch_utils::TwitchAPIWrapper;
+use twitch_utils::TwitchAPIWrapper;
 pub struct MetadataProcessor {
     pub defaults: HashMap<String, MetadataTypes>,
     broadcast_receiver: broadcast::Receiver<(Comment, u32)>,

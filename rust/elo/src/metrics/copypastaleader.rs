@@ -1,7 +1,7 @@
 use log::debug;
 
 use crate::_types::clptypes::MetricUpdate;
-use crate::_types::twitchtypes::Comment;
+use twitch_utils::twitchtypes::Comment;
 use crate::metrics::metrictrait::AbstractMetric;
 
 const WEIGHT_COPYPASTA: f32 = 0.3;

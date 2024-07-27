@@ -13,7 +13,7 @@ use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 
 use crate::_types::clptypes::MetricUpdate;
-use crate::_types::twitchtypes::Comment;
+use twitch_utils::twitchtypes::Comment;
 use crate::metrics::metrictrait::AbstractMetric;
 
 pub struct MetricProcessor {

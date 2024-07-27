@@ -3,8 +3,8 @@ Represents an abstract metadata
 */
 
 use crate::_types::clptypes::{MetadataTypes, MetadataUpdate};
-use crate::_types::twitchtypes::Comment;
-use crate::twitch_utils::TwitchAPIWrapper;
+use twitch_utils::twitchtypes::Comment;
+use twitch_utils::TwitchAPIWrapper;
 
 pub trait AbstractMetadata: Sized {
     /*

@@ -2,8 +2,8 @@
 Publically accessible leaderboard types
 */
 
-use super::clptypes::BadgeInformation;
 use serde::{Deserialize, Serialize};
+use twitch_utils::BadgeInformation;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct LeaderboardExportItem {

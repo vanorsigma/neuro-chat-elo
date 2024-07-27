@@ -1,15 +1,10 @@
-mod _constants;
-mod _types;
 mod backfill;
 mod chatlogprocessor;
-mod leaderboards;
-mod metadata;
-mod metrics;
-mod twitch_utils;
 mod twitchdownloaderproxy;
 
 use env_logger::Env;
 use log::info;
+use ::twitch_utils::TwitchAPIWrapper;
 use std::{env, process::exit};
 
 #[tokio::main]
@@ -27,9 +22,9 @@ async fn main() {
 
     info!("Authenticating with Twitch...");
 
-    let twitch = twitch_utils::TwitchAPIWrapper::new().await.unwrap();
+    let twitch = TwitchAPIWrapper::new().await.unwrap();
     let vod_id = twitch
-        .get_latest_vod_id(_constants::VED_CH_ID.to_string())
+        .get_latest_vod_id(elo::_constants::VED_CH_ID.to_string())
         .await;
 
     info!("Script triggered, pulling logs for VOD ID: {}...", vod_id);

@@ -5,9 +5,9 @@ Get the username and avatar of the user
 use std::collections::HashMap;
 
 use crate::_types::clptypes::{MetadataTypes, MetadataUpdate};
-use crate::_types::twitchtypes::Comment;
+use twitch_utils::twitchtypes::Comment;
 use crate::metadata::metadatatrait::AbstractMetadata;
-use crate::twitch_utils::TwitchAPIWrapper;
+use twitch_utils::TwitchAPIWrapper;
 
 #[derive(Default, Debug)]
 pub struct BasicInfo;

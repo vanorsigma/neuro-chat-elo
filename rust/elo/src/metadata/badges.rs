@@ -5,10 +5,10 @@ use log::error;
 use std::collections::HashMap;
 
 use crate::_constants::VED_CH_ID;
-use crate::_types::clptypes::{BadgeInformation, MetadataTypes, MetadataUpdate};
-use crate::_types::twitchtypes::Comment;
+use crate::_types::clptypes::{MetadataTypes, MetadataUpdate};
 use crate::metadata::metadatatrait::AbstractMetadata;
-use crate::twitch_utils::TwitchAPIWrapper;
+use twitch_utils::twitchtypes::Comment;
+use twitch_utils::{BadgeInformation, TwitchAPIWrapper};
 
 pub struct Badges {
     badges: HashMap<String, HashMap<String, BadgeInformation>>,
@@ -28,11 +28,7 @@ impl AbstractMetadata for Badges {
         MetadataTypes::BadgeList(vec![])
     }
 
-    fn get_metadata(
-        &self,
-        comment: Comment,
-        _sequence_no: u32,
-    ) -> MetadataUpdate {
+    fn get_metadata(&self, comment: Comment, _sequence_no: u32) -> MetadataUpdate {
         let mut metadata: Vec<BadgeInformation> = vec![];
         let user_badges = if let Some(user_badges) = comment.message.user_badges {
             user_badges
@@ -44,7 +40,7 @@ impl AbstractMetadata for Badges {
             );
             return MetadataUpdate {
                 metadata_name: self.get_name(),
-                updates: out
+                updates: out,
             };
         };
         for badge in user_badges {

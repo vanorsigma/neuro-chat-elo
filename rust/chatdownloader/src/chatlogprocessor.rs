@@ -1,17 +1,16 @@
+use elo::_types::clptypes::{MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
+use elo::leaderboards::LeaderboardProcessor;
+use elo::metadata::setup_metadata_and_channels;
+use elo::metrics::setup_metrics_and_channels;
 use futures::join;
 use log::{debug, info, warn};
 use std::time::Instant;
 use std::{collections::HashMap, fs};
 use tokio::sync::broadcast;
 use tokio::sync::mpsc;
+use twitch_utils::TwitchAPIWrapper;
 
-use crate::_types::clptypes::{MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
-use crate::_types::twitchtypes::{ChatLog, Comment};
-use crate::twitch_utils::TwitchAPIWrapper;
-
-use crate::leaderboards::LeaderboardProcessor;
-use crate::metadata::setup_metadata_and_channels;
-use crate::metrics::setup_metrics_and_channels;
+use twitch_utils::twitchtypes::{ChatLog, Comment};
 
 pub struct ChatLogProcessor<'a> {
     /*
@@ -50,20 +49,25 @@ impl<'a> ChatLogProcessor<'a> {
             setup_metadata_and_channels(self.twitch).await;
 
         info!("Parsing chat log object");
-        let chat_adder =
-            chatlog_to_receiver(chat_log, vec![metric_sender, metadata_sender]);
-        let performances = user_chat_performance_processor(metric_processor.defaults.clone(), metric_receiver, metadata_processor.defaults.clone(), metadata_receiver);
+        let chat_adder = chatlog_to_receiver(chat_log, vec![metric_sender, metadata_sender]);
+        let performances = user_chat_performance_processor(
+            metric_processor.defaults.clone(),
+            metric_receiver,
+            metadata_processor.defaults.clone(),
+            metadata_receiver,
+        );
 
         let (_, _, _, performances) = join!(
             chat_adder,
-            async move {metric_processor.run().await;},
-            async move {metadata_processor.run().await;},
+            async move {
+                metric_processor.run().await;
+            },
+            async move {
+                metadata_processor.run().await;
+            },
             performances,
         );
-        info!(
-            "Chat log processing took: {:#?}",
-            start_time.elapsed()
-        );
+        info!("Chat log processing took: {:#?}", start_time.elapsed());
         performances.into_values().collect()
     }
 

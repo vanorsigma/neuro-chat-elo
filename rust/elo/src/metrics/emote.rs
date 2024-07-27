@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::_constants::VED_CH_ID;
 use crate::_types::clptypes::MetricUpdate;
-use crate::_types::twitchtypes::{ChatMessageFragment, Comment};
+use twitch_utils::twitchtypes::{ChatMessageFragment, Comment};
 
 use super::metrictrait::AbstractMetric;
 

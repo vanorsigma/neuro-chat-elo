@@ -1,19 +1,17 @@
 use std::collections::HashMap;
 
-use _types::{
-    clptypes::{MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance},
-    twitchtypes::Comment,
-};
+use _types::clptypes::{MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
 use log::{debug, warn};
 use metadata::setup_metadata_and_channels;
 use metrics::setup_metrics_and_channels;
 use tokio::sync::mpsc;
+use twitch_utils::twitchtypes::Comment;
 
 pub mod _constants;
 pub mod _types;
+pub mod leaderboards;
 pub mod metadata;
 pub mod metrics;
-pub mod twitch_utils;
 
 pub struct MessageProcessor {
     metric_processor_task: tokio::task::JoinHandle<()>,
@@ -24,7 +22,8 @@ pub struct MessageProcessor {
 
 impl MessageProcessor {
     pub async fn new(twitch: &twitch_utils::TwitchAPIWrapper) -> Self {
-        let (mut metric_processor, metric_sender, metric_receiver) = setup_metrics_and_channels().await;
+        let (mut metric_processor, metric_sender, metric_receiver) =
+            setup_metrics_and_channels().await;
 
         let (mut metadata_processor, metadata_sender, metadata_receiver) =
             setup_metadata_and_channels(twitch).await;
@@ -39,7 +38,9 @@ impl MessageProcessor {
         Self {
             metric_processor_task: tokio::task::spawn(async move { metric_processor.run().await }),
             metric_sender,
-            metadata_processor_task: tokio::task::spawn(async move { metadata_processor.run().await }),
+            metadata_processor_task: tokio::task::spawn(
+                async move { metadata_processor.run().await },
+            ),
             metadata_sender: (),
         }
     }

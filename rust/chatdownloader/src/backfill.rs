@@ -5,8 +5,8 @@ A function to backfill given video IDs
 use log::info;
 
 use crate::chatlogprocessor::ChatLogProcessor;
-use crate::twitch_utils::TwitchAPIWrapper;
 use crate::twitchdownloaderproxy::TwitchChatDownloader;
+use twitch_utils::TwitchAPIWrapper;
 
 const VIDEO_IDS: [&str; 12] = [
     "2170316549",
@@ -30,7 +30,10 @@ pub async fn backfill() {
     for video_id in VIDEO_IDS.iter() {
         info!("Backfilling for video ID: {}", video_id);
         // let chat_log = downloader.download_chat(video_id).await.unwrap();
-        let chat_log = downloader.download_chat(video_id).await.expect("Could not download chat log: {e:?}");
+        let chat_log = downloader
+            .download_chat(video_id)
+            .await
+            .expect("Could not download chat log: {e:?}");
 
         let user_performances = ChatLogProcessor::new(&twitch)
             .parse_from_log_object(chat_log)
