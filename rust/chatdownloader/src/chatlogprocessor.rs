@@ -47,7 +47,9 @@ impl<'a> ChatLogProcessor<'a> {
         debug!("Starting chat log processing");
 
         for message in chat_log.comments {
-            self.message_processor.process_message(message.clone());
+            self.message_processor
+                .process_message(message.clone())
+                .await;
         }
 
         let performances = self.message_processor.finish().await;
