@@ -14,7 +14,7 @@ set(SOURCE_FILES
   src/components/waveform_visualizer.cpp
   src/controllers/timeout_triager_controller.cpp
   src/controllers/triage_folder_controller.cpp
-  src/controllers/progress_controller.cpp
+  src/controllers/triage_folder_controller.cpp
   src/model/training_files_model.cpp
 )
 

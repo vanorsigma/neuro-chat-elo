@@ -1,15 +1,24 @@
 #pragma once
 
+#include "../model/training_files_model.hpp"
 #include <string>
 #include <vector>
-#include "../model/training_files_model.hpp"
 
 class TriageFolderController {
 public:
-  TriageFolderController(const std::string& directory_path);
+  typedef std::vector<TrainingFileModel>::const_iterator const_iterator;
+
+  TriageFolderController() = default;
+  TriageFolderController(const std::string &directory_path);
+
+  void setParent(wxWindow *parent);
   void setDirectoryPath(const std::string &directory_path);
-  std::vector<TrainingFileModel> getTrainingFileModels();
+
+  std::vector<TrainingFileModel>::const_iterator getTrainingFileModels();
+  std::vector<TrainingFileModel>::const_iterator getTrainingFileModelsEnd();
 
 private:
-    std::string directory_path;
+  wxWindow *parent;
+  std::string directory_path;
+  std::vector<TrainingFileModel> training_file_models;
 };

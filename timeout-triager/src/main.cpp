@@ -4,9 +4,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <memory>
+#include <optional>
 #include <wx/gdicmn.h>
 #include <wx/wx.h>
-#include <optional>
 
 using namespace std;
 
@@ -96,8 +96,7 @@ TimeoutTriagerDialog::TimeoutTriagerDialog(
     setDelegate(delegate);
 
   waveformVisualizer = new WaveformVisualizer(this);
-  auto data = audio::squeeze(audio::getWaveFormForAudioFile("something.wav"));
-  waveformVisualizer->setWaveformData(data);
+  delegate->setWaveformVisualizer(waveformVisualizer);
 
   mainSizer = new wxBoxSizer(wxVERTICAL);
   buttonSizers = new wxBoxSizer(wxHORIZONTAL);
@@ -170,4 +169,5 @@ TimeoutTriagerDialog::TimeoutTriagerDialog(
 void TimeoutTriagerDialog::setDelegate(
     const shared_ptr<TimeoutTriagerControllerDelegate> &delegate) {
   this->delegate = weak_ptr<TimeoutTriagerControllerDelegate>(delegate);
+  this->delegate.lock().get()->setParent(this);
 }
