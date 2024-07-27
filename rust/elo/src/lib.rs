@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::atomic::AtomicU32};
 
 use _types::clptypes::{MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
 use log::{debug, warn};
@@ -17,7 +17,8 @@ pub struct MessageProcessor {
     metric_processor_task: tokio::task::JoinHandle<()>,
     metric_sender: tokio::sync::broadcast::Sender<(Comment, u32)>,
     metadata_processor_task: tokio::task::JoinHandle<()>,
-    metadata_sender: (),
+    metadata_sender: tokio::sync::broadcast::Sender<(Comment, u32)>,
+    sequence_number: AtomicU32,
 }
 
 impl MessageProcessor {
@@ -41,15 +42,26 @@ impl MessageProcessor {
             metadata_processor_task: tokio::task::spawn(
                 async move { metadata_processor.run().await },
             ),
-            metadata_sender: (),
+            metadata_sender,
+            sequence_number: AtomicU32::new(0),
         }
     }
 
-    pub async fn process_message(&self, message: ()) {}
+    pub async fn process_message(&self, message: Comment) {
+        let sequence_number = self
+            .sequence_number
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        for sender in [&self.metric_sender, &self.metadata_sender] {
+            sender.send((message.clone(), sequence_number)).unwrap();
+        }
+    }
 
     pub async fn finish(self) -> () {
         drop(self.metric_sender);
         drop(self.metadata_sender);
+
+        self.metadata_processor_task.await.unwrap();
+        self.metric_processor_task.await.unwrap();
     }
 }
 
