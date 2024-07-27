@@ -19,6 +19,7 @@ pub struct MessageProcessor {
     metadata_processor_task: tokio::task::JoinHandle<()>,
     metadata_sender: tokio::sync::broadcast::Sender<(Comment, u32)>,
     sequence_number: AtomicU32,
+    performances_task: tokio::task::JoinHandle<HashMap<String, UserChatPerformance>>,
 }
 
 impl MessageProcessor {
@@ -43,6 +44,7 @@ impl MessageProcessor {
                 async move { metadata_processor.run().await },
             ),
             metadata_sender,
+            performances_task: tokio::task::spawn(performances),
             sequence_number: AtomicU32::new(0),
         }
     }
@@ -56,12 +58,14 @@ impl MessageProcessor {
         }
     }
 
-    pub async fn finish(self) -> () {
+    pub async fn finish(self) -> HashMap<String, UserChatPerformance> {
         drop(self.metric_sender);
         drop(self.metadata_sender);
 
         self.metadata_processor_task.await.unwrap();
         self.metric_processor_task.await.unwrap();
+
+        self.performances_task.await.unwrap()
     }
 }
 

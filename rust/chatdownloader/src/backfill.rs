@@ -36,7 +36,8 @@ pub async fn backfill() {
             .expect("Could not download chat log: {e:?}");
 
         let user_performances = ChatLogProcessor::new(&twitch)
-            .parse_from_log_object(chat_log)
+            .await
+            .process_from_log_object(chat_log)
             .await;
 
         ChatLogProcessor::export_to_leaderboards(user_performances).await;

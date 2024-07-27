@@ -2,9 +2,9 @@ mod backfill;
 mod chatlogprocessor;
 mod twitchdownloaderproxy;
 
+use ::twitch_utils::TwitchAPIWrapper;
 use env_logger::Env;
 use log::info;
-use ::twitch_utils::TwitchAPIWrapper;
 use std::{env, process::exit};
 
 #[tokio::main]
@@ -30,10 +30,13 @@ async fn main() {
     info!("Script triggered, pulling logs for VOD ID: {}...", vod_id);
 
     let mut downloader = twitchdownloaderproxy::TwitchChatDownloader::new();
-    let chat_log = downloader.download_chat(&vod_id).await.expect("Failed to download chat: {e:?}");
+    let chat_log = downloader
+        .download_chat(&vod_id)
+        .await
+        .expect("Failed to download chat: {e:?}");
 
-    let processor = chatlogprocessor::ChatLogProcessor::new(&twitch);
+    let processor = chatlogprocessor::ChatLogProcessor::new(&twitch).await;
     // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());
-    let user_performances = processor.parse_from_log_object(chat_log).await;
+    let user_performances = processor.process_from_log_object(chat_log).await;
     chatlogprocessor::ChatLogProcessor::export_to_leaderboards(user_performances).await;
 }

@@ -1,3 +1,4 @@
+use elo::MessageProcessor;
 use elo::_types::clptypes::{MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
 use elo::leaderboards::LeaderboardProcessor;
 use elo::metadata::setup_metadata_and_channels;
@@ -22,11 +23,17 @@ pub struct ChatLogProcessor<'a> {
     metadata to the right people
     */
     twitch: &'a TwitchAPIWrapper,
+    message_processor: MessageProcessor,
 }
 
 impl<'a> ChatLogProcessor<'a> {
-    pub fn new(twitch: &'a TwitchAPIWrapper) -> Self {
-        Self { twitch }
+    pub async fn new(twitch: &'a TwitchAPIWrapper) -> Self {
+        let message_processor = MessageProcessor::new(&twitch).await;
+
+        Self {
+            twitch,
+            message_processor,
+        }
     }
 
     pub fn __parse_to_log_struct(&self, chat_log_path: String) -> ChatLog {
@@ -35,46 +42,24 @@ impl<'a> ChatLogProcessor<'a> {
         chat_log
     }
 
-    pub async fn parse_from_log_object(&self, chat_log: ChatLog) -> Vec<UserChatPerformance> {
+    pub async fn process_from_log_object(self, chat_log: ChatLog) -> Vec<UserChatPerformance> {
         let start_time = Instant::now();
         debug!("Starting chat log processing");
 
-        debug!("Instantiated metric and metadata processors");
+        for message in chat_log.comments {
+            self.message_processor.process_message(message.clone());
+        }
 
-        debug!("Setting up channels for metric and metadata processors");
-        let (mut metric_processor, metric_sender, metric_receiver) =
-            setup_metrics_and_channels().await;
+        let performances = self.message_processor.finish().await;
 
-        let (mut metadata_processor, metadata_sender, metadata_receiver) =
-            setup_metadata_and_channels(self.twitch).await;
-
-        info!("Parsing chat log object");
-        let chat_adder = chatlog_to_receiver(chat_log, vec![metric_sender, metadata_sender]);
-        let performances = user_chat_performance_processor(
-            metric_processor.defaults.clone(),
-            metric_receiver,
-            metadata_processor.defaults.clone(),
-            metadata_receiver,
-        );
-
-        let (_, _, _, performances) = join!(
-            chat_adder,
-            async move {
-                metric_processor.run().await;
-            },
-            async move {
-                metadata_processor.run().await;
-            },
-            performances,
-        );
         info!("Chat log processing took: {:#?}", start_time.elapsed());
         performances.into_values().collect()
     }
 
     #[allow(dead_code)]
-    async fn parse(&self, chat_log_path: String) -> Vec<UserChatPerformance> {
+    async fn process(self, chat_log_path: String) -> Vec<UserChatPerformance> {
         let chat_log = self.__parse_to_log_struct(chat_log_path);
-        self.parse_from_log_object(chat_log).await
+        self.process_from_log_object(chat_log).await
     }
 
     /// A function to export the user performances to the leaderboards and save them
