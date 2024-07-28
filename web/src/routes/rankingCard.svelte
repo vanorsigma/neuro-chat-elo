@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { sanitizeString } from '$lib';
   import Leaderboard from '$lib/leaderboard.svelte';
   import Podium from '$lib/podium.svelte';
   import type { RankingInfo } from '$lib/ranks';
