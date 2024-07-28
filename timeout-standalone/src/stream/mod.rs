@@ -52,6 +52,8 @@ impl FFMPEGDecorator {
             .arg(format!("{}", consts::MIDDLEMAN_FFMPEG_SAMPLE_RATE))
             .arg("-f")
             .arg("f32le")
+            .arg("-f")
+            .arg("wav")
             .arg("-")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
