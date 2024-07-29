@@ -15,6 +15,7 @@ use crate::_types::clptypes::MetadataUpdate;
 use twitch_utils::twitchtypes::Comment;
 use crate::metadata::metadatatrait::AbstractMetadata;
 use twitch_utils::TwitchAPIWrapper;
+
 pub struct MetadataProcessor {
     pub defaults: HashMap<String, MetadataTypes>,
     broadcast_receiver: broadcast::Receiver<(Comment, u32)>,
