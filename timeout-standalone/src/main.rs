@@ -68,7 +68,8 @@ async fn main() {
     );
     // let mut stream = FFMPEGDecorator::wrap_around(TwitchLiveStream::new("vedal987", None));
     // let mut stream = FFMPEGDecorator::wrap_around(TwitchVOD::new("2182332760"));
-    let mut stream = FFMPEGDecorator::wrap_around(TwitchVOD::new("2188296968"));
+    // let mut stream = FFMPEGDecorator::wrap_around(TwitchVOD::new("2188296968"));
+    let mut stream = FFMPEGDecorator::wrap_around(TwitchVOD::new("2175349344"));
     /*let mut stream = FFMPEGDecorator::wrap_around(Local::new("./evil_trimmed.wav"));*/
     let (sender, mut receiver) = channel(1000);
 
