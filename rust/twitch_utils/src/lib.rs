@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use dotenv::dotenv;
 use log::debug;
-use serde::{Deserialize, Serialize};
-use twitch_api::helix::chat::{BadgeSet, ChatBadge, GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
+use twitch_api::helix::chat::{ChatBadge, GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
 use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
 use twitch_api::HelixClient;
