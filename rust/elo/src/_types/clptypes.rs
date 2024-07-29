@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use twitch_utils::BadgeInformation;
 use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -9,6 +8,12 @@ pub struct UserChatPerformance {
     pub avatar: String,
     pub metrics: HashMap<String, f32>,
     pub metadata: HashMap<String, MetadataTypes>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct BadgeInformation {
+    pub description: String,
+    pub image_url: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -44,11 +49,11 @@ impl MetadataTypes {
 #[derive(Default)]
 pub struct MetricUpdate {
     pub metric_name: String,
-    pub updates: HashMap<String, f32>
+    pub updates: HashMap<String, f32>,
 }
 
 #[derive(Default)]
 pub struct MetadataUpdate {
     pub metadata_name: String,
-    pub updates: HashMap<String, MetadataTypes>
+    pub updates: HashMap<String, MetadataTypes>,
 }

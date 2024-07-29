@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use dotenv::dotenv;
 use log::debug;
 use serde::{Deserialize, Serialize};
-use twitch_api::helix::chat::{GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
+use twitch_api::helix::chat::{BadgeSet, ChatBadge, GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
 use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
 use twitch_api::HelixClient;
@@ -61,7 +61,7 @@ impl TwitchAPIWrapper {
     pub async fn get_badges(
         &self,
         ch_id: String,
-    ) -> Result<HashMap<String, HashMap<String, BadgeInformation>>, reqwest::Error> {
+    ) -> Result<HashMap<String, HashMap<String, ChatBadge>>, reqwest::Error> {
         let request = GetChannelChatBadgesRequest::broadcaster_id(ch_id.clone());
         let response = self.twitch.req_get(request, &self.token);
         let channel_badges = response.await.unwrap().data;
@@ -72,17 +72,13 @@ impl TwitchAPIWrapper {
 
         let all_badges = [global_badges, channel_badges].concat();
 
-        let mut badge_sets: HashMap<String, HashMap<String, BadgeInformation>> = HashMap::new();
+        let mut badge_sets: HashMap<String, HashMap<String, ChatBadge>> = HashMap::new();
 
         for badge_set in all_badges {
-            let mut badges: HashMap<String, BadgeInformation> = HashMap::new();
+            let mut badges: HashMap<String, ChatBadge> = HashMap::new();
 
             for badge in badge_set.versions {
-                let badge_info = BadgeInformation {
-                    description: badge_set.set_id.to_string().clone(),
-                    image_url: badge.image_url_4x.clone(),
-                };
-                badges.insert(badge.id.to_string().clone(), badge_info);
+                badges.insert(badge.id.to_string().clone(), badge);
             }
 
             badge_sets.insert(badge_set.set_id.to_string().clone(), badges);
@@ -90,10 +86,4 @@ impl TwitchAPIWrapper {
 
         Ok(badge_sets)
     }
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct BadgeInformation {
-    pub description: String,
-    pub image_url: String,
 }

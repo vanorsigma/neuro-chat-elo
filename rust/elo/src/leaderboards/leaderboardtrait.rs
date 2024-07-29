@@ -1,10 +1,9 @@
-use crate::_types::clptypes::UserChatPerformance;
+use crate::_types::clptypes::{BadgeInformation, UserChatPerformance};
 use crate::_types::leaderboardtypes::{LeaderboardExportItem, LeaderboardInnerState};
 use log::{debug, info};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
-use twitch_utils::BadgeInformation;
 
 const K: f32 = 2.0;
 
