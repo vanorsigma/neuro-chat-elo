@@ -6,6 +6,8 @@ use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
 use twitch_api::HelixClient;
 
+pub mod twitchtypes;
+
 pub const USER_AGENT: &str = concat!(
     "neuro-chat-elo/0.1 ",
     env!("CARGO_PKG_NAME"),
@@ -13,8 +15,6 @@ pub const USER_AGENT: &str = concat!(
     env!("CARGO_PKG_VERSION"),
     " (https://vanorsigma.github.io/neuro-chat-elo)"
 );
-
-pub mod twitchtypes;
 
 #[derive(Clone)]
 pub struct TwitchAPIWrapper {
