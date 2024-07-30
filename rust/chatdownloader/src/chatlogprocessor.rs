@@ -27,7 +27,7 @@ impl ChatLogProcessor {
         Self { message_processor }
     }
 
-    pub fn __parse_to_log_struct(&self, chat_log_path: String) -> ChatLog {
+    pub(crate) fn parse_to_log_struct(&self, chat_log_path: String) -> ChatLog {
         let chat_log_str = fs::read_to_string(chat_log_path).unwrap();
         let chat_log: ChatLog = serde_json::from_str(&chat_log_str).unwrap();
         chat_log
@@ -51,7 +51,7 @@ impl ChatLogProcessor {
 
     #[allow(dead_code)]
     async fn process(self, chat_log_path: String) -> Vec<UserChatPerformance> {
-        let chat_log = self.__parse_to_log_struct(chat_log_path);
+        let chat_log = self.parse_to_log_struct(chat_log_path);
         self.process_from_log_object(chat_log).await
     }
 
