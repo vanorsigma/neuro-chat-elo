@@ -59,6 +59,8 @@ impl MessageProcessor {
     }
 
     pub async fn finish(self) -> HashMap<String, UserChatPerformance> {
+        // These senders need to be dropped before `metadata_processor_task`
+        // and `metric_processor_task` will exit.
         drop(self.metric_sender);
         drop(self.metadata_sender);
 
