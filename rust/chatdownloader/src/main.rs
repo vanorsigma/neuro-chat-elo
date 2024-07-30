@@ -9,6 +9,8 @@ use std::{env, process::exit};
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
+
     let env = Env::default()
         .filter_or("MY_LOG_LEVEL", "info")
         .write_style_or("MY_LOG_STYLE", "always");

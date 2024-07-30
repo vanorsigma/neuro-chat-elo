@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use dotenv::dotenv;
 use log::debug;
 use twitch_api::helix::chat::{ChatBadge, GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
 use twitch_api::helix::videos::GetVideosRequest;
@@ -25,7 +24,6 @@ pub struct TwitchAPIWrapper {
 
 impl TwitchAPIWrapper {
     pub async fn new() -> Result<Self, reqwest::Error> {
-        dotenv().ok();
         let client_id: ClientId = std::env::var("TWITCH_APPID")
             .map(ClientId::new)
             .expect("TWITCH_APPID must be set");
