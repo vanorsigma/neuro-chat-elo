@@ -16,8 +16,10 @@ pub struct Badges {
 
 impl AbstractMetadata for Badges {
     async fn new(twitch: &TwitchAPIWrapper) -> Self {
-        let badges = twitch.get_badges(VED_CH_ID.to_string()).await.unwrap();
-        let badges = badges
+        let badges = twitch
+            .get_badges(VED_CH_ID.to_string())
+            .await
+            .unwrap()
             .into_iter()
             .map(|(set_id, badge_set)| {
                 (
