@@ -13,8 +13,8 @@ use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 
 use crate::_types::clptypes::MetricUpdate;
-use twitch_utils::twitchtypes::Comment;
 use crate::metrics::metrictrait::AbstractMetric;
+use twitch_utils::twitchtypes::Comment;
 
 pub struct MetricProcessor {
     pub defaults: HashMap<String, f32>,
@@ -30,7 +30,10 @@ pub struct MetricProcessor {
 impl MetricProcessor {
     /// Create a new MetricProcessor
     /// get_defaults_and_setup_channels must be called before run
-    pub async fn new(broadcast_receiver: broadcast::Receiver<(Comment, u32)>, mpsc_sender: mpsc::Sender<MetricUpdate>) -> Self {
+    pub async fn new(
+        broadcast_receiver: broadcast::Receiver<(Comment, u32)>,
+        mpsc_sender: mpsc::Sender<MetricUpdate>,
+    ) -> Self {
         let mut defaults: HashMap<String, f32> = HashMap::new();
 
         let bits = bits::Bits::new().await;
@@ -124,9 +127,5 @@ pub async fn setup_metrics_and_channels() -> (
     let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);
     let (mpsc_sender, mpsc_receiver) = mpsc::channel(100000);
     let metric_processor = MetricProcessor::new(broadcast_receiver, mpsc_sender).await;
-    (
-        metric_processor,
-        broadcast_sender,
-        mpsc_receiver,
-    )
+    (metric_processor, broadcast_sender, mpsc_receiver)
 }

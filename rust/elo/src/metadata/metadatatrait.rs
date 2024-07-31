@@ -33,11 +33,7 @@ pub trait AbstractMetadata: Sized {
     Get the default value for this metadata
     */
 
-    fn get_metadata(
-        &self,
-        comment: Comment,
-        sequence_no: u32,
-    ) -> MetadataUpdate;
+    fn get_metadata(&self, comment: Comment, sequence_no: u32) -> MetadataUpdate;
     /*
     Get information about a user from a chat message
 

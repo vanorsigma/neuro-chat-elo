@@ -2,10 +2,10 @@ mod backfill;
 mod chatlogprocessor;
 mod twitchdownloaderproxy;
 
-use twitch_utils::TwitchAPIWrapper;
 use env_logger::Env;
 use log::info;
 use std::{env, process::exit};
+use twitch_utils::TwitchAPIWrapper;
 
 #[tokio::main]
 async fn main() {

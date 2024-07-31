@@ -1,6 +1,6 @@
-use twitch_utils::twitchtypes::Comment;
 use crate::_types::clptypes::MetricUpdate;
 use std::collections::HashMap;
+use twitch_utils::twitchtypes::Comment;
 
 pub trait AbstractMetric {
     /*
@@ -13,17 +13,13 @@ pub trait AbstractMetric {
     Initializes the metric
     */
 
-    fn _shortcut_for_this_comment_user(
-        &self,
-        comment: Comment,
-        score: f32,
-    ) -> MetricUpdate {
+    fn _shortcut_for_this_comment_user(&self, comment: Comment, score: f32) -> MetricUpdate {
         // return {comment.commenter._id: score}
         let mut map: HashMap<String, f32> = HashMap::new();
         map.insert(comment.commenter._id.clone(), score);
         MetricUpdate {
             metric_name: self.get_name(),
-            updates: map
+            updates: map,
         }
     }
 
@@ -58,9 +54,9 @@ pub trait AbstractMetric {
                  the score to add for the user involved in this
                  metric.
         */
-        MetricUpdate{
+        MetricUpdate {
             metric_name: self.get_name(),
-            updates: HashMap::new()
+            updates: HashMap::new(),
         }
     }
 }

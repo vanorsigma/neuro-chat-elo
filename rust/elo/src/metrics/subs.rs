@@ -5,8 +5,8 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 use crate::_types::clptypes::MetricUpdate;
-use twitch_utils::twitchtypes::{ChatMessageFragment, Comment};
 use crate::metrics::metrictrait::AbstractMetric;
+use twitch_utils::twitchtypes::{ChatMessageFragment, Comment};
 
 const WEIGHT_SUBS: f32 = 0.1;
 
@@ -35,11 +35,7 @@ impl AbstractMetric for Subs {
         String::from("subs")
     }
 
-    fn get_metric(
-        &mut self,
-        comment: Comment,
-        _sequence_no: u32,
-    ) -> MetricUpdate {
+    fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> MetricUpdate {
         let total_subs: i32 = comment
             .message
             .fragments

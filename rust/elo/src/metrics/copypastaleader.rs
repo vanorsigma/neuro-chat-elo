@@ -1,8 +1,8 @@
 use log::debug;
 
 use crate::_types::clptypes::MetricUpdate;
-use twitch_utils::twitchtypes::Comment;
 use crate::metrics::metrictrait::AbstractMetric;
+use twitch_utils::twitchtypes::Comment;
 
 const WEIGHT_COPYPASTA: f32 = 0.3;
 const CHAIN_GRACE: u32 = 10;
@@ -119,7 +119,8 @@ impl AbstractMetric for CopypastaLeader {
     fn finish(&self) -> MetricUpdate {
         MetricUpdate {
             metric_name: self.get_name(),
-            updates: self.history
+            updates: self
+                .history
                 .iter()
                 .map(|item| (item.2.clone(), (item.0 - item.3) as f32 * WEIGHT_COPYPASTA))
                 .collect(),

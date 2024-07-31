@@ -8,8 +8,8 @@ use std::io::{self, Read};
 use std::os::unix::fs::PermissionsExt;
 use std::process::Command;
 
-use twitch_utils::USER_AGENT;
 use twitch_utils::twitchtypes::ChatLog;
+use twitch_utils::USER_AGENT;
 
 const RELEASES_URL: &str = "https://api.github.com/repos/lay295/TwitchDownloader/releases/latest";
 

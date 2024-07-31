@@ -96,11 +96,7 @@ impl AbstractMetric for Emote {
         String::from("emote")
     }
 
-    fn get_metric(
-        &mut self,
-        comment: Comment,
-        _sequence_no: u32,
-    ) -> MetricUpdate {
+    fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> MetricUpdate {
         let score: f32 = comment
             .message
             .fragments

@@ -12,8 +12,8 @@ use tokio::sync::mpsc;
 
 use crate::_types::clptypes::MetadataTypes;
 use crate::_types::clptypes::MetadataUpdate;
-use twitch_utils::twitchtypes::Comment;
 use crate::metadata::metadatatrait::AbstractMetadata;
+use twitch_utils::twitchtypes::Comment;
 use twitch_utils::TwitchAPIWrapper;
 
 pub struct MetadataProcessor {
@@ -26,7 +26,11 @@ pub struct MetadataProcessor {
 }
 
 impl MetadataProcessor {
-    pub async fn new(twitch: &TwitchAPIWrapper, broadcast_receiver: broadcast::Receiver<(Comment, u32)>, mpsc_sender: mpsc::Sender<MetadataUpdate>) -> Self {
+    pub async fn new(
+        twitch: &TwitchAPIWrapper,
+        broadcast_receiver: broadcast::Receiver<(Comment, u32)>,
+        mpsc_sender: mpsc::Sender<MetadataUpdate>,
+    ) -> Self {
         let mut defaults: HashMap<String, MetadataTypes> = HashMap::new();
 
         // Initialize the metadata
@@ -93,7 +97,9 @@ async fn calc_metadata<M: AbstractMetadata + Send + Sync + 'static>(
 
 #[allow(clippy::type_complexity)]
 /// Get the default values for the metrics and set up the channels
-pub async fn setup_metadata_and_channels(twitch: &TwitchAPIWrapper) -> (
+pub async fn setup_metadata_and_channels(
+    twitch: &TwitchAPIWrapper,
+) -> (
     MetadataProcessor,
     broadcast::Sender<(Comment, u32)>,
     mpsc::Receiver<MetadataUpdate>,
@@ -101,9 +107,5 @@ pub async fn setup_metadata_and_channels(twitch: &TwitchAPIWrapper) -> (
     let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);
     let (mpsc_sender, mpsc_receiver) = mpsc::channel(100000);
     let metadata_processor = MetadataProcessor::new(twitch, broadcast_receiver, mpsc_sender).await;
-    (
-        metadata_processor,
-        broadcast_sender,
-        mpsc_receiver,
-    )
+    (metadata_processor, broadcast_sender, mpsc_receiver)
 }
