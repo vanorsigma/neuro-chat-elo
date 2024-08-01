@@ -3,6 +3,7 @@ pub mod basic_info;
 pub mod chat_origin;
 pub mod metadatatrait;
 pub mod special_role;
+pub mod is_discord_chat;
 
 use futures::join;
 use log::debug;

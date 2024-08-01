@@ -183,6 +183,18 @@ pub trait AbstractLeaderboard {
         let percentiles: Vec<f32> = chunks.map(|chunk| chunk[chunk.len() / 2]).collect();
         percentiles
     }
+
+    fn is_discord_message(&self, performance: &UserChatPerformance) -> bool {
+        if let MetadataTypes::Bool(true) = performance
+            .metadata
+            .get("is_discord_chat")
+            .unwrap_or(&MetadataTypes::Bool(false))
+        {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 #[macro_export]
