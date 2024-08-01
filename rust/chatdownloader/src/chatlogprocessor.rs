@@ -1,5 +1,5 @@
 use elo::MessageProcessor;
-use elo::_types::clptypes::UserChatPerformance;
+use elo::_types::clptypes::{Message, UserChatPerformance};
 use elo::leaderboards::LeaderboardProcessor;
 use log::{debug, info};
 use std::fs;
@@ -32,11 +32,14 @@ impl ChatLogProcessor {
         serde_json::from_str(&chat_log_str).unwrap()
     }
 
-    pub async fn process_from_log_object(self, chat_log: ChatLog) -> Vec<UserChatPerformance> {
+    pub async fn process_from_messages<Iter: Iterator<Item = Message>>(
+        self,
+        messages: Iter,
+    ) -> Vec<UserChatPerformance> {
         let start_time = Instant::now();
         debug!("Starting chat log processing");
 
-        for message in chat_log.comments {
+        for message in messages {
             self.message_processor
                 .process_message(message.clone())
                 .await;
@@ -46,6 +49,16 @@ impl ChatLogProcessor {
 
         info!("Chat log processing took: {:#?}", start_time.elapsed());
         performances.into_values().collect()
+    }
+
+    pub async fn process_from_log_object(self, chat_log: ChatLog) -> Vec<UserChatPerformance> {
+        self.process_from_messages(
+            chat_log
+                .comments
+                .into_iter()
+                .map(|comment| Message::from(comment)),
+        )
+        .await
     }
 
     #[allow(dead_code)]

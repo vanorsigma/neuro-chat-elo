@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use twitch_utils::twitchtypes::Comment;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UserChatPerformance {
@@ -56,4 +57,36 @@ pub struct MetricUpdate {
 pub struct MetadataUpdate {
     pub metadata_name: String,
     pub updates: HashMap<String, MetadataTypes>,
+}
+
+impl MetricUpdate {
+    pub fn empty_with_name(name: String) -> Self {
+        Self {
+            metric_name: name,
+            updates: HashMap::new(),
+        }
+    }
+}
+
+impl MetadataUpdate {
+    pub fn empty_with_name(name: String) -> Self {
+        Self {
+            metadata_name: name,
+            updates: HashMap::new(),
+        }
+    }
+}
+
+/// Message enum representing all possible messages that go through
+/// chat log processor.
+#[derive(Debug, Clone)]
+pub enum Message {
+    /// Represents a Twitch message
+    TWITCH(Comment),
+}
+
+impl From<Comment> for Message {
+    fn from(value: Comment) -> Self {
+        Self::TWITCH(value)
+    }
 }

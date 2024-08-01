@@ -1,6 +1,5 @@
-use crate::_types::clptypes::MetricUpdate;
+use crate::_types::clptypes::{Message, MetricUpdate};
 use crate::metrics::metrictrait::AbstractMetric;
-use twitch_utils::twitchtypes::Comment;
 
 const WEIGHT_BITS: f32 = 0.1;
 
@@ -20,8 +19,12 @@ impl AbstractMetric for Bits {
         String::from("bits")
     }
 
-    fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> MetricUpdate {
-        let score = comment.message.bits_spent as f32 * WEIGHT_BITS;
-        self._shortcut_for_this_comment_user(comment, score)
+    fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
+        match message {
+            Message::TWITCH(comment) => {
+                let score = comment.message.bits_spent as f32 * WEIGHT_BITS;
+                self._shortcut_for_this_comment_user(comment, score)
+            }
+        }
     }
 }

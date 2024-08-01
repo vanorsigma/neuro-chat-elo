@@ -1,59 +1,44 @@
-use crate::_types::clptypes::MetricUpdate;
+use crate::_types::clptypes::{Message, MetricUpdate};
 use std::collections::HashMap;
 use twitch_utils::twitchtypes::Comment;
 
+/// Defines the trait for a metric
 pub trait AbstractMetric {
-    /*
-    Defines the trait for a metric
-    */
+    /// Initializes the metric
     async fn new() -> Self
     where
         Self: Sized;
-    /*
-    Initializes the metric
-    */
 
     fn _shortcut_for_this_comment_user(&self, comment: Comment, score: f32) -> MetricUpdate {
-        // return {comment.commenter._id: score}
         let mut map: HashMap<String, f32> = HashMap::new();
-        map.insert(comment.commenter._id.clone(), score);
+        map.insert(comment.commenter._id, score);
         MetricUpdate {
             metric_name: self.get_name(),
             updates: map,
         }
     }
 
+    /// Indicates to the executor if this metric can be parallelized
     #[allow(dead_code)]
     fn can_parallelize(&self) -> bool;
-    /*
-    Indicates to the executor if this metric can be parallelized
-    */
 
+    /// Returns the name of the metric
     fn get_name(&self) -> String;
-    /*
-    Returns the name of the metric
-    */
 
-    fn get_metric(&mut self, comment: Comment, sequence_no: u32) -> MetricUpdate;
-    /*
-    Gets the score for a particular comment
+    /// Gets the score for a particular message.
+    ///
+    /// # Parameters
+    /// - `comment`: The comment to process
+    /// - `sequence_no`: The sequence number of the message
+    ///
+    /// # Return value
+    /// A metric update to be added for the associated user
+    fn get_metric(&mut self, message: Message, sequence_no: u32) -> MetricUpdate;
 
-    :param comment: The comment to process
-    :param sequence_no: The sequence number of the comment
-    :return: A HashMap. The HashMap contains the user id and
-             the score to add for the user involved in this
-             metric.
-    */
-
+    /// This method is called when there are no more comments to
+    /// process. Useful for metrics that need to flush any remaining
+    /// data.
     fn finish(&self) -> MetricUpdate {
-        /*
-        This method is called when there are no more comments to process.
-        Useful for metrics that need to flush any remaining data.
-
-        :return: A HashMap. The HashMap contains the user id and
-                 the score to add for the user involved in this
-                 metric.
-        */
         MetricUpdate {
             metric_name: self.get_name(),
             updates: HashMap::new(),

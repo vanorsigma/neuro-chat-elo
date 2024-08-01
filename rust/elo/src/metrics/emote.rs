@@ -1,16 +1,13 @@
-/*
-The emote metric
-*/
-
+///! The emote metric
 use std::collections::HashSet;
 
 use lazy_static::lazy_static;
 use log::{debug, info};
 use serde::Deserialize;
 
-use crate::_constants::VED_CH_ID;
 use crate::_types::clptypes::MetricUpdate;
-use twitch_utils::twitchtypes::{ChatMessageFragment, Comment};
+use crate::{_constants::VED_CH_ID, _types::clptypes::Message};
+use twitch_utils::twitchtypes::ChatMessageFragment;
 
 use super::metrictrait::AbstractMetric;
 
@@ -96,17 +93,21 @@ impl AbstractMetric for Emote {
         String::from("emote")
     }
 
-    fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> MetricUpdate {
-        let score: f32 = comment
-            .message
-            .fragments
-            .iter()
-            .map(|fragment| {
-                (fragment.emoticon.is_some() as u16 as f32
-                    + self.count_7tv_emotes_in_fragment(fragment) as f32)
-                    * WEIGHT_EMOTES
-            })
-            .sum();
-        self._shortcut_for_this_comment_user(comment, score)
+    fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
+        match message {
+            Message::TWITCH(comment) => {
+                let score: f32 = comment
+                    .message
+                    .fragments
+                    .iter()
+                    .map(|fragment| {
+                        (fragment.emoticon.is_some() as u16 as f32
+                            + self.count_7tv_emotes_in_fragment(fragment) as f32)
+                            * WEIGHT_EMOTES
+                    })
+                    .sum();
+                self._shortcut_for_this_comment_user(comment, score)
+            },
+        }
     }
 }
