@@ -10,15 +10,15 @@ use std::collections::HashMap;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 
+use crate::_types::clptypes::Message;
 use crate::_types::clptypes::MetadataTypes;
 use crate::_types::clptypes::MetadataUpdate;
 use crate::metadata::metadatatrait::AbstractMetadata;
-use twitch_utils::twitchtypes::Comment;
 use twitch_utils::TwitchAPIWrapper;
 
 pub struct MetadataProcessor {
     pub defaults: HashMap<String, MetadataTypes>,
-    broadcast_receiver: broadcast::Receiver<(Comment, u32)>,
+    broadcast_receiver: broadcast::Receiver<(Message, u32)>,
     mpsc_sender: mpsc::Sender<MetadataUpdate>,
     basic_info: basic_info::BasicInfo,
     badges: badges::Badges,
@@ -28,7 +28,7 @@ pub struct MetadataProcessor {
 impl MetadataProcessor {
     pub async fn new(
         twitch: &TwitchAPIWrapper,
-        broadcast_receiver: broadcast::Receiver<(Comment, u32)>,
+        broadcast_receiver: broadcast::Receiver<(Message, u32)>,
         mpsc_sender: mpsc::Sender<MetadataUpdate>,
     ) -> Self {
         let mut defaults: HashMap<String, MetadataTypes> = HashMap::new();
@@ -78,20 +78,21 @@ impl MetadataProcessor {
 async fn calc_metadata<M: AbstractMetadata + Send + Sync + 'static>(
     metadata: &mut M,
     sender: mpsc::Sender<MetadataUpdate>,
-    mut reciever: broadcast::Receiver<(Comment, u32)>,
+    mut reciever: broadcast::Receiver<(Message, u32)>,
 ) {
     /*
     Find metadata based on chat messages sent by a tokio broadcast channel
     */
     loop {
-        let (comment, sequence_no) = match reciever.recv().await {
-            Ok((comment, sequence_no)) => (comment, sequence_no),
-            Err(_) => break,
+        if let Ok((message, sequence_no)) = reciever.recv().await {
+            let metadata = (*metadata).get_metadata(message, sequence_no);
+            if let Err(e) = sender.send(metadata).await {
+                warn!("Failed to send metadata result {}", e)
+            };
+        } else {
+            break
         };
-        let metadata = (*metadata).get_metadata(comment, sequence_no);
-        if let Err(e) = sender.send(metadata).await {
-            warn!("Failed to send metadata result {}", e)
-        };
+
     }
 }
 
@@ -101,7 +102,7 @@ pub async fn setup_metadata_and_channels(
     twitch: &TwitchAPIWrapper,
 ) -> (
     MetadataProcessor,
-    broadcast::Sender<(Comment, u32)>,
+    broadcast::Sender<(Message, u32)>,
     mpsc::Receiver<MetadataUpdate>,
 ) {
     let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);

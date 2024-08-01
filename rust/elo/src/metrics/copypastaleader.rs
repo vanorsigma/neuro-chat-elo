@@ -1,6 +1,6 @@
 use log::debug;
 
-use crate::_types::clptypes::MetricUpdate;
+use crate::_types::clptypes::{Message, MetricUpdate};
 use crate::metrics::metrictrait::AbstractMetric;
 use twitch_utils::twitchtypes::Comment;
 
@@ -13,22 +13,12 @@ pub struct CopypastaLeader {
     history: Vec<(u32, String, String, u32)>,
 }
 
-impl AbstractMetric for CopypastaLeader {
-    async fn new() -> Self {
-        Self {
-            history: Vec::new(),
-        }
-    }
-
-    fn can_parallelize(&self) -> bool {
-        false
-    }
-
-    fn get_name(&self) -> String {
-        String::from("copypasta")
-    }
-
-    fn get_metric(&mut self, comment: Comment, sequence_no: u32) -> MetricUpdate {
+impl CopypastaLeader {
+    fn get_metric_for_twitch_message(
+        &mut self,
+        comment: Comment,
+        sequence_no: u32,
+    ) -> MetricUpdate {
         let text = comment
             .message
             .fragments
@@ -113,6 +103,28 @@ impl AbstractMetric for CopypastaLeader {
         MetricUpdate {
             metric_name: self.get_name(),
             updates: result,
+        }
+    }
+}
+
+impl AbstractMetric for CopypastaLeader {
+    async fn new() -> Self {
+        Self {
+            history: Vec::new(),
+        }
+    }
+
+    fn can_parallelize(&self) -> bool {
+        false
+    }
+
+    fn get_name(&self) -> String {
+        String::from("copypasta")
+    }
+
+    fn get_metric(&mut self, message: Message, sequence_no: u32) -> MetricUpdate {
+        match message {
+            Message::Twitch(comment) => self.get_metric_for_twitch_message(comment, sequence_no),
         }
     }
 

@@ -1,11 +1,10 @@
 use std::{collections::HashMap, sync::atomic::AtomicU32};
 
-use _types::clptypes::{MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
+use _types::clptypes::{Message, MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
 use log::{debug, warn};
 use metadata::setup_metadata_and_channels;
 use metrics::setup_metrics_and_channels;
 use tokio::sync::mpsc;
-use twitch_utils::twitchtypes::Comment;
 
 pub mod _constants;
 pub mod _types;
@@ -15,9 +14,9 @@ pub mod metrics;
 
 pub struct MessageProcessor {
     metric_processor_task: tokio::task::JoinHandle<()>,
-    metric_sender: tokio::sync::broadcast::Sender<(Comment, u32)>,
+    metric_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
     metadata_processor_task: tokio::task::JoinHandle<()>,
-    metadata_sender: tokio::sync::broadcast::Sender<(Comment, u32)>,
+    metadata_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
     sequence_number: AtomicU32,
     performances_task: tokio::task::JoinHandle<HashMap<String, UserChatPerformance>>,
 }
@@ -49,7 +48,7 @@ impl MessageProcessor {
         }
     }
 
-    pub async fn process_message(&self, message: Comment) {
+    pub async fn process_message(&self, message: Message) {
         let sequence_number = self
             .sequence_number
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);

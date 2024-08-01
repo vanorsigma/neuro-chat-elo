@@ -12,13 +12,13 @@ use std::collections::HashMap;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 
+use crate::_types::clptypes::Message;
 use crate::_types::clptypes::MetricUpdate;
 use crate::metrics::metrictrait::AbstractMetric;
-use twitch_utils::twitchtypes::Comment;
 
 pub struct MetricProcessor {
     pub defaults: HashMap<String, f32>,
-    broadcast_receiver: broadcast::Receiver<(Comment, u32)>,
+    broadcast_receiver: broadcast::Receiver<(Message, u32)>,
     mpsc_sender: mpsc::Sender<MetricUpdate>,
     bits: bits::Bits,
     subs: subs::Subs,
@@ -31,7 +31,7 @@ impl MetricProcessor {
     /// Create a new MetricProcessor
     /// get_defaults_and_setup_channels must be called before run
     pub async fn new(
-        broadcast_receiver: broadcast::Receiver<(Comment, u32)>,
+        broadcast_receiver: broadcast::Receiver<(Message, u32)>,
         mpsc_sender: mpsc::Sender<MetricUpdate>,
     ) -> Self {
         let mut defaults: HashMap<String, f32> = HashMap::new();
@@ -95,21 +95,21 @@ impl MetricProcessor {
 async fn calc_metric<M: AbstractMetric + Sync + Send + 'static>(
     metric: &mut M,
     sender: mpsc::Sender<MetricUpdate>,
-    mut reciever: broadcast::Receiver<(Comment, u32)>,
+    mut reciever: broadcast::Receiver<(Message, u32)>,
 ) {
     /*
     Calculate the metric based on chat messages sent by a tokio broadcast channel
     */
     loop {
-        let (comment, sequence_no) = match reciever.recv().await {
-            Ok((comment, sequence_no)) => (comment, sequence_no),
-            Err(_) => break,
+        if let Ok((message, sequence_no)) = reciever.recv().await {
+            let metric_result = (*metric).get_metric(message, sequence_no);
+            if let Err(e) = sender.send(metric_result).await {
+                warn!("Failed to send metric result: {}", e)
+            };
+            tokio::task::yield_now().await;
+        } else {
+            break;
         };
-        let metric_result = (*metric).get_metric(comment, sequence_no);
-        if let Err(e) = sender.send(metric_result).await {
-            warn!("Failed to send metric result: {}", e)
-        };
-        tokio::task::yield_now().await;
     }
     let metric_result = metric.finish();
     if let Err(e) = sender.send(metric_result).await {
@@ -121,7 +121,7 @@ async fn calc_metric<M: AbstractMetric + Sync + Send + 'static>(
 /// Get the default values for the metrics and set up the channels
 pub async fn setup_metrics_and_channels() -> (
     MetricProcessor,
-    broadcast::Sender<(Comment, u32)>,
+    broadcast::Sender<(Message, u32)>,
     mpsc::Receiver<MetricUpdate>,
 ) {
     let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);

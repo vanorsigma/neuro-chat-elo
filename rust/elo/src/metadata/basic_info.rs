@@ -1,22 +1,15 @@
-/*
-Get the username and avatar of the user
-*/
-
+//! Get the username and avatar of the user
 use std::collections::HashMap;
 
-use crate::_types::clptypes::{MetadataTypes, MetadataUpdate};
+use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate};
 use crate::metadata::metadatatrait::AbstractMetadata;
-use twitch_utils::twitchtypes::Comment;
 use twitch_utils::TwitchAPIWrapper;
 
+/// Figures out if the user is a special role
 #[derive(Default, Debug)]
 pub struct BasicInfo;
 
 impl AbstractMetadata for BasicInfo {
-    /*
-    Figures out if the user is a special role
-    */
-
     async fn new(_twitch: &TwitchAPIWrapper) -> Self {
         Self
     }
@@ -29,18 +22,18 @@ impl AbstractMetadata for BasicInfo {
         MetadataTypes::BasicInfo("".to_string(), "".to_string())
     }
 
-    fn get_metadata(&self, comment: Comment, _sequence_no: u32) -> MetadataUpdate {
-        let mut metadata: HashMap<String, MetadataTypes> = HashMap::new();
-        metadata.insert(
-            comment.commenter._id.clone(),
-            MetadataTypes::BasicInfo(
-                comment.commenter.display_name.clone(),
-                comment.commenter.logo.clone(),
-            ),
-        );
-        MetadataUpdate {
-            metadata_name: self.get_name(),
-            updates: metadata,
+    fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
+        match message {
+            Message::Twitch(comment) => MetadataUpdate {
+                metadata_name: self.get_name(),
+                updates: HashMap::from([(
+                    comment.commenter._id.clone(),
+                    MetadataTypes::BasicInfo(
+                        comment.commenter.display_name.clone(),
+                        comment.commenter.logo.clone(),
+                    ),
+                )]),
+            },
         }
     }
 }

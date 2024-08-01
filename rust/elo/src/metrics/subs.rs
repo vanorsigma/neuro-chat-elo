@@ -1,12 +1,10 @@
-/*
-The subs metric
-*/
+//! The subs metric
 use lazy_static::lazy_static;
 use regex::Regex;
 
-use crate::_types::clptypes::MetricUpdate;
+use crate::_types::clptypes::{Message, MetricUpdate};
 use crate::metrics::metrictrait::AbstractMetric;
-use twitch_utils::twitchtypes::{ChatMessageFragment, Comment};
+use twitch_utils::twitchtypes::ChatMessageFragment;
 
 const WEIGHT_SUBS: f32 = 0.1;
 
@@ -35,16 +33,20 @@ impl AbstractMetric for Subs {
         String::from("subs")
     }
 
-    fn get_metric(&mut self, comment: Comment, _sequence_no: u32) -> MetricUpdate {
-        let total_subs: i32 = comment
-            .message
-            .fragments
-            .iter()
-            .map(no_of_gifted_subs)
-            .sum();
+    fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
+        match message {
+            Message::Twitch(comment) => {
+                let total_subs: i32 = comment
+                    .message
+                    .fragments
+                    .iter()
+                    .map(no_of_gifted_subs)
+                    .sum();
 
-        let score = total_subs as f32 * WEIGHT_SUBS;
-        self._shortcut_for_this_comment_user(comment, score)
+                let score = total_subs as f32 * WEIGHT_SUBS;
+                self._shortcut_for_this_comment_user(comment, score)
+            }
+        }
     }
 }
 
