@@ -1,4 +1,4 @@
-///!Get the username and avatar of the user
+//! Get the username and avatar of the user
 use std::collections::HashMap;
 
 use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate};
@@ -24,7 +24,7 @@ impl AbstractMetadata for BasicInfo {
 
     fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
         match message {
-            Message::TWITCH(comment) => MetadataUpdate {
+            Message::Twitch(comment) => MetadataUpdate {
                 metadata_name: self.get_name(),
                 updates: HashMap::from([(
                     comment.commenter._id.clone(),

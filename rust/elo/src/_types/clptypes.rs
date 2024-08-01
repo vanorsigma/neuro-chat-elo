@@ -82,11 +82,11 @@ impl MetadataUpdate {
 #[derive(Debug, Clone)]
 pub enum Message {
     /// Represents a Twitch message
-    TWITCH(Comment),
+    Twitch(Comment),
 }
 
 impl From<Comment> for Message {
     fn from(value: Comment) -> Self {
-        Self::TWITCH(value)
+        Self::Twitch(value)
     }
 }

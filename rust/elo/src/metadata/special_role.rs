@@ -1,7 +1,3 @@
-/*
-Figures out if the user is a special role
-*/
-
 use std::collections::HashMap;
 
 use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate};
@@ -11,7 +7,7 @@ use twitch_utils::TwitchAPIWrapper;
 
 const SPECIAL_ROLES: [&str; 3] = ["moderator", "vip", "broadcaster"];
 
-///! Figures out if the user is a special role
+/// Figures out if the user is a special role
 #[derive(Default, Debug)]
 pub struct SpecialRole;
 
@@ -59,7 +55,7 @@ impl AbstractMetadata for SpecialRole {
 
     fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
         match message {
-            Message::TWITCH(comment) => self.get_metadata_twitch(comment),
+            Message::Twitch(comment) => self.get_metadata_twitch(comment),
         }
     }
 }

@@ -1,4 +1,4 @@
-///!Represents an abstract metadata
+//! Represents an abstract metadata
 use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate};
 use twitch_utils::TwitchAPIWrapper;
 

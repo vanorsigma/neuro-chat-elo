@@ -21,7 +21,7 @@ impl AbstractMetric for Bits {
 
     fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
         match message {
-            Message::TWITCH(comment) => {
+            Message::Twitch(comment) => {
                 let score = comment.message.bits_spent as f32 * WEIGHT_BITS;
                 self._shortcut_for_this_comment_user(comment, score)
             }

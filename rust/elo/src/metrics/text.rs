@@ -1,7 +1,5 @@
+//! The text metric
 use crate::_types::clptypes::{Message, MetricUpdate};
-/*
-The text metric
-*/
 use crate::metrics::metrictrait::AbstractMetric;
 
 const WEIGHT_TEXT: f32 = 0.02;
@@ -24,7 +22,7 @@ impl AbstractMetric for Text {
 
     fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
         match message {
-            Message::TWITCH(comment) => {
+            Message::Twitch(comment) => {
                 let score = f32::max(0.0, calculate_score(comment.message.body.len()));
                 self._shortcut_for_this_comment_user(comment, score)
             },

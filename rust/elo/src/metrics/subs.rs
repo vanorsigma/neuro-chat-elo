@@ -1,6 +1,4 @@
-/*
-The subs metric
-*/
+//! The subs metric
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -37,7 +35,7 @@ impl AbstractMetric for Subs {
 
     fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
         match message {
-            Message::TWITCH(comment) => {
+            Message::Twitch(comment) => {
                 let total_subs: i32 = comment
                     .message
                     .fragments

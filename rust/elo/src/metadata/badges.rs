@@ -1,6 +1,4 @@
-/*
-Assigns badges to each user
-*/
+//! Assigns badges to each user
 use log::error;
 use std::collections::HashMap;
 use twitch_utils::twitchtypes::Comment;
@@ -95,7 +93,7 @@ impl AbstractMetadata for Badges {
 
     fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
         match message {
-            Message::TWITCH(comment) => self.get_metadata_twitch(comment),
+            Message::Twitch(comment) => self.get_metadata_twitch(comment),
         }
     }
 }

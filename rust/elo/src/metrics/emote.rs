@@ -1,4 +1,4 @@
-///! The emote metric
+//! The emote metric
 use std::collections::HashSet;
 
 use lazy_static::lazy_static;
@@ -95,7 +95,7 @@ impl AbstractMetric for Emote {
 
     fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
         match message {
-            Message::TWITCH(comment) => {
+            Message::Twitch(comment) => {
                 let score: f32 = comment
                     .message
                     .fragments
