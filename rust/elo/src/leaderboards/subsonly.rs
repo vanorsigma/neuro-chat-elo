@@ -30,6 +30,10 @@ impl AbstractLeaderboard for SubsOnly {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
+        if self.is_discord_message(performance) {
+            return None
+        }
+
         if performance.metrics.contains_key("subs") {
             return Some(performance.metrics["subs"]);
         }

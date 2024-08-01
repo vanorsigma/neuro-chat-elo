@@ -1,6 +1,7 @@
 mod bitsonly;
 mod chatonly;
 mod copypastaleaders;
+mod discordlivestreamchat;
 mod leaderboardtrait;
 mod nonvips;
 mod overall;
@@ -39,6 +40,7 @@ pub struct LeaderboardProcessor {
     nonvips: nonvips::NonVIPS,
     overall: overall::Overall,
     subsonly: subsonly::SubsOnly,
+    discordlivestreamchat: discordlivestreamchat::DiscordLivestreamChat,
 }
 
 impl LeaderboardProcessor {
@@ -49,6 +51,7 @@ impl LeaderboardProcessor {
         let nonvips = nonvips::NonVIPS::new();
         let overall = overall::Overall::new();
         let subsonly = subsonly::SubsOnly::new();
+        let discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
 
         Self {
             bitsonly,
@@ -57,6 +60,7 @@ impl LeaderboardProcessor {
             nonvips,
             overall,
             subsonly,
+            discordlivestreamchat,
         }
     }
 
@@ -71,6 +75,10 @@ impl LeaderboardProcessor {
             calc_leaderboard(&mut self.nonvips, broadcast_reciever.resubscribe()),
             calc_leaderboard(&mut self.overall, broadcast_reciever.resubscribe()),
             calc_leaderboard(&mut self.subsonly, broadcast_reciever.resubscribe()),
+            calc_leaderboard(
+                &mut self.discordlivestreamchat,
+                broadcast_reciever.resubscribe()
+            )
         );
     }
 }

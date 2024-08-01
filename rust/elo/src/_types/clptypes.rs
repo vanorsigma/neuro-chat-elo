@@ -1,3 +1,4 @@
+use discord_utils::DiscordMessage;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use twitch_utils::twitchtypes::Comment;
@@ -83,6 +84,8 @@ impl MetadataUpdate {
 pub enum Message {
     /// Represents a Twitch message
     Twitch(Comment),
+    /// Represents a Discord message
+    Discord(DiscordMessage)
 }
 
 impl From<Comment> for Message {

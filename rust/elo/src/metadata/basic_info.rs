@@ -34,6 +34,13 @@ impl AbstractMetadata for BasicInfo {
                     ),
                 )]),
             },
+            Message::Discord(msg) => MetadataUpdate {
+                metadata_name: self.get_name(),
+                updates: HashMap::from([(
+                    msg.author.id,
+                    MetadataTypes::BasicInfo(msg.author.nickname, msg.author.avatar_url),
+                )]),
+            },
         }
     }
 }

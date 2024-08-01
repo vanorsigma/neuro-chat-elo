@@ -94,6 +94,7 @@ impl AbstractMetadata for Badges {
     fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
         match message {
             Message::Twitch(comment) => self.get_metadata_twitch(comment),
+            _ => MetadataUpdate::empty_with_name(self.get_name())
         }
     }
 }

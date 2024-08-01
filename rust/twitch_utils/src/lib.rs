@@ -4,6 +4,7 @@ use log::debug;
 use twitch_api::helix::chat::{ChatBadge, GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
 use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
+use twitch_api::types::Timestamp;
 use twitch_api::HelixClient;
 
 pub mod twitchtypes;
@@ -53,6 +54,16 @@ impl TwitchAPIWrapper {
         let request = GetVideosRequest::user_id(ch_id.clone());
         let response = self.twitch.req_get(request, &self.token);
         response.await.unwrap().data[0].id.clone().to_string()
+    }
+
+    pub async fn get_vod_start_time(&self, vod_id: String) -> Timestamp {
+        self.twitch
+            .req_get(GetVideosRequest::ids(&[(&vod_id).into()]), &self.token)
+            .await
+            .unwrap()
+            .data[0]
+            .created_at
+            .clone()
     }
 
     pub async fn get_badges(

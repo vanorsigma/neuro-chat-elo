@@ -30,6 +30,10 @@ impl AbstractLeaderboard for CopypastaLeaders {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        Some(*performance.metrics.get("copypasta").unwrap_or(&0.0))
+        if self.is_discord_message(performance) {
+            return None
+        } else {
+            Some(*performance.metrics.get("copypasta").unwrap_or(&0.0))
+        }
     }
 }

@@ -32,6 +32,10 @@ impl AbstractLeaderboard for BitsOnly {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        Some(performance.metrics.get("bits").unwrap_or(&0.0) * K)
+        if self.is_discord_message(performance) {
+            None
+        } else {
+            Some(performance.metrics.get("bits").unwrap_or(&0.0) * K)
+        }
     }
 }

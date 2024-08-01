@@ -2,7 +2,7 @@
 # Simple bash script to stage results from chatdownloader to the
 # webpage
 
-CHATDOWNLOADER="chatdownloader"
+CHATDOWNLOADER="rust"
 WEB="web/static"
 
 cp ${CHATDOWNLOADER}/*.json ${WEB}/
