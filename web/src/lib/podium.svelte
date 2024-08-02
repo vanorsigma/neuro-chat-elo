@@ -8,6 +8,10 @@
   let canvasElement: HTMLCanvasElement;
   let canvasWidth: number = 400;
   let canvasHeight: number = 400;
+
+  const minimumHeight = 110;
+  $: maximumHeight = podiumHeight;
+
   $: podiumWidth = canvasWidth / 3;
   $: podiumHeight = canvasHeight - canvasToPodiumOffset;
 
@@ -24,9 +28,55 @@
   const colors = ['#C0C0C0', '#FFD700', '#CD7F32'];
 
   function calculateRelativeHeights() {
-    let secondPlaceRatio = secondPlace.elo / firstPlace.elo;
-    let thirdPlaceRatio = thirdPlace.elo / firstPlace.elo;
-    return [podiumHeight, podiumHeight * secondPlaceRatio, podiumHeight * thirdPlaceRatio];
+    // NOTE: credit ByronOf39
+    let elements = [firstPlace.elo, secondPlace.elo, thirdPlace.elo];
+
+    // If all elements are the same, return a default scaled array
+    if (elements[2] === elements[0]) {
+      const defaultValue = Math.round((minimumHeight + maximumHeight) / 2);
+      return [defaultValue, defaultValue, defaultValue];
+    }
+
+    const maxElementAbove = elements[2] - elements[0];
+    const deltaHeight = maximumHeight - minimumHeight;
+
+    // Scale elements
+    elements = elements.map((element, index) => {
+      const above = element - elements[2];
+      let fraction = above / maxElementAbove;
+      return index === 0 ? maximumHeight : fraction * deltaHeight + minimumHeight;
+    });
+
+    const minDiffHeight = deltaHeight * 0.16666666;
+    let last = maximumHeight + minDiffHeight;
+
+    // Clamp to max
+    for (let i = 0; i < elements.length; i++) {
+      if (elements[i] === last) {
+        elements[i - 1] -= minDiffHeight;
+        elements[i] -= minDiffHeight;
+        continue;
+      }
+
+      while (minDiffHeight + elements[i] > last) {
+        elements[i] -= minDiffHeight;
+      }
+      last = elements[i];
+    }
+    last = minimumHeight - minDiffHeight;
+
+    // Clamp to min
+    for (let i = elements.length - 1; i >= 0; i--) {
+      if (elements[i] === last) {
+        continue;
+      }
+
+      while (elements[i] < last + minDiffHeight) {
+        elements[i] += minDiffHeight;
+      }
+      last = elements[i];
+    }
+    return elements;
   }
 
   function drawPodiums(context: CanvasRenderingContext2D) {
