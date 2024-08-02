@@ -142,7 +142,7 @@
   }
 
   onMount(() => {
-    const context = canvasElement.getContext('2d');
+    const context = convertHiDPICanvas(canvasElement, canvasWidth, canvasHeight);
     if (!context) {
       console.error('Cannot get context to draw podium');
       return;
@@ -153,6 +153,17 @@
     drawHero(firstPlace, 1, relativeHeights[0], context);
     drawHero(thirdPlace, 2, relativeHeights[2], context);
   });
+
+  function convertHiDPICanvas(canvas: HTMLCanvasElement, width: number, height: number) {
+    const ratio = Math.ceil(window.devicePixelRatio);
+    canvas.width = width * ratio;
+    canvas.height = height * ratio;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    const context = canvas.getContext('2d');
+    context?.setTransform(ratio, 0, 0, ratio, 0, 0);
+    return context;
+  }
 </script>
 
 <canvas bind:this={canvasElement} width={canvasWidth} height={canvasHeight}></canvas>
