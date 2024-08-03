@@ -94,7 +94,7 @@
   });
 </script>
 
-<div class="flex container h-full items-center justify-center">
+<div class="flex container h-[95vh] items-center justify-center">
   {#if !offscreenDone}
     <p>Loading...</p>
   {/if}
@@ -111,7 +111,7 @@
   <canvas
     bind:this={confettiCanvas}
     in:fade={{ duration: 200, delay: 200 }}
-    class="absolute w-full h-full {offscreenDone ? '' : 'invisible'}"
+    class="absolute w-full h-[90%] {offscreenDone ? '' : 'invisible'}"
   ></canvas>
   <audio bind:this={yippieAudio} autoplay={false} muted={false} src="./audio/yippie.mp3"></audio>
   <audio bind:this={drumAudio} autoplay={false} muted={false} src="./audio/drum.mp3"></audio>
