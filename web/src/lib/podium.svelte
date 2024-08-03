@@ -79,6 +79,15 @@
     return elements;
   }
 
+  function drawPodiumText(context: CanvasRenderingContext2D, text: string, x: number, y: number) {
+    const oldFillStyle = context.fillStyle;
+    context.font = '2em bold';
+    context.fillStyle = 'black';
+    context.textAlign = 'center';
+    context.fillText(text, x, y);
+    context.fillStyle = oldFillStyle;
+  }
+
   function drawPodiums(context: CanvasRenderingContext2D) {
     const relativeHeights = calculateRelativeHeights();
     context.fillStyle = colors[0];
@@ -88,6 +97,12 @@
       podiumWidth,
       relativeHeights[1]
     );
+    drawPodiumText(
+      context,
+      '#2',
+      podiumWidth / 2,
+      podiumHeight - relativeHeights[1] + canvasToPodiumOffset + 50
+    );
 
     context.fillStyle = colors[1];
     context.fillRect(
@@ -96,6 +111,12 @@
       podiumWidth,
       podiumHeight
     );
+    drawPodiumText(
+      context,
+      '#1',
+      (3 * podiumWidth) / 2,
+      podiumHeight - relativeHeights[0] + canvasToPodiumOffset + 50
+    );
 
     context.fillStyle = colors[2];
     context.fillRect(
@@ -103,6 +124,12 @@
       podiumHeight - relativeHeights[2] + canvasToPodiumOffset,
       podiumWidth,
       podiumHeight
+    );
+    drawPodiumText(
+      context,
+      '#3',
+      (5 * podiumWidth) / 2,
+      podiumHeight - relativeHeights[2] + canvasToPodiumOffset + 50
     );
   }
 
