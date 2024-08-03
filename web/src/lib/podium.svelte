@@ -8,6 +8,10 @@
   let canvasElement: HTMLCanvasElement;
   let canvasWidth: number = 400;
   let canvasHeight: number = 400;
+
+  const minimumHeight = 110;
+  $: maximumHeight = podiumHeight;
+
   $: podiumWidth = canvasWidth / 3;
   $: podiumHeight = canvasHeight - canvasToPodiumOffset;
 
@@ -24,9 +28,64 @@
   const colors = ['#C0C0C0', '#FFD700', '#CD7F32'];
 
   function calculateRelativeHeights() {
-    let secondPlaceRatio = secondPlace.elo / firstPlace.elo;
-    let thirdPlaceRatio = thirdPlace.elo / firstPlace.elo;
-    return [podiumHeight, podiumHeight * secondPlaceRatio, podiumHeight * thirdPlaceRatio];
+    // NOTE: credit ByronOf39
+    let elements = [firstPlace.elo, secondPlace.elo, thirdPlace.elo];
+
+    // If all elements are the same, return a default scaled array
+    if (elements[2] === elements[0]) {
+      const defaultValue = Math.round((minimumHeight + maximumHeight) / 2);
+      return [defaultValue, defaultValue, defaultValue];
+    }
+
+    const maxElementAbove = elements[2] - elements[0];
+    const deltaHeight = maximumHeight - minimumHeight;
+
+    // Scale elements
+    elements = elements.map((element, index) => {
+      const above = element - elements[2];
+      let fraction = above / maxElementAbove;
+      return index === 0 ? maximumHeight : fraction * deltaHeight + minimumHeight;
+    });
+
+    const minDiffHeight = deltaHeight * 0.16666666;
+    let last = maximumHeight + minDiffHeight;
+
+    // Clamp to max
+    for (let i = 0; i < elements.length; i++) {
+      if (elements[i] === last) {
+        elements[i - 1] -= minDiffHeight;
+        elements[i] -= minDiffHeight;
+        continue;
+      }
+
+      while (minDiffHeight + elements[i] > last) {
+        elements[i] -= minDiffHeight;
+      }
+      last = elements[i];
+    }
+    last = minimumHeight - minDiffHeight;
+
+    // Clamp to min
+    for (let i = elements.length - 1; i >= 0; i--) {
+      if (elements[i] === last) {
+        continue;
+      }
+
+      while (elements[i] < last + minDiffHeight) {
+        elements[i] += minDiffHeight;
+      }
+      last = elements[i];
+    }
+    return elements;
+  }
+
+  function drawPodiumText(context: CanvasRenderingContext2D, text: string, x: number, y: number) {
+    const oldFillStyle = context.fillStyle;
+    context.font = '2em bold';
+    context.fillStyle = 'black';
+    context.textAlign = 'center';
+    context.fillText(text, x, y);
+    context.fillStyle = oldFillStyle;
   }
 
   function drawPodiums(context: CanvasRenderingContext2D) {
@@ -38,6 +97,12 @@
       podiumWidth,
       relativeHeights[1]
     );
+    drawPodiumText(
+      context,
+      '#2',
+      podiumWidth / 2,
+      podiumHeight - relativeHeights[1] + canvasToPodiumOffset + 50
+    );
 
     context.fillStyle = colors[1];
     context.fillRect(
@@ -46,6 +111,12 @@
       podiumWidth,
       podiumHeight
     );
+    drawPodiumText(
+      context,
+      '#1',
+      (3 * podiumWidth) / 2,
+      podiumHeight - relativeHeights[0] + canvasToPodiumOffset + 50
+    );
 
     context.fillStyle = colors[2];
     context.fillRect(
@@ -53,6 +124,12 @@
       podiumHeight - relativeHeights[2] + canvasToPodiumOffset,
       podiumWidth,
       podiumHeight
+    );
+    drawPodiumText(
+      context,
+      '#3',
+      (5 * podiumWidth) / 2,
+      podiumHeight - relativeHeights[2] + canvasToPodiumOffset + 50
     );
   }
 
@@ -92,7 +169,7 @@
   }
 
   onMount(() => {
-    const context = canvasElement.getContext('2d');
+    const context = convertHiDPICanvas(canvasElement, canvasWidth, canvasHeight);
     if (!context) {
       console.error('Cannot get context to draw podium');
       return;
@@ -103,6 +180,17 @@
     drawHero(firstPlace, 1, relativeHeights[0], context);
     drawHero(thirdPlace, 2, relativeHeights[2], context);
   });
+
+  function convertHiDPICanvas(canvas: HTMLCanvasElement, width: number, height: number) {
+    const ratio = Math.ceil(window.devicePixelRatio);
+    canvas.width = width * ratio;
+    canvas.height = height * ratio;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    const context = canvas.getContext('2d');
+    context?.setTransform(ratio, 0, 0, ratio, 0, 0);
+    return context;
+  }
 </script>
 
 <canvas bind:this={canvasElement} width={canvasWidth} height={canvasHeight}></canvas>

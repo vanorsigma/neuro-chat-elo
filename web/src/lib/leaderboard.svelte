@@ -188,7 +188,7 @@ needed, so it no longer supports lazy loading. Please refer to commit
   });
 </script>
 
-<div bind:this={containerElement} class="relative w-full h-60 grow md:h-full overflow-y-scroll">
+<div bind:this={containerElement} class="relative w-full md:h-60 grow md:h-full overflow-y-scroll">
   <div class="relative w-full z-50" bind:this={parentElement}>
     <div
       bind:this={stickyElement}

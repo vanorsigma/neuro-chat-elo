@@ -15,7 +15,7 @@
   }
 </script>
 
-<button class="relative z-50" on:click={allAnimationsDone}>Skip</button>
+<button class="absolute z-50 top-10" on:click={allAnimationsDone}>Skip</button>
 {#each revealMetadatas as metadata, index}
   {#if index === currentIndex}
     <RevealCard
