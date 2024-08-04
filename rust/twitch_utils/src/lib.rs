@@ -5,7 +5,6 @@ use log::debug;
 use twitch_api::helix::chat::{ChatBadge, GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
 use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
-use twitch_api::types::Timestamp;
 use twitch_api::HelixClient;
 
 pub mod seventvclient;
