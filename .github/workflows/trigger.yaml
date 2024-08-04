@@ -36,7 +36,7 @@ jobs:
         ACT: ${{ vars.ACT }}
         TWITCH_APPID: ${{ secrets.TWITCH_APPID }}
         TWITCH_APPSECRET: ${{ secrets.TWITCH_APPSECRET }}
-      working-directory: chatdownloader/
+      working-directory: rust/
       run: |
         cargo run --release
 
