@@ -62,6 +62,7 @@ impl DiscordChatDownloader {
     pub async fn download_chat(
         &mut self,
         start_datetime: DateTime<Utc>,
+        end_datetime: DateTime<Utc>,
         channel_id: &str,
         discord_token: &str,
     ) -> Result<DiscordChatLogs, Box<dyn std::error::Error>> {
@@ -93,6 +94,11 @@ impl DiscordChatDownloader {
                 output_path.as_str(),
                 "--after",
                 start_datetime
+                    .format("%m/%d/%Y %I:%M %p")
+                    .to_string()
+                    .as_str(),
+                "--before",
+                end_datetime
                     .format("%m/%d/%Y %I:%M %p")
                     .to_string()
                     .as_str(),

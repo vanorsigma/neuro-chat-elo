@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
+use chrono::{DateTime, FixedOffset};
 use log::debug;
 use twitch_api::helix::chat::{ChatBadge, GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
 use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
-use twitch_api::types::Timestamp;
 use twitch_api::HelixClient;
 
 pub mod twitchtypes;
@@ -56,14 +56,35 @@ impl TwitchAPIWrapper {
         response.await.unwrap().data[0].id.clone().to_string()
     }
 
-    pub async fn get_vod_start_time(&self, vod_id: String) -> Timestamp {
-        self.twitch
-            .req_get(GetVideosRequest::ids(&[(&vod_id).into()]), &self.token)
+    /// Returns a tuple (start timestamp and end timestamp) of the VOD
+    pub async fn get_vod_times(
+        &self,
+        vod_id: String,
+    ) -> (DateTime<FixedOffset>, DateTime<FixedOffset>) {
+        let vod_ids = [(&vod_id).into()];
+        let vod_info = self
+            .twitch
+            .req_get(GetVideosRequest::ids(&vod_ids), &self.token)
             .await
-            .unwrap()
-            .data[0]
-            .created_at
-            .clone()
+            .unwrap();
+
+        let start_timestamp =
+            chrono::DateTime::parse_from_rfc3339(vod_info.data[0].created_at.as_str())
+                .expect("can interpret datetime");
+
+        let end_timestamp = start_timestamp
+            .checked_add_signed(
+                vod_info.data[0]
+                    .duration
+                    .as_str()
+                    .parse::<iso8601_duration::Duration>()
+                    .expect("cannot get vod end duration")
+                    .to_chrono()
+                    .expect("can convert to timedelta"),
+            )
+            .expect("can get end duration");
+
+        (start_timestamp, end_timestamp)
     }
 
     pub async fn get_badges(

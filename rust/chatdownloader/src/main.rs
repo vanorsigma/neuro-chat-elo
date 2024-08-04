@@ -4,7 +4,6 @@ mod discorddownloaderproxy;
 mod github;
 mod twitchdownloaderproxy;
 
-use chrono::FixedOffset;
 use elo::_types::clptypes::Message;
 use env_logger::Env;
 use log::info;
@@ -48,13 +47,11 @@ async fn main() {
 
     let discord_messages = match env::var("CHAT_DISCORD_TOKEN") {
         Ok(token) => {
+            let (start_time, end_time) = twitch.get_vod_times(vod_id).await;
             discorddownloaderproxy::DiscordChatDownloader::new()
                 .download_chat(
-                    chrono::DateTime::<FixedOffset>::parse_from_rfc3339(
-                        twitch.get_vod_start_time(vod_id).await.as_str(),
-                    )
-                    .expect("Cannot parse Twitch VOD start time")
-                    .into(),
+                    start_time.into(),
+                    end_time.into(),
                     CHANNEL_ID,
                     token.as_str(),
                 )
