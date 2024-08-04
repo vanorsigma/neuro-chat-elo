@@ -17,6 +17,27 @@ pub const USER_AGENT: &str = concat!(
     " (https://vanorsigma.github.io/neuro-chat-elo)"
 );
 
+/// Twitch's duration timestamp can't be parsed by iso8601 parsers that I can find
+fn parse_time(duration_str: &str) -> Result<u32, Box<dyn std::error::Error>> {
+    let re = regex::Regex::new(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?").unwrap();
+
+    let captures = re
+        .captures(duration_str)
+        .expect("should pass even with empty string");
+
+    let hours = captures
+        .get(1)
+        .map_or(Ok(0), |m| m.as_str().parse::<u32>())?;
+    let minutes = captures
+        .get(2)
+        .map_or(Ok(0), |m| m.as_str().parse::<u32>())?;
+    let seconds = captures
+        .get(3)
+        .map_or(Ok(0), |m| m.as_str().parse::<u32>())?;
+
+    Ok(hours * 3600 + minutes * 60 + seconds)
+}
+
 #[derive(Clone)]
 pub struct TwitchAPIWrapper {
     pub twitch: HelixClient<'static, reqwest::Client>,
@@ -74,13 +95,12 @@ impl TwitchAPIWrapper {
 
         let end_timestamp = start_timestamp
             .checked_add_signed(
-                vod_info.data[0]
-                    .duration
-                    .as_str()
-                    .parse::<iso8601_duration::Duration>()
-                    .expect("cannot get vod end duration")
-                    .to_chrono()
-                    .expect("can convert to timedelta"),
+                chrono::TimeDelta::new(
+                    parse_time(vod_info.data[0].duration.as_str()).expect("parsable duration")
+                        as i64,
+                    0,
+                )
+                .expect("can convert to timedelta"),
             )
             .expect("can get end duration");
 

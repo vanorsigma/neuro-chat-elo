@@ -8,5 +8,5 @@ log = "0.4.22"
 reqwest = {version = "0.11.27", features = ["json", "blocking"]}
 serde = { version = "1.0.204", features = ["derive"] }
 twitch_api = { version = "0.7.0-rc.7", features = ["all", "reqwest"] }
-iso8601-duration = { version = "0.2.0", features = ["chrono"] }
 chrono = "0.4.38"
+regex = "1.10.6"
