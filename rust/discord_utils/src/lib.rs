@@ -30,3 +30,10 @@ pub struct DiscordMessage {
 pub struct DiscordChatLogs {
     pub messages: Vec<DiscordMessage>,
 }
+
+#[derive(Clone, Debug)]
+pub struct DiscordMapping {
+    pub id: String,
+    pub name: String,
+    pub image_url: String
+}
