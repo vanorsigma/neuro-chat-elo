@@ -30,7 +30,6 @@ pub struct DiscordMessage {
 pub struct DiscordChatLogs {
     pub messages: Vec<DiscordMessage>,
 }
-<<<<<<< HEAD
 
 #[derive(Clone, Debug)]
 pub struct DiscordMapping {
@@ -38,5 +37,3 @@ pub struct DiscordMapping {
     pub name: String,
     pub image_url: String
 }
-=======
->>>>>>> 8a08dfd (WIP: #livestream-chat)
