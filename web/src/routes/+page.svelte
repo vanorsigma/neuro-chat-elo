@@ -75,6 +75,25 @@
   });
 </script>
 
+<svg width="0" height="0">
+  <defs>
+    <linearGradient x1="0%" y1="0%" x2="100%" y2="0%" id="mx-gradient-ffd700-1-ffb570-1-e-0">
+      <stop offset="0%" style="stop-color: rgb(255, 215, 0); stop-opacity: 1;" />
+      <stop offset="100%" style="stop-color: rgb(255, 181, 112); stop-opacity: 1;" />
+    </linearGradient>
+
+    <linearGradient x1="0%" y1="0%" x2="100%" y2="0%" id="mx-gradient-4d4d4d-1-c0c0c0-1-e-0">
+      <stop offset="0%" style="stop-color: rgb(77, 77, 77); stop-opacity: 1;" />
+      <stop offset="100%" style="stop-color: rgb(192, 192, 192); stop-opacity: 1;" />
+    </linearGradient>
+
+    <linearGradient x1="0%" y1="0%" x2="100%" y2="0%" id="mx-gradient-613e00-1-ffb570-1-e-0">
+      <stop offset="0%" style="stop-color: rgb(97, 62, 0); stop-opacity: 1;" />
+      <stop offset="100%" style="stop-color: rgb(255, 181, 112); stop-opacity: 1;" />
+    </linearGradient>
+  </defs>
+</svg>
+
 {#if showCarouselLoading}
   <p class="absolute">Loading...</p>
 {/if}

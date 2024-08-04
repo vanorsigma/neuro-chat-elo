@@ -1,18 +1,10 @@
-<!--
-Leaderboard.
-
-NOTE: The original design supported lazy loading, but after some
-visual struggles and careful thought, I realized that it wasn't really
-needed, so it no longer supports lazy loading. Please refer to commit
-1371382 at your own risk
--->
+<!--Leaderboard.-->
 
 <script lang="ts">
   import RankItem from './rankitem.svelte';
 
-  import { onMount, onDestroy, afterUpdate } from 'svelte';
+  import { onMount, afterUpdate } from 'svelte';
   import type { RankingInfo } from './ranks';
-  import Carousel from './carousel.svelte';
 
   export let currentData: RankingInfo[];
   export let isActive: boolean;
@@ -20,35 +12,13 @@ needed, so it no longer supports lazy loading. Please refer to commit
 
   /* Header Rendering Shenanigans */
   // Leaderboard header rendering related variables
-  const leaderboardHeaderBase = 'text-semibold grid grid-row-1 grid-cols-4 top-0 w-full';
-  const leaderboardHeaderFloat = ' fixed bg-gray-200';
-  const leaderboardHeaderHide = ' invisible';
-  let leaderboardClasses = leaderboardHeaderBase + leaderboardHeaderFloat;
   let containerElement: HTMLDivElement;
   let parentElement: HTMLDivElement;
   let stickyElement: HTMLDivElement;
-  let headerObserver: IntersectionObserver;
 
-  let rankElement: HTMLParagraphElement | undefined;
-  let userElement: HTMLParagraphElement | undefined;
-  let eloElement: HTMLParagraphElement | undefined;
-  let deltaElement: HTMLParagraphElement | undefined;
-
-  let rankWidth = rankElement?.clientWidth;
-  let userWidth = userElement?.clientWidth;
-  let eloWidth = eloElement?.clientWidth;
-  let deltaWidth = deltaElement?.clientWidth;
   $: setTimeout(() => {
     isActive; // create dependency, so that widths get updated
-    rankWidth = rankElement?.clientWidth == 0 ? rankWidth : rankElement?.clientWidth;
-    userWidth = userElement?.clientWidth == 0 ? userWidth : userElement?.clientWidth;
-    eloWidth = eloElement?.clientWidth == 0 ? eloWidth : eloElement?.clientWidth;
-    deltaWidth = deltaElement?.clientWidth == 0 ? deltaWidth : deltaElement?.clientWidth;
   }, 0);
-
-  let headerWidth = 0;
-  let headerTop = 0;
-  let headerLeft = 0;
 
   interface LeaderboardIntersectionEntry {
     readonly target: HTMLElement;
@@ -62,26 +32,10 @@ needed, so it no longer supports lazy loading. Please refer to commit
     // NOTE: IntersectionObserver doesn't report the correct intersect
     // when the page first loads, so instead of relying on the value from
     // IntersectionObserver, we use the value here.
-    // TODO: This probably affects performance a lot. Probably need to make it faster
-    let isContainerIntersect = isInView(containerElement);
-
     entries.forEach((entry) => {
       isStickyIntersect ||= entry.target == stickyElement && entry.isIntersecting;
       isParentIntersect ||= entry.target == parentElement && entry.isIntersecting;
-      // isContainerIntersect ||= entry.target == containerElement && entry.isIntersecting;
     });
-
-    if (!isStickyIntersect && !isParentIntersect) {
-      leaderboardClasses = leaderboardHeaderBase + leaderboardHeaderFloat;
-    } else if (isParentIntersect) {
-      leaderboardClasses = leaderboardHeaderBase;
-    }
-
-    if (!isContainerIntersect) {
-      leaderboardClasses += leaderboardHeaderHide;
-    }
-
-    updateHeaderValues();
   }
 
   afterUpdate(() => {
@@ -95,53 +49,6 @@ needed, so it no longer supports lazy loading. Please refer to commit
       lagIsActive = isActive;
     }
   });
-
-  onMount(() => {
-    headerObserver = new IntersectionObserver(
-      (entries) =>
-        intersectionCallback(
-          entries.map(
-            (entry) =>
-              ({
-                isIntersecting: entry.isIntersecting,
-                target: entry.target
-              }) as LeaderboardIntersectionEntry
-          )
-        ),
-      { threshold: [0, 1] }
-    );
-
-    headerObserver.observe(stickyElement);
-    headerObserver.observe(parentElement);
-    headerObserver.observe(containerElement);
-  });
-
-  onMount(() => {
-    window.addEventListener('scroll', updateHeaderValues);
-
-    return () => {
-      window.removeEventListener('scroll', updateHeaderValues);
-    };
-  });
-
-  onDestroy(() => {
-    if (!headerObserver) return;
-
-    headerObserver.unobserve(stickyElement);
-    headerObserver.unobserve(parentElement);
-    headerObserver.unobserve(containerElement);
-  });
-
-  function updateHeaderValues() {
-    if (!containerElement || !parentElement || !stickyElement) return;
-
-    const containerBoundingRect = containerElement.getBoundingClientRect();
-
-    headerWidth = parentElement.clientWidth;
-    // headerTop = containerBoundingRect.top + window.scrollY;
-    headerTop = containerBoundingRect.top;
-    headerLeft = containerBoundingRect.left + window.scrollX;
-  }
 
   function isInView(element: HTMLElement) {
     const rect = element.getBoundingClientRect();
@@ -189,30 +96,15 @@ needed, so it no longer supports lazy loading. Please refer to commit
 </script>
 
 <div bind:this={containerElement} class="relative w-full md:h-60 grow md:h-full overflow-y-scroll">
-  <div class="relative w-full z-50" bind:this={parentElement}>
-    <div
-      bind:this={stickyElement}
-      class={leaderboardClasses}
-      style="width: {headerWidth}px; top: {headerTop}px; left: {headerLeft}px"
-    >
-      <b bind:this={rankElement}>Rank</b>
-      <b bind:this={userElement}>User</b>
-      <b bind:this={eloElement} class="collapse sm:visible">Elo Score</b>
-      <b bind:this={deltaElement}>Delta</b>
-    </div>
-  </div>
-  <div class="grid auto-rows-auto grid-cols-4 w-full">
+  <div class="w-full">
     {#each filteredList.slice(0, sliceEnd) as rank}
       <RankItem
         rank={rank.rank}
         score={rank.elo}
         username={rank.username}
         delta={rank.delta}
+        avatarUrl={rank.avatar}
         badges={rank.badges == null ? [] : rank.badges}
-        {userWidth}
-        {rankWidth}
-        {eloWidth}
-        {deltaWidth}
       />
     {/each}
     <div class="h-1" bind:this={endMarker} />
