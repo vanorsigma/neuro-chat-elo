@@ -17,7 +17,7 @@
   height="67"
   viewBox="-0.5 -0.5 476 67"
 >
-  <g filter="url(#dropShadow)">
+  <g>
     <g data-cell-id="0">
       <g data-cell-id="1">
         <g data-cell-id="TQTXx6ygs8IL0Gh_ZsiX-7">
