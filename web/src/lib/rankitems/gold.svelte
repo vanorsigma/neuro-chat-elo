@@ -120,7 +120,7 @@
                 font-family={fontFamily}
                 font-size="12px"
                 text-anchor="middle"
-                font-weight="bold">{eloScore}</text
+                font-weight="bold">{eloScore.toFixed(0)}</text
               >
             </g>
           </g>
