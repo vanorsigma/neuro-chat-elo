@@ -18,15 +18,6 @@
   height="67"
   viewBox="-0.5 -0.5 346 67"
 >
-  <defs>
-    <filter id="dropShadow">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="1.7" result="blur" />
-      <feOffset in="blur" dx="3" dy="3" result="offsetBlur" />
-      <feFlood flood-color="#3D4574" flood-opacity="0.4" result="offsetColor" />
-      <feComposite in="offsetColor" in2="offsetBlur" operator="in" result="offsetBlur" />
-      <feBlend in="SourceGraphic" in2="offsetBlur" />
-    </filter>
-  </defs>
   <g filter="url(#dropShadow)">
     <g data-cell-id="0">
       <g data-cell-id="1">

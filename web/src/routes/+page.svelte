@@ -91,6 +91,14 @@
       <stop offset="0%" style="stop-color: rgb(97, 62, 0); stop-opacity: 1;" />
       <stop offset="100%" style="stop-color: rgb(255, 181, 112); stop-opacity: 1;" />
     </linearGradient>
+
+    <filter id="dropShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.7" result="blur" />
+      <feOffset in="blur" dx="1" dy="0" result="offsetBlur" />
+      <feFlood flood-color="#3D4574" flood-opacity="0.4" result="offsetColor" />
+      <feComposite in="offsetColor" in2="offsetBlur" operator="in" result="offsetBlur" />
+      <feBlend in="SourceGraphic" in2="offsetBlur" />
+    </filter>
   </defs>
 </svg>
 
