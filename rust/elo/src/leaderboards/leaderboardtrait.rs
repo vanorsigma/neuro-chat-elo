@@ -165,6 +165,10 @@ pub trait AbstractLeaderboard {
     }
 
     fn percentiles(&self, scores: &[f32], start: f32, end: f32, step: f32) -> Vec<f32> {
+        if scores.is_empty() {
+            return Vec::new();
+        }
+        
         let mut sorted_scores = scores.to_vec();
         sorted_scores.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let step_count = ((end - start) / step) as usize + 1;
