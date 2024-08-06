@@ -18,6 +18,8 @@ pub struct MessageProcessor {
     metadata_processor_task: tokio::task::JoinHandle<()>,
     metadata_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
     sequence_number: AtomicU32,
+    peek_send: tokio::sync::mpsc::Sender<()>,
+    peek_recv: tokio::sync::mpsc::Receiver<HashMap<String, UserChatPerformance>>,
     performances_task: tokio::task::JoinHandle<HashMap<String, UserChatPerformance>>,
 }
 
@@ -29,11 +31,16 @@ impl MessageProcessor {
         let (mut metadata_processor, metadata_sender, metadata_receiver) =
             setup_metadata_and_channels(twitch).await;
 
+        let (incoming_peek_send, incoming_peek_recv) = tokio::sync::mpsc::channel(10);
+        let (outgoing_peek_send, outgoing_peek_recv) = tokio::sync::mpsc::channel(10);
+
         let performances = user_chat_performance_processor(
             metric_processor.defaults.clone(),
             metric_receiver,
             metadata_processor.defaults.clone(),
             metadata_receiver,
+            incoming_peek_recv,
+            outgoing_peek_send,
         );
 
         Self {
@@ -45,6 +52,8 @@ impl MessageProcessor {
             metadata_sender,
             performances_task: tokio::task::spawn(performances),
             sequence_number: AtomicU32::new(0),
+            peek_send: incoming_peek_send,
+            peek_recv: outgoing_peek_recv,
         }
     }
 
@@ -57,11 +66,18 @@ impl MessageProcessor {
         }
     }
 
+    pub async fn peek_performances(&mut self) -> Option<HashMap<String, UserChatPerformance>> {
+        self.peek_send.send(()).await.unwrap();
+        
+        self.peek_recv.recv().await
+    }
+
     pub async fn finish(self) -> HashMap<String, UserChatPerformance> {
         // These senders need to be dropped before `metadata_processor_task`
         // and `metric_processor_task` will exit.
         drop(self.metric_sender);
         drop(self.metadata_sender);
+        drop(self.peek_send);
 
         self.metadata_processor_task.await.unwrap();
         self.metric_processor_task.await.unwrap();
@@ -75,6 +91,8 @@ pub async fn user_chat_performance_processor(
     mut metric_receiver: mpsc::Receiver<MetricUpdate>,
     metadata_defaults: HashMap<String, MetadataTypes>,
     mut metadata_receiver: mpsc::Receiver<MetadataUpdate>,
+    mut incoming_peek_recv: mpsc::Receiver<()>,
+    outgoing_peek_send: mpsc::Sender<HashMap<String, UserChatPerformance>>,
 ) -> HashMap<String, UserChatPerformance> {
     let mut user_performances: HashMap<String, UserChatPerformance> = HashMap::new();
     loop {
@@ -105,6 +123,9 @@ pub async fn user_chat_performance_processor(
                         }
                     }
                 });
+            }
+            Some(_) = incoming_peek_recv.recv() => {
+                outgoing_peek_send.send(user_performances.clone()).await.unwrap();
             }
             else => break,
         }

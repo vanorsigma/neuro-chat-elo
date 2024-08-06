@@ -12,7 +12,7 @@ async fn main() {
     env_logger::init_from_env(env);
 
     let twitch = twitch_utils::TwitchAPIWrapper::new().await.unwrap();
-    let message_processor = elo::MessageProcessor::new(&twitch).await;
+    let mut message_processor = elo::MessageProcessor::new(&twitch).await;
     let mut provider_set = ProviderSet::new(twitch);
 
     let (done_s, mut done_r) = tokio::sync::mpsc::channel::<()>(1);
@@ -23,21 +23,34 @@ async fn main() {
         drop(done_s);
     });
 
+    let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
+    interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+
     loop {
         let message = tokio::select! {
-            msg = provider_set.next_message() => msg,
-            _ = done_r.recv() => {
-                debug!("got finish signal");
-                break;
-            },
+            msg = provider_set.next_message() => Action::Message(msg),
+            _ = interval.tick() => Action::PeekPerformances,
+            _ = done_r.recv() => Action::Finish,
         };
 
-        if message.is_none() {
-            info!("finished reading messages from all providers");
-            break;
+        match message {
+            Action::Message(message) => {
+                if message.is_none() {
+                    info!("finished reading messages from all providers (?)");
+                    break;
+                }
+
+                message_processor.process_message(message.unwrap()).await;
+            }
+            Action::PeekPerformances => {
+                let performances = message_processor.peek_performances().await;
+
+                debug!("got intermediate performances {performances:?}");
+            }
+            Action::Finish => {
+                break;
+            }
         }
-        
-        message_processor.process_message(message.unwrap()).await;
     }
 
     info!("finished getting messages");
@@ -53,4 +66,10 @@ async fn main() {
     let performances = message_processor.finish().await;
 
     println!("{performances:?}");
+}
+
+enum Action {
+    Message(Option<elo::_types::clptypes::Message>),
+    PeekPerformances,
+    Finish,
 }
