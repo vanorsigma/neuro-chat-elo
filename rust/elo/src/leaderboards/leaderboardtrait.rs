@@ -1,6 +1,6 @@
 use crate::_types::clptypes::{BadgeInformation, UserChatPerformance};
 use crate::_types::leaderboardtypes::{LeaderboardExportItem, LeaderboardInnerState};
-use log::{debug, info};
+use log::{debug, info, warn};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
@@ -100,7 +100,7 @@ pub trait AbstractLeaderboard {
         // Update rank and delta
         let mut sorted_to_save = to_save.clone();
         sorted_to_save.sort_by(|a, b| b.elo.partial_cmp(&a.elo).unwrap());
-        assert!(sorted_to_save.len() > 1, "Nothing to save!");
+        if sorted_to_save.len() < 1 {warn!("Nothing to save for leaderboard {}", self.get_name())}
 
         let updated_to_save: Vec<LeaderboardExportItem> = sorted_to_save
             .into_iter()
