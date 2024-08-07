@@ -13,3 +13,7 @@ there aren't any, delete the section.
 
 In a bullet list, put any related issues or cards here. If there
 aren't any, delete the section.
+
+## Reminder
+
+Please add the relevant labels and assign the PR to yourself.
