@@ -1,4 +1,6 @@
 //! The text metric
+use std::collections::HashMap;
+
 use crate::_types::clptypes::{Message, MetricUpdate};
 use crate::metrics::metrictrait::AbstractMetric;
 
@@ -25,6 +27,13 @@ impl AbstractMetric for Text {
             Message::Twitch(comment) => {
                 let score = f32::max(0.0, calculate_score(comment.message.body.len()));
                 self._shortcut_for_this_comment_user(comment, score)
+            }
+            Message::Discord(msg) => MetricUpdate {
+                metric_name: self.get_name(),
+                updates: HashMap::from([(
+                    msg.author.id,
+                    f32::max(0.0, calculate_score(msg.content.len())),
+                )]),
             },
         }
     }

@@ -1,4 +1,4 @@
-use crate::_types::clptypes::{BadgeInformation, UserChatPerformance};
+use crate::_types::clptypes::{BadgeInformation, MetadataTypes, UserChatPerformance};
 use crate::_types::leaderboardtypes::{LeaderboardExportItem, LeaderboardInnerState};
 use log::{debug, info, warn};
 use serde_json::Value;
@@ -176,5 +176,17 @@ pub trait AbstractLeaderboard {
         let chunks = sorted_scores.chunks(chunk_size);
         let percentiles: Vec<f32> = chunks.map(|chunk| chunk[chunk.len() / 2]).collect();
         percentiles
+    }
+
+    fn is_discord_message(&self, performance: &UserChatPerformance) -> bool {
+        if let MetadataTypes::Bool(true) = performance
+            .metadata
+            .get("is_discord_chat")
+            .unwrap_or(&MetadataTypes::Bool(false))
+        {
+            true
+        } else {
+            false
+        }
     }
 }

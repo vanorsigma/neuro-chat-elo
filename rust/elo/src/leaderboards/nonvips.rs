@@ -30,6 +30,10 @@ impl AbstractLeaderboard for NonVIPS {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
+        if !self.is_discord_message(performance) {
+            return None;
+        }
+
         if let Some(special_role) = performance.metadata.get("special_role") {
             if *special_role.get_bool().unwrap_or(&false) {
                 return None;

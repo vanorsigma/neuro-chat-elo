@@ -1,7 +1,6 @@
+use super::github::{extract_zip_blob, get_blob_url};
 use log::info;
-use serde::{Deserialize, Serialize};
-use tempfile::{Builder, NamedTempFile, TempPath};
-use zip::ZipArchive;
+use tempfile::{Builder, NamedTempFile, TempDir, TempPath};
 
 use std::fs::{self, File};
 use std::io::{self, Read};
@@ -9,20 +8,8 @@ use std::os::unix::fs::PermissionsExt;
 use std::process::Command;
 
 use twitch_utils::twitchtypes::ChatLog;
-use twitch_utils::USER_AGENT;
 
 const RELEASES_URL: &str = "https://api.github.com/repos/lay295/TwitchDownloader/releases/latest";
-
-#[derive(Serialize, Deserialize, Debug)]
-struct GithubAsset {
-    name: String,
-    browser_download_url: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct GithubRelease {
-    assets: Vec<GithubAsset>,
-}
 
 pub struct TwitchChatDownloader {
     executable_path: TempPath,
@@ -38,51 +25,21 @@ impl TwitchChatDownloader {
     }
 
     async fn download_executable(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        /*
-        Downloads the latest executable from the releases page
-        */
-        println!("Downloading executable");
+        let temporary_directory = TempDir::new()?;
+        let mut archive = extract_zip_blob(
+            get_blob_url(RELEASES_URL, "Linux-x64.zip").await?.as_str(),
+            temporary_directory.path(),
+        )
+        .await?;
 
-        let client = reqwest::ClientBuilder::new()
-            .user_agent(USER_AGENT)
-            .build()
-            .expect("Failed to create HTTP Client");
+        let mut file = archive.by_name("TwitchDownloaderCLI")?;
 
-        info!("Fetching latest release from GitHub");
+        let mut exe_file = fs::File::create(&self.executable_path)?;
+        io::copy(&mut file, &mut exe_file)?;
+        exe_file.sync_all()?;
+        fs::set_permissions(&self.executable_path, fs::Permissions::from_mode(0o700))?;
 
-        let response = client.get(RELEASES_URL).send().await?;
-
-        if response.status().is_success() {
-            let release: GithubRelease = response.json().await?;
-            let asset = release
-                .assets
-                .iter()
-                .find(|a| a.name.ends_with("Linux-x64.zip"))
-                .ok_or("No suitable asset found")?;
-
-            let download_response = reqwest::get(&asset.browser_download_url).await?;
-            let mut temp_zip = NamedTempFile::new()?;
-            io::copy(
-                &mut download_response.bytes().await?.as_ref(),
-                &mut temp_zip,
-            )?;
-
-            let mut zip = ZipArchive::new(temp_zip.reopen()?)?;
-            let mut file = zip.by_name("TwitchDownloaderCLI")?;
-
-            let mut exe_file = fs::File::create(&self.executable_path)?;
-            io::copy(&mut file, &mut exe_file)?;
-            exe_file.sync_all()?;
-            fs::set_permissions(&self.executable_path, fs::Permissions::from_mode(0o700))?;
-
-            drop(temp_zip);
-            self.downloaded = true;
-        } else {
-            return Err(Box::new(io::Error::new(
-                io::ErrorKind::Other,
-                "Failed to fetch release",
-            )));
-        }
+        self.downloaded = true;
         Ok(())
     }
 
