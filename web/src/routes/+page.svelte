@@ -10,7 +10,8 @@
     nonvipsRank,
     bitsRank,
     subsRank,
-    discordRank
+    discordRank,
+    partnersRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
   import Menu from '$lib/menu.svelte';
@@ -27,6 +28,7 @@
     'Copypasta Leaders',
     'Bits',
     'Subs',
+    'Partners',
     '#livestream-chat'
   ];
   $: ranking = [
@@ -36,6 +38,7 @@
     $copypastaRank,
     $bitsRank,
     $subsRank,
+    $partnersRank,
     $discordRank
   ];
 
