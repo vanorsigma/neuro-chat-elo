@@ -1,14 +1,16 @@
+use crate::optout::OptOutList;
 use elo::MessageProcessor;
 use elo::_types::clptypes::{Message, UserChatPerformance};
 use elo::leaderboards::LeaderboardProcessor;
 use log::{debug, info};
+use std::collections::HashSet;
 use std::fs;
 use std::time::Instant;
 use twitch_utils::TwitchAPIWrapper;
 
 use twitch_utils::twitchtypes::ChatLog;
 
-pub struct ChatLogProcessor {
+pub struct ChatLogProcessor<'a> {
     /*
     Processes the chat logs.
 
@@ -18,13 +20,17 @@ pub struct ChatLogProcessor {
     metadata to the right people
     */
     message_processor: MessageProcessor,
+    optout_list: &'a OptOutList,
 }
 
-impl ChatLogProcessor {
-    pub async fn new(twitch: &TwitchAPIWrapper) -> Self {
+impl<'a> ChatLogProcessor<'a> {
+    pub async fn new(twitch: &TwitchAPIWrapper, optout_list: &'a OptOutList) -> Self {
         let message_processor = MessageProcessor::new(twitch).await;
 
-        Self { message_processor }
+        Self {
+            message_processor,
+            optout_list,
+        }
     }
 
     pub(crate) fn parse_to_log_struct(&self, chat_log_path: String) -> ChatLog {
@@ -40,6 +46,10 @@ impl ChatLogProcessor {
         debug!("Starting chat log processing");
 
         for message in messages {
+            if self.optout_list.is_opted_out(&message) {
+                debug!("Skipping opted out user for message: {:#?}", message);
+                continue;
+            }
             self.message_processor
                 .process_message(message.clone())
                 .await;
@@ -56,7 +66,7 @@ impl ChatLogProcessor {
             chat_log
                 .comments
                 .into_iter()
-                .map(Message::from),
+                .map(|comment| Message::from(comment)),
         )
         .await
     }
@@ -68,8 +78,11 @@ impl ChatLogProcessor {
     }
 
     /// A function to export the user performances to the leaderboards and save them
-    pub async fn export_to_leaderboards(performances: Vec<UserChatPerformance>) {
-        let mut leaderboard_processor = LeaderboardProcessor::new();
+    pub async fn export_to_leaderboards(
+        performances: Vec<UserChatPerformance>,
+        optout_list: &HashSet<String>,
+    ) {
+        let mut leaderboard_processor = LeaderboardProcessor::new(optout_list);
         leaderboard_processor.run(performances).await;
     }
 }

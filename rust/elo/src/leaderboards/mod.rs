@@ -7,6 +7,8 @@ mod nonvips;
 mod overall;
 mod subsonly;
 
+use std::collections::HashSet;
+
 use futures::join;
 
 use log::error;
@@ -44,14 +46,14 @@ pub struct LeaderboardProcessor {
 }
 
 impl LeaderboardProcessor {
-    pub fn new() -> Self {
-        let bitsonly = bitsonly::BitsOnly::new();
-        let chatonly = chatonly::ChatOnly::new();
-        let copypasta = copypastaleaders::CopypastaLeaders::new();
-        let nonvips = nonvips::NonVIPS::new();
-        let overall = overall::Overall::new();
-        let subsonly = subsonly::SubsOnly::new();
-        let discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
+    pub fn new(optouts: &HashSet<String>) -> Self {
+        let bitsonly = bitsonly::BitsOnly::new(optouts);
+        let chatonly = chatonly::ChatOnly::new(optouts);
+        let copypasta = copypastaleaders::CopypastaLeaders::new(optouts);
+        let nonvips = nonvips::NonVIPS::new(optouts);
+        let overall = overall::Overall::new(optouts);
+        let subsonly = subsonly::SubsOnly::new(optouts);
+        let discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new(optouts);
 
         Self {
             bitsonly,

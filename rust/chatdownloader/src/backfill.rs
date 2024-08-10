@@ -4,7 +4,8 @@ A function to backfill given video IDs
 
 use log::info;
 
-use crate::chatlogprocessor::ChatLogProcessor;
+use crate::chatlogprocessor::{self, ChatLogProcessor};
+use crate::optout::OptOutList;
 use crate::twitchdownloaderproxy::TwitchChatDownloader;
 use twitch_utils::TwitchAPIWrapper;
 
@@ -35,11 +36,11 @@ pub async fn backfill() {
             .await
             .expect("Could not download chat log: {e:?}");
 
-        let user_performances = ChatLogProcessor::new(&twitch)
-            .await
-            .process_from_log_object(chat_log)
-            .await;
+        let optout_list = OptOutList::new().await.unwrap();
 
-        ChatLogProcessor::export_to_leaderboards(user_performances).await;
+        let processor = chatlogprocessor::ChatLogProcessor::new(&twitch, &optout_list).await;
+        let user_performances = processor.process_from_log_object(chat_log).await;
+
+        ChatLogProcessor::export_to_leaderboards(user_performances, &optout_list.twitch_ids).await;
     }
 }

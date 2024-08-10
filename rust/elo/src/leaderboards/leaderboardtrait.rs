@@ -7,14 +7,14 @@ use crate::_types::{
 };
 use log::{debug, info, warn};
 use prost::Message;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::{Read, Write};
 use std::{fs, fs::File};
 
 const K: f32 = 2.0;
 
 pub trait AbstractLeaderboard {
-    fn new() -> Self
+    fn new(optout_list: &HashSet<String>) -> Self
     where
         Self: Sized;
 
@@ -45,6 +45,10 @@ pub trait AbstractLeaderboard {
         }
 
         info!("{} leaderboard loading ok", self.get_name());
+    }
+
+    fn cull_optout(&mut self, optout_list: &HashSet<String>) {
+        self.__get_state().retain(|id, _| !optout_list.contains(id));
     }
 
     fn update_leaderboard(&mut self, performance: UserChatPerformance) {
@@ -100,10 +104,7 @@ pub trait AbstractLeaderboard {
         // Update rank and delta
         let mut sorted_to_save = to_save.clone();
         sorted_to_save.sort_by(|a, b| b.elo.partial_cmp(&a.elo).unwrap());
-        if sorted_to_save.is_empty() {
-            warn!("Nothing to save for leaderboard {}", self.get_name())
-        }
-        if sorted_to_save.is_empty() {
+        if sorted_to_save.len() < 1 {
             warn!("Nothing to save for leaderboard {}", self.get_name())
         }
 

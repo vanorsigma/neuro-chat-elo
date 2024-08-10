@@ -1,0 +1,22 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "chat-leaderboard-optout"
+version = "0.1.0"
+description = "Allows users to opt out from leaderboards over discord or twitch whispers"
+authors = ["gaijutsu"]
+packages = [{include="*", from="src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10.12"
+firebase_admin = "^6.5.0"
+discord-py = "^2.4.0"
+python-dotenv = "^1.0.1"
+twitchapi = "^4.2.1"
+
+[tool.poetry.dev-dependencies]
+pylint = "*"
+black = "^24.0.0"
+flake8 = "*"

@@ -2,11 +2,13 @@ mod backfill;
 mod chatlogprocessor;
 mod discorddownloaderproxy;
 mod github;
+mod optout;
 mod twitchdownloaderproxy;
 
 use elo::_types::clptypes::Message;
 use env_logger::Env;
 use log::info;
+use optout::OptOutList;
 use std::{env, process::exit};
 use twitch_utils::TwitchAPIWrapper;
 
@@ -26,6 +28,9 @@ async fn main() {
         backfill::backfill().await;
         exit(0);
     }
+
+    info!("Loading opt-out list...");
+    let optout_list = OptOutList::new().await.unwrap();
 
     info!("Authenticating with Twitch...");
 
@@ -66,10 +71,14 @@ async fn main() {
     .into_iter()
     .map(|m| Message::Discord(m));
 
-    let processor = chatlogprocessor::ChatLogProcessor::new(&twitch).await;
+    let processor = chatlogprocessor::ChatLogProcessor::new(&twitch, &optout_list).await;
     // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());
     let user_performances = processor
         .process_from_messages(chat_log.chain(discord_messages))
         .await;
-    chatlogprocessor::ChatLogProcessor::export_to_leaderboards(user_performances).await;
+    chatlogprocessor::ChatLogProcessor::export_to_leaderboards(
+        user_performances,
+        &optout_list.twitch_ids,
+    )
+    .await;
 }

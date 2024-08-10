@@ -6,7 +6,7 @@ use crate::_types::clptypes::{MessageTag, UserChatPerformance};
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
 use crate::is_message_origin;
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const K: f32 = 2.0;
 
@@ -16,11 +16,12 @@ pub struct BitsOnly {
 }
 
 impl AbstractLeaderboard for BitsOnly {
-    fn new() -> Self {
+    fn new(optout_list: &HashSet<String>) -> Self {
         let mut out = Self {
             state: HashMap::new(),
         };
         out.read_initial_state();
+        out.cull_optout(optout_list);
         out
     }
 

@@ -6,7 +6,7 @@ use crate::_types::clptypes::{MessageTag, UserChatPerformance};
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
 use crate::is_message_origin;
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Default, Debug)]
 pub struct SubsOnly {
@@ -14,11 +14,12 @@ pub struct SubsOnly {
 }
 
 impl AbstractLeaderboard for SubsOnly {
-    fn new() -> Self {
+    fn new(optout_list: &HashSet<String>) -> Self {
         let mut out = Self {
             state: HashMap::new(),
         };
         out.read_initial_state();
+        out.cull_optout(optout_list);
         out
     }
 
