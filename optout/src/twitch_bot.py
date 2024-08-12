@@ -36,14 +36,15 @@ class TwitchWhisperBot:
         if data["type"] != "whisper_received":
             return
         body = data["data_object"]["body"]
-        user_id = data["data_object"]["tags"]["login"]
         from_id = data["data_object"]["from_id"]
 
+        print(data)
+
         if body.startswith("!optout"):
-            await self.handle_optout(user_id, from_id)
+            await self.handle_optout(from_id)
 
         elif body.startswith("!optin"):
-            await self.handle_optin(user_id, from_id)
+            await self.handle_optin(from_id)
 
         else:
             # Default response
@@ -54,11 +55,11 @@ class TwitchWhisperBot:
                 "If you would like to opt out type !optout, and if you would like to opt back in type !optin.",
             )
 
-    async def handle_optout(self, user_id, from_id):
+    async def handle_optout(self, from_id):
         """Handle the opt-out process for a user."""
         if (
             self.db.collection("opt_outs")
-            .where("id", "==", user_id)
+            .where("id", "==", from_id)
             .where("platform", "==", "twitch")
             .get()
         ):
@@ -68,18 +69,18 @@ class TwitchWhisperBot:
                 "You have already opted out of twitch leaderboards.",
             )
         else:
-            self.db.collection("opt_outs").add({"id": user_id, "platform": "twitch"})
+            self.db.collection("opt_outs").add({"id": from_id, "platform": "twitch"})
             await self.twitch.send_whisper(
                 self.user.id,
                 from_id,
                 "You have successfully opted out of twitch leaderboards.",
             )
 
-    async def handle_optin(self, user_id, from_id):
+    async def handle_optin(self, from_id):
         """Handle the opt-in process for a user."""
         opt_outs = (
             self.db.collection("opt_outs")
-            .where("id", "==", user_id)
+            .where("id", "==", from_id)
             .where("platform", "==", "twitch")
             .get()
         )
