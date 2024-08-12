@@ -1,3 +1,4 @@
+mod bilibililivestreamchat;
 mod bitsonly;
 mod chatonly;
 mod copypastaleaders;
@@ -43,6 +44,7 @@ pub struct LeaderboardProcessor {
     subsonly: subsonly::SubsOnly,
     discordlivestreamchat: discordlivestreamchat::DiscordLivestreamChat,
     partnersonly: partnersonly::PartnersOnly,
+    bilibililivestreamchat: bilibililivestreamchat::BilibiliLivestreamChat,
 }
 
 impl LeaderboardProcessor {
@@ -55,6 +57,7 @@ impl LeaderboardProcessor {
         let subsonly = subsonly::SubsOnly::new();
         let discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
         let partnersonly = partnersonly::PartnersOnly::new();
+        let bilibililivestreamchat = bilibililivestreamchat::BilibiliLivestreamChat::new();
 
         Self {
             bitsonly,
@@ -65,6 +68,7 @@ impl LeaderboardProcessor {
             subsonly,
             discordlivestreamchat,
             partnersonly,
+            bilibililivestreamchat,
         }
     }
 
@@ -83,7 +87,11 @@ impl LeaderboardProcessor {
                 &mut self.discordlivestreamchat,
                 broadcast_reciever.resubscribe()
             ),
-            calc_leaderboard(&mut self.partnersonly, broadcast_reciever.resubscribe())
+            calc_leaderboard(&mut self.partnersonly, broadcast_reciever.resubscribe()),
+            calc_leaderboard(
+                &mut self.bilibililivestreamchat,
+                broadcast_reciever.resubscribe()
+            )
         );
     }
 }

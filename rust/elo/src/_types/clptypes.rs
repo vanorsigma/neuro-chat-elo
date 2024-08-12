@@ -1,4 +1,5 @@
 use crate::_types::leaderboardtypes::BadgeInformation;
+use bili_utils::BiliChatMessage;
 use discord_utils::DiscordMessage;
 use std::collections::HashMap;
 use twitch_utils::twitchtypes::Comment;
@@ -113,4 +114,4 @@ macro_rules! declare_messages {
     };
 }
 
-declare_messages!((Twitch, Comment), (Discord, DiscordMessage));
+declare_messages!((Twitch, Comment), (Discord, DiscordMessage), (Bilibili, BiliChatMessage));

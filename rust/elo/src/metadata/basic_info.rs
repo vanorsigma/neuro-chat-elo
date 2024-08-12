@@ -41,6 +41,13 @@ impl AbstractMetadata for BasicInfo {
                     MetadataTypes::BasicInfo(msg.author.nickname, msg.author.avatar_url),
                 )]),
             },
+            Message::Bilibili(msg) => MetadataUpdate {
+                metadata_name: self.get_name(),
+                updates: HashMap::from([(
+                    msg.uid,
+                    MetadataTypes::BasicInfo(msg.username, msg.avatar),
+                )]),
+            },
             _ => MetadataUpdate::default(),
         }
     }

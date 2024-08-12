@@ -16,4 +16,5 @@ env_logger = "0.11.3"
 elo = { path = "../elo/" }
 twitch_utils = { path = "../twitch_utils/" }
 discord_utils = { path = "../discord_utils/" }
+bili_utils = { path = "../bili_utils/" }
 chrono = "0.4.38"

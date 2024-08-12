@@ -37,6 +37,13 @@ impl AbstractMetric for Text {
                     f32::max(0.0, calculate_score(msg.content.len())),
                 )]),
             },
+            Message::Bilibili(bilimsg) => MetricUpdate {
+                metric_name: self.get_name(),
+                updates: HashMap::from([(
+                    bilimsg.uid,
+                    f32::max(0.0, calculate_score(bilimsg.message.len())),
+                )]),
+            },
             _ => MetricUpdate::default(),
         }
     }
