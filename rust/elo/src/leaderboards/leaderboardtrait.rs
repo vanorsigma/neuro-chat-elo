@@ -63,18 +63,10 @@ pub trait AbstractLeaderboard {
         if let Some(score) = self.calculate_score(&performance) {
             debug!("Score for the above is {}", score);
 
-            let entry =
-                self.__get_state()
-                    .entry(performance.id.clone())
-                    .or_insert(LeaderboardInnerState {
-                        id: performance.id,
-                        username: performance.username,
-                        avatar: performance.avatar,
-                        badges: None,
-                        previous_rank: None,
-                        elo: 1200.0,
-                        score: 0.0,
-                    });
+            let entry = self
+                .__get_state()
+                .entry(performance.id.clone())
+                .or_insert(LeaderboardInnerState::from(performance.clone()));
 
             let badges: Vec<BadgeInformation> = performance
                 .metadata
@@ -93,20 +85,15 @@ pub trait AbstractLeaderboard {
         let to_save: Vec<LeaderboardExportItem> = self
             .__get_state()
             .values()
-            .map(|inner_state| LeaderboardExportItem {
-                id: inner_state.id.clone(),
-                rank: 0,
-                elo: inner_state.elo,
-                username: inner_state.username.clone(),
-                delta: 0,
-                avatar: inner_state.avatar.clone(),
-                badges: inner_state.badges.clone().unwrap_or_default(),
-            })
+            .map(|inner_state| LeaderboardExportItem::from(inner_state.clone()))
             .collect();
 
         // Update rank and delta
         let mut sorted_to_save = to_save.clone();
         sorted_to_save.sort_by(|a, b| b.elo.partial_cmp(&a.elo).unwrap());
+        if sorted_to_save.is_empty() {
+            warn!("Nothing to save for leaderboard {}", self.get_name())
+        }
         if sorted_to_save.is_empty() {
             warn!("Nothing to save for leaderboard {}", self.get_name())
         }

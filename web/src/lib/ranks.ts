@@ -1,18 +1,6 @@
 import { readable } from 'svelte/store';
 import axios from 'axios';
-import protobuf from 'protobufjs';
-
-const protoPath = './src/lib/leaderboard.proto';  // Adjust the path to where your proto file is located
-let root: protobuf.Root;
-
-protobuf.load(protoPath)
-  .then((loadedRoot) => {
-    root = loadedRoot;
-  })
-  .catch((error) => {
-    console.error('Error loading the .proto file:', error);
-  });
-
+import { LeaderboardExport } from './leaderboardExportTypes';
 
 export interface Badge {
   description: string;
@@ -29,7 +17,6 @@ export interface RankingInfo {
   badges: Badge[];
 }
 
-
 function makeRankingInfo(path: string) {
   return (set: (arg0: any) => void) => {
     axios.get(`./${path}`, { responseType: 'arraybuffer' })
@@ -39,19 +26,34 @@ function makeRankingInfo(path: string) {
           return;
         }
         try {
-          const LeaderboardExport = root.lookupType("leaderboard.LeaderboardExport");
-          const message = LeaderboardExport.decode(new Uint8Array(result.data));
-          const object = LeaderboardExport.toObject(message, {
-            longs: String,
-            enums: String,
-            bytes: String,
-          });
-          set(object.items as any);
-        } catch (err) {
-          console.error('Protobuf decoding error:', err);
+          const data = new Uint8Array(result.data);
+          const leaderboard = LeaderboardExport.decode(data);
+          const rankingInfo: RankingInfo[] = [];
+          for (const item of leaderboard.items) {
+            const badges = [];
+            for (const badge of item.badges) {
+              badges.push({
+                description: badge.description,
+                image_url: badge.imageUrl
+              });
+            }
+            rankingInfo.push({
+              id: item.id,
+              rank: item.rank,
+              elo: item.elo,
+              username: item.username,
+              delta: item.delta,
+              avatar: item.avatar,
+              badges: badges
+            });
+            set(rankingInfo);
+          }
+        } catch (error) {
+          // TODO: Create an error handling page for this.
+          alert(`Error parsing leaderboard from ${path}: ${error}`);
         }
       });
-    return () => {};
+    return () => { };
   };
 }
 
