@@ -1,5 +1,5 @@
 <script lang="ts">
-  import RankingCard from './rankingCard.svelte';
+  import RankingCard from '$lib/rankingCard.svelte';
   import LoadableFlexContainer from '$lib/loadableFlexContainer.svelte';
   import RevealCards from '$lib/revealCards.svelte';
   import type { RevealMetadata } from '$lib/revealMetadata';
@@ -121,7 +121,7 @@
   >
     {#each ranking as rankingInfo, index}
       <div
-        class="flex flex-col w-full h-full md:h-full md:h-[90%] {index === activeIndex
+        class="flex flex-col px-5 w-full h-full md:h-full md:h-[90%] {index === activeIndex
           ? ''
           : 'hidden'}"
       >
