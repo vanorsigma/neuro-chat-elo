@@ -1,0 +1,83 @@
+async function fetchWithAuth(url: string, options: RequestInit, env: Env): Promise<Response> {
+    const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${env.FIREBASE_AUTH}`,
+    };
+    return fetch(url, { ...options, headers });
+}
+
+async function documentExists(userId: string, type: string, env: Env): Promise<boolean> {
+    const queryData = {
+        structuredQuery: {
+            where: {
+                compositeFilter: {
+                    op: "AND",
+                    filters: [
+                        { fieldFilter: { field: { fieldPath: "id" }, op: "EQUAL", value: { stringValue: userId } } },
+                        { fieldFilter: { field: { fieldPath: "type" }, op: "EQUAL", value: { stringValue: type } } }
+                    ]
+                }
+            },
+            from: [{ collectionId: "opt_outs" }],
+            select: { fields: [{ fieldPath: "__name__" }] },
+        }
+    };
+
+    const url = `${env.FIREBASE_BASE_URL}/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
+    const response = await fetchWithAuth(url, { method: 'POST', body: JSON.stringify(queryData) }, env);
+    
+    if (!response.ok) {
+        const errorDetails = await response.json();
+        throw new Error(`Failed to run query: ${response.statusText} - ${JSON.stringify(errorDetails)}`);
+    }
+
+    const results = await response.json();
+    return results.length > 0 && results[0].document;
+}
+
+export async function addOptOut(userId: string, type: string, env: Env): Promise<CommandResponse> {
+    if (await documentExists(userId, type, env)) {
+        return { success: true };
+    }
+
+    const url = `${env.FIREBASE_BASE_URL}/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/opt_outs/`;
+    const documentData = { fields: { id: { stringValue: userId }, type: { stringValue: type } } };
+    const response = await fetchWithAuth(url, { method: 'POST', body: JSON.stringify(documentData) }, env);
+
+    return response.ok ? { success: true } : { success: false, reason: 'Firebase request failed' };
+}
+
+export async function removeOptOut(userId: string, type: string, env: Env): Promise<CommandResponse> {
+    console.log(`Opting in ${userId} with type ${type}`);
+
+    const queryData = {
+        structuredQuery: {
+            where: {
+                compositeFilter: {
+                    op: "AND",
+                    filters: [
+                        { fieldFilter: { field: { fieldPath: "id" }, op: "EQUAL", value: { stringValue: userId } } },
+                        { fieldFilter: { field: { fieldPath: "type" }, op: "EQUAL", value: { stringValue: type } } }
+                    ]
+                }
+            },
+            from: [{ collectionId: "opt_outs" }],
+            select: { fields: [{ fieldPath: "__name__" }] },
+        }
+    };
+
+    const url = `${env.FIREBASE_BASE_URL}/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
+    const response = await fetchWithAuth(url, { method: 'POST', body: JSON.stringify(queryData) }, env);
+    const data = await response.json();
+
+    for (const doc of data) {
+        const deleteUrl = `${env.FIREBASE_BASE_URL}/${doc.document.name}`;
+        const deleteResponse = await fetchWithAuth(deleteUrl, { method: 'DELETE' }, env);
+
+        if (!deleteResponse.ok) {
+            console.error(`Failed to delete document: ${deleteResponse.statusText}`);
+            return { success: false, reason: 'Firebase request failed' };
+        }
+    }
+    return { success: true };
+}
