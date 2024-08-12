@@ -1,6 +1,6 @@
 <script lang="ts">
-  import RankingCard from './rankingCard.svelte';
-  import Carousel from '$lib/carousel.svelte';
+  import RankingCard from '$lib/rankingCard.svelte';
+  import LoadableFlexContainer from '$lib/loadableFlexContainer.svelte';
   import RevealCards from '$lib/revealCards.svelte';
   import type { RevealMetadata } from '$lib/revealMetadata';
   import {
@@ -13,9 +13,11 @@
     type RankingInfo
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
+  import Menu from '$lib/menu.svelte';
+  import Burger from '$lib/burger.svelte';
 
-  let showCarouselLoading = false;
-  let allowCarousels = false; // this forces the loading text to appear
+  let showRankingsLoading = false;
+  let allowRankings = false; // this forces the loading text to appear
   let activeIndex =
     Number(sanitizeString(new URL(window.location.href).searchParams.get('index'))) || 0;
   let rankingTitles = [
@@ -28,11 +30,10 @@
   ];
   $: ranking = [$overallRank, $nonvipsRank, $chatOnlyRank, $copypastaRank, $bitsRank, $subsRank];
 
-  function navigatePage(offset: number) {
-    activeIndex = (activeIndex + offset) % ranking.length;
-    while (activeIndex < 0) {
-      activeIndex = ranking.length + activeIndex;
-    }
+  let menuAppear = false;
+
+  function navigatePage(page: number) {
+    activeIndex = page;
   }
 
   $: {
@@ -58,11 +59,11 @@
 
   // Reveal Shenanigans
   async function onAnimationDone() {
-    showCarouselLoading = true;
+    showRankingsLoading = true;
 
     // Give some time for the loading to show up
     setTimeout(() => {
-      allowCarousels = true;
+      allowRankings = true;
     }, 100);
   }
 
@@ -94,21 +95,33 @@
   </defs>
 </svg>
 
-{#if showCarouselLoading}
+{#if showRankingsLoading}
   <p class="absolute">Loading...</p>
 {/if}
 
-{#if allowCarousels}
-  <Carousel
-    onload={() => {
-      showCarouselLoading = false;
+{#if allowRankings}
+  <Burger
+    onClick={() => {
+      menuAppear = !menuAppear;
     }}
-    previousPage={() => navigatePage(-1)}
-    nextPage={() => navigatePage(1)}
+  />
+  {#if menuAppear}
+    <Menu
+      itemClicked={(page) => {
+        navigatePage(page);
+        menuAppear = !menuAppear;
+      }}
+      selectedPage={activeIndex}
+    />
+  {/if}
+  <LoadableFlexContainer
+    onload={() => {
+      showRankingsLoading = false;
+    }}
   >
     {#each ranking as rankingInfo, index}
       <div
-        class="flex flex-col w-full h-full md:h-full md:h-[90%] {index === activeIndex
+        class="flex flex-col px-5 w-full h-full md:h-full md:h-[90%] {index === activeIndex
           ? ''
           : 'hidden'}"
       >
@@ -118,9 +131,9 @@
         <RankingCard isActive={index === activeIndex} bind:userSearchTextValue {rankingInfo} />
       </div>
     {/each}
-  </Carousel>
+  </LoadableFlexContainer>
 {/if}
 
-{#if !showCarouselLoading && !allowCarousels && ranking[0]?.length > 0}
+{#if !showRankingsLoading && !allowRankings && ranking[0]?.length > 0}
   <RevealCards revealMetadatas={metadatas} allAnimationsDone={onAnimationDone} />
 {/if}
