@@ -3,7 +3,7 @@
 
 interface Env {
 	TWITCH_WEBHOOK_SECRET: string;
-	FIREBASE_AUTH: string;
+	FIREBASE_CREDS: string;
 	FIREBASE_PROJECT_ID: string;
 	FIREBASE_BASE_URL: string;
 }

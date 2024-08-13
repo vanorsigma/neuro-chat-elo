@@ -1,7 +1,40 @@
+import { getTokenFromGCPServiceAccount } from '@sagi.io/workers-jwt'
+
+export async function getAccessToken(env: Env) {
+    console.log(JSON.parse(env.FIREBASE_CREDS));
+    const jwtToken = await getTokenFromGCPServiceAccount({
+        serviceAccountJSON: JSON.parse(env.FIREBASE_CREDS),
+        aud: 'https://oauth2.googleapis.com/token',
+        payloadAdditions: {
+            scope: [
+                'https://www.googleapis.com/auth/datastore',
+            ].join(' '),
+        },
+    })
+    console.log(jwtToken);
+    
+    const accessToken = await (
+        await fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                assertion: jwtToken,
+            }),
+        })
+    ).json()
+    console.log(accessToken);
+    
+    return accessToken
+}
+
 async function fetchWithAuth(url: string, options: RequestInit, env: Env): Promise<Response> {
+    const accessToken = await getAccessToken(env);
     const headers = {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${env.FIREBASE_AUTH}`,
+        Authorization: `Bearer ${accessToken.access_token}`,
     };
     return fetch(url, { ...options, headers });
 }
@@ -22,7 +55,7 @@ async function documentExists(userId: string, type: string, env: Env): Promise<b
             select: { fields: [{ fieldPath: "__name__" }] },
         }
     };
-
+    
     const url = `${env.FIREBASE_BASE_URL}/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
     const response = await fetchWithAuth(url, { method: 'POST', body: JSON.stringify(queryData) }, env);
     
@@ -30,7 +63,7 @@ async function documentExists(userId: string, type: string, env: Env): Promise<b
         const errorDetails = await response.json();
         throw new Error(`Failed to run query: ${response.statusText} - ${JSON.stringify(errorDetails)}`);
     }
-
+    
     const results = await response.json();
     return results.length > 0 && results[0].document;
 }
@@ -39,17 +72,17 @@ export async function addOptOut(userId: string, type: string, env: Env): Promise
     if (await documentExists(userId, type, env)) {
         return { success: true };
     }
-
+    
     const url = `${env.FIREBASE_BASE_URL}/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/opt_outs/`;
     const documentData = { fields: { id: { stringValue: userId }, type: { stringValue: type } } };
     const response = await fetchWithAuth(url, { method: 'POST', body: JSON.stringify(documentData) }, env);
-
+    
     return response.ok ? { success: true } : { success: false, reason: 'Firebase request failed' };
 }
 
 export async function removeOptOut(userId: string, type: string, env: Env): Promise<CommandResponse> {
     console.log(`Opting in ${userId} with type ${type}`);
-
+    
     const queryData = {
         structuredQuery: {
             where: {
@@ -65,15 +98,15 @@ export async function removeOptOut(userId: string, type: string, env: Env): Prom
             select: { fields: [{ fieldPath: "__name__" }] },
         }
     };
-
+    
     const url = `${env.FIREBASE_BASE_URL}/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
     const response = await fetchWithAuth(url, { method: 'POST', body: JSON.stringify(queryData) }, env);
     const data = await response.json();
-
+    
     for (const doc of data) {
         const deleteUrl = `${env.FIREBASE_BASE_URL}/${doc.document.name}`;
         const deleteResponse = await fetchWithAuth(deleteUrl, { method: 'DELETE' }, env);
-
+        
         if (!deleteResponse.ok) {
             console.error(`Failed to delete document: ${deleteResponse.statusText}`);
             return { success: false, reason: 'Firebase request failed' };
