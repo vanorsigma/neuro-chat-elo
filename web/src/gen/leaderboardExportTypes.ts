@@ -2,11 +2,11 @@
 // versions:
 //   protoc-gen-ts_proto  v1.181.1
 //   protoc               v3.12.4
-// source: src/lib/leaderboardExportTypes.proto
+// source: leaderboardExportTypes.proto
 
 /* eslint-disable */
 import * as _m0 from "protobufjs/minimal";
-import Long from "long";
+import Long = require("long");
 
 export const protobufPackage = "leaderboardExportTypes";
 

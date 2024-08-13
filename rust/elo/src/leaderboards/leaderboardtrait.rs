@@ -1,6 +1,6 @@
-use crate::_types::clptypes::{BadgeInformation, UserChatPerformance};
+use crate::_types::clptypes::UserChatPerformance;
 use crate::_types::leaderboardtypes::{
-    LeaderboardExport, LeaderboardExportItem, LeaderboardInnerState,
+    BadgeInformation, LeaderboardExport, LeaderboardExportItem, LeaderboardInnerState,
 };
 use log::{debug, info, warn};
 use prost::Message;
@@ -37,18 +37,8 @@ pub trait AbstractLeaderboard {
         let leaderboard = LeaderboardExport::decode(&*buf).unwrap();
 
         for item in leaderboard.items {
-            self.__get_state().insert(
-                item.id.clone(),
-                LeaderboardInnerState {
-                    id: item.id,
-                    username: item.username,
-                    avatar: item.avatar,
-                    badges: Some(item.badges),
-                    previous_rank: Some(item.rank),
-                    elo: item.elo,
-                    score: 0.0,
-                },
-            );
+            self.__get_state()
+                .insert(item.id.clone(), LeaderboardInnerState::from(item));
         }
 
         info!("{} leaderboard loading ok", self.get_name());
@@ -63,10 +53,18 @@ pub trait AbstractLeaderboard {
         if let Some(score) = self.calculate_score(&performance) {
             debug!("Score for the above is {}", score);
 
-            let entry = self
-                .__get_state()
-                .entry(performance.id.clone())
-                .or_insert(LeaderboardInnerState::from(performance.clone()));
+            let entry =
+                self.__get_state()
+                    .entry(performance.id.clone())
+                    .or_insert(LeaderboardInnerState {
+                        id: performance.id,
+                        username: performance.username,
+                        avatar: performance.avatar,
+                        badges: None,
+                        previous_rank: None,
+                        elo: 1200.0,
+                        score: 0.0,
+                    });
 
             let badges: Vec<BadgeInformation> = performance
                 .metadata
@@ -85,7 +83,15 @@ pub trait AbstractLeaderboard {
         let to_save: Vec<LeaderboardExportItem> = self
             .__get_state()
             .values()
-            .map(|inner_state| LeaderboardExportItem::from(inner_state.clone()))
+            .map(|inner_state| LeaderboardExportItem {
+                id: inner_state.id.clone(),
+                rank: 0,
+                elo: inner_state.elo,
+                username: inner_state.username.clone(),
+                delta: 0,
+                avatar: inner_state.avatar.clone(),
+                badges: inner_state.badges.clone().unwrap_or_default(),
+            })
             .collect();
 
         // Update rank and delta
@@ -112,9 +118,7 @@ pub trait AbstractLeaderboard {
             })
             .collect();
 
-        let msg = LeaderboardExport {
-            items: updated_to_save,
-        };
+        let msg = LeaderboardExport::from(updated_to_save);
 
         // Save to file
         let path = format!("{}.bin", self.get_name());

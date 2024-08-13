@@ -1,3 +1,4 @@
+use crate::_types::leaderboardtypes::BadgeInformation;
 use discord_utils::DiscordMessage;
 use std::collections::HashMap;
 use twitch_utils::twitchtypes::Comment;
@@ -9,15 +10,6 @@ pub struct UserChatPerformance {
     pub avatar: String,
     pub metrics: HashMap<String, f32>,
     pub metadata: HashMap<String, MetadataTypes>,
-}
-
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
-pub struct BadgeInformation {
-    #[prost(string, tag = "1")]
-    pub description: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub image_url: ::prost::alloc::string::String,
 }
 
 #[derive(Debug, Clone)]

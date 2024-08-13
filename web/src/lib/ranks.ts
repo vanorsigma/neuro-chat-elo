@@ -1,6 +1,6 @@
 import { readable } from 'svelte/store';
 import axios from 'axios';
-import { LeaderboardExport } from './leaderboardExportTypes';
+import { BadgeInformation, LeaderboardExport } from '../gen/leaderboardExportTypes';
 
 export interface Badge {
   description: string;
@@ -28,34 +28,44 @@ function makeRankingInfo(path: string) {
         try {
           const data = new Uint8Array(result.data);
           const leaderboard = LeaderboardExport.decode(data);
-          const rankingInfo: RankingInfo[] = [];
-          for (const item of leaderboard.items) {
-            const badges = [];
-            for (const badge of item.badges) {
-              badges.push({
-                description: badge.description,
-                image_url: badge.imageUrl
-              });
-            }
-            rankingInfo.push({
-              id: item.id,
-              rank: item.rank,
-              elo: item.elo,
-              username: item.username,
-              delta: item.delta,
-              avatar: item.avatar,
-              badges: badges
-            });
-            set(rankingInfo);
-          }
+          const rankingInfo = mapLeaderboardToRanking(leaderboard);
+          set(rankingInfo);
         } catch (error) {
-          // TODO: Create an error handling page for this.
-          alert(`Error parsing leaderboard from ${path}: ${error}`);
+          handleError(path, error);
         }
       });
     return () => { };
   };
 }
+
+function mapLeaderboardToRanking(leaderboard: LeaderboardExport): RankingInfo[] {
+  const rankingInfo: RankingInfo[] = leaderboard.items.map(item => {
+    const badges = convertProtoBadges(item.badges);
+    return {
+      id: item.id,
+      rank: item.rank,
+      elo: item.elo,
+      username: item.username,
+      delta: item.delta,
+      avatar: item.avatar,
+      badges: badges
+    };
+  });
+  return rankingInfo;
+}
+
+function convertProtoBadges(badges: BadgeInformation[]): Badge[] {
+  return badges.map(badge => ({
+    description: badge.description,
+    image_url: badge.imageUrl
+  }));
+}
+
+function handleError(path: string, error: any) {
+  // TODO: Create an error handling page for this.
+  alert(`Error parsing leaderboard from ${path}: ${error}`);
+}
+
 
 export const overallRank = readable([], makeRankingInfo('overall.bin'));
 export const chatOnlyRank = readable([], makeRankingInfo('chat-only.bin'));
