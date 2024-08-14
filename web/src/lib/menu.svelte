@@ -8,7 +8,16 @@
     'Chat Only': 2,
     Copypasta: 3,
     Bits: 4,
-    Subs: 5
+    Subs: 5,
+    'Partner Only': 6
+  };
+
+  const discordMenuItemMapping = {
+    '#livestream-chat': 7
+  };
+
+  const bilibiliMenuItemMapping = {
+    bilibili: 8
   };
   const discordMenuItemMapping = {
     '#livestream-chat': 6
@@ -44,9 +53,20 @@
       selected={selectedPage == menuItem[1]}
     />
   {/each}
+
   <br />
   <p class="text-xl">Discord</p>
   {#each Object.entries(discordMenuItemMapping) as menuItem}
+    <MenuItem
+      text={menuItem[0]}
+      onClick={() => onMenuItemClick(menuItem[1])}
+      selected={selectedPage == menuItem[1]}
+    />
+  {/each}
+
+  <br />
+  <p class="text-xl">Bilibili</p>
+  {#each Object.entries(bilibiliMenuItemMapping) as menuItem}
     <MenuItem
       text={menuItem[0]}
       onClick={() => onMenuItemClick(menuItem[1])}

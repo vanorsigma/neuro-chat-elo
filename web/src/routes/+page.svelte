@@ -11,7 +11,8 @@
     bitsRank,
     subsRank,
     discordRank,
-    partnersRank
+    partnersRank,
+    bilibiliRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
   import Menu from '$lib/menu.svelte';
@@ -29,7 +30,8 @@
     'Bits',
     'Subs',
     'Partners',
-    '#livestream-chat'
+    '#livestream-chat',
+    'bilibili'
   ];
   $: ranking = [
     $overallRank,
@@ -39,7 +41,8 @@
     $bitsRank,
     $subsRank,
     $partnersRank,
-    $discordRank
+    $discordRank,
+    $bilibiliRank
   ];
 
   let menuAppear = false;

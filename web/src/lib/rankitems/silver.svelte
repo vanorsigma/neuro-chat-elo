@@ -1,4 +1,6 @@
 <script>
+  import { onMount } from 'svelte';
+  import { loadImageAsBase64URL } from './rankutils';
   const fontFamily = 'Comic Sans MS';
   export let username = 'alternate person';
   export let eloScore = 1399.0;
@@ -6,6 +8,14 @@
     'https://atlas-content-cdn.pixelsquid.com/stock-images/egg-z0nrae1-600.jpg';
   export let iconUrl =
     'https://i.pinimg.com/originals/c1/8a/8e/c18a8e6298ce417e595b4ddec7bc486b.png';
+
+  var avatarUrlResolved = '';
+  var iconUrlResolved = '';
+
+  onMount(async () => {
+    avatarUrlResolved = await loadImageAsBase64URL(avatarUrl);
+    iconUrlResolved = await loadImageAsBase64URL(iconUrl);
+  });
 </script>
 
 <svg
@@ -126,12 +136,20 @@
         </g>
         <g data-cell-id="gtfplMh8BVE9ldx_d5it-4">
           <g>
-            <image href={avatarUrl} x="114" y="6.5" width="45" height="45" />
+            <image href={avatarUrlResolved} x="114" y="6.5" width="45" height="45" crossorigin="" />
           </g>
         </g>
         <g data-cell-id="gtfplMh8BVE9ldx_d5it-7">
           <g>
-            <image href={iconUrl} x="330" y="11.5" width="32.5" height="32.5"> </image>
+            <image
+              href={iconUrlResolved}
+              x="330"
+              y="11.5"
+              width="32.5"
+              height="32.5"
+              crossorigin=""
+            >
+            </image>
           </g>
         </g>
       </g>

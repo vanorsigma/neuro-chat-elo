@@ -165,6 +165,7 @@
         avatarYOffset + avatarSize + 12.5
       );
     });
+    image.referrerPolicy = 'no-referrer';
     image.src = user.avatar;
   }
 
