@@ -26,14 +26,13 @@ async fn main() {
     let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
     interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
-    let leaderboard_processor = elo::leaderboards::LeaderboardProcessor::new();
-    let (broadcast_send, broadcast_recv) = tokio::sync::broadcast::channel(10000);
-    let leaderboard_processor_task = leaderboard_processor.run_streaming(broadcast_recv).await;
+    let leaderboard_processor =
+        elo::leaderboards::LeaderboardProcessorBuilder::all_leaderboards().spawn();
 
     loop {
         let message = tokio::select! {
             msg = provider_set.next_message() => Action::Message(msg),
-            _ = interval.tick() => Action::PeekPerformances,
+            _ = interval.tick() => Action::PopPerformances,
             _ = done_r.recv() => Action::Finish,
         };
 
@@ -46,14 +45,14 @@ async fn main() {
 
                 message_processor.process_message(message.unwrap()).await;
             }
-            Action::PeekPerformances => {
+            Action::PopPerformances => {
                 let performances = message_processor.peek_performances().await;
 
                 debug!("got intermediate performances {performances:?}");
 
                 if let Some(performances) = performances {
                     for performance in performances.into_values() {
-                        broadcast_send.send(performance).unwrap();
+                        leaderboard_processor.send_performance(performance);
                     }
                 }
             }
@@ -63,9 +62,7 @@ async fn main() {
         }
     }
 
-    // this has to be dropped to allow `leaderboard_processor_task` to end
-    drop(broadcast_send);
-    leaderboard_processor_task.await.unwrap();
+    leaderboard_processor.finish().await;
 
     info!("finished getting messages");
     let extras = provider_set.finish().await;
@@ -84,6 +81,6 @@ async fn main() {
 
 enum Action {
     Message(Option<elo::_types::clptypes::Message>),
-    PeekPerformances,
+    PopPerformances,
     Finish,
 }
