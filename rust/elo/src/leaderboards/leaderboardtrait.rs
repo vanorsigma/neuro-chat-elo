@@ -80,8 +80,7 @@ pub trait AbstractLeaderboard {
         }
     }
 
-    fn save(&mut self) {
-        info!("Saving {} leaderboard...", self.get_name());
+    fn generate_export(&mut self) -> Vec<LeaderboardExportItem> {
         self.__calculate_new_elo();
         let to_save: Vec<LeaderboardExportItem> = self
             .__get_state()
@@ -116,10 +115,17 @@ pub trait AbstractLeaderboard {
             })
             .collect();
 
+        updated_to_save
+    }
+
+    fn save(&mut self) {
+        info!("Saving {} leaderboard...", self.get_name());
+        let to_save = self.generate_export();
+
         // Save to file
         let path = format!("{}.json", self.get_name());
         let data =
-            serde_json::to_string(&updated_to_save).expect("Unable to serialize leaderboard data");
+            serde_json::to_string(&to_save).expect("Unable to serialize leaderboard data");
         fs::write(path, data).expect("Unable to write file");
         info!("{} leaderboard saved", self.get_name());
     }

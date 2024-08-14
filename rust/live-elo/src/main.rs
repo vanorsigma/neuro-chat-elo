@@ -26,7 +26,7 @@ async fn main() {
     let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
     interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
-    let leaderboard_processor =
+    let mut leaderboard_processor =
         elo::leaderboards::LeaderboardProcessorBuilder::all_leaderboards().spawn();
 
     loop {
@@ -55,6 +55,10 @@ async fn main() {
                         leaderboard_processor.send_performance(performance);
                     }
                 }
+
+                let leaderboards = leaderboard_processor.peek().await;
+
+                println!("got intermediate leaderboards {leaderboards:?}");
             }
             Action::Finish => {
                 break;
