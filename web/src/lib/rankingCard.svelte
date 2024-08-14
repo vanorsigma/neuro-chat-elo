@@ -38,7 +38,7 @@
   </div>
 
   <div
-    class="bg-chat rounded-xl flex flex-col items-center max-h-[70vh] md:max-h-[90%] flex-auto p-5 w-full md:w-auto min-h-0"
+    class="bg-chat rounded-xl flex flex-col items-center max-h-[70vh] md:max-h-[90%] flex-0 p-5 w-full md:w-auto min-h-0"
   >
     <h1 class="text-3xl">Leaderboard</h1>
     <input
