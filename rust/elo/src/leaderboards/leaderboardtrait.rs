@@ -1,6 +1,9 @@
-use crate::_types::clptypes::UserChatPerformance;
-use crate::_types::leaderboardtypes::{
-    BadgeInformation, LeaderboardExport, LeaderboardExportItem, LeaderboardInnerState,
+use crate::_types::{
+    clptypes::UserChatPerformance,
+    leaderboardtypes::{
+        export_item_to_inner_state, BadgeInformation, LeaderboardExport, LeaderboardExportItem,
+        LeaderboardInnerState,
+    },
 };
 use log::{debug, info, warn};
 use prost::Message;
@@ -38,7 +41,7 @@ pub trait AbstractLeaderboard {
 
         for item in leaderboard.items {
             self.__get_state()
-                .insert(item.id.clone(), LeaderboardInnerState::from(item));
+                .insert(item.id.clone(), export_item_to_inner_state(item));
         }
 
         info!("{} leaderboard loading ok", self.get_name());
@@ -119,15 +122,10 @@ pub trait AbstractLeaderboard {
             .collect();
 
         let msg = LeaderboardExport::from(updated_to_save);
-
-        // Save to file
         let path = format!("{}.bin", self.get_name());
+        let buf = msg.encode_to_vec();
 
-        let mut buf = Vec::new();
-        msg.encode(&mut buf).unwrap();
-
-        let mut file = fs::File::create(path).unwrap();
-        file.write_all(&buf).unwrap();
+        fs::File::create(path).unwrap().write_all(&buf).unwrap();
 
         info!("{} leaderboard saved", self.get_name());
     }

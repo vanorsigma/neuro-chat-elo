@@ -5,6 +5,9 @@
 # Protobuf
 *.bin
 
+# Generated TypeScript Files
+web/src/gen/
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
