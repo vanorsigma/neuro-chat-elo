@@ -3,12 +3,15 @@ name = "optout-worker"
 main = "src/index.ts"
 compatibility_date = "2024-08-06"
 compatibility_flags = ["nodejs_compat"]
+#node_compat = true
 
 [vars]
+CLOUDFLARE_WORKER_NAME = "optout-worker"
 FIREBASE_BASE_URL = "https://firestore.googleapis.com/v1"
 FIREBASE_PROJECT_ID = "neuro-chat-elo"
 TWITCH_BOT_USERNAME = "neurochatelo"
 TWITCH_BOT_ID = "1125901438"
+DISCORD_PUBLIC_KEY = "60d23e01987f1991fbbecc5a987a7447f9f7b4b96ea156c14270e0c52b8b7c3d"
 
 # Automatically place your workloads in an optimal location to minimize latency.
 # If you are running back-end logic in a Worker, running it closer to your back-end infrastructure

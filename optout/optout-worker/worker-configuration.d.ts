@@ -2,9 +2,14 @@
 // by running `wrangler types`
 
 interface Env {
+	CLOUDFLARE_API_KEY: string;
+	CLOUDFLARE_ACCOUNT_ID: string;
+	CLOUDFLARE_WORKER_NAME: string;
 	TWITCH_WEBHOOK_SECRET: string;
 	TWITCH_CLIENT_ID: string;
+	TWITCH_CLIENT_SECRET: string;
 	TWITCH_USER_AUTH: string;
+	TWITCH_REFRESH_TOKEN: string;
 	TWITCH_BOT_USERNAME: string;
 	TWITCH_BOT_ID: string;
 	DISCORD_PUBLIC_KEY: string;

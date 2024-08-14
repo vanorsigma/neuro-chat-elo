@@ -1,4 +1,4 @@
-// FIXME: getHmac and verifyMessage are written by copilot, this crypto could be bs
+// FIXME: Twitch User Auth tokens expire, need to refresh with refresh token and update stored auth token sadge
 
 import { addOptOut, removeOptOut } from "./firebase";
 
@@ -128,8 +128,67 @@ async function sendWhisper(userId: string, text: string, env: Env): Promise<void
         }
     });
 
+    if (response.status == 401) {
+        const { accessToken, refreshToken } = await refreshTwitchToken(env.TWITCH_CLIENT_ID, env.TWITCH_CLIENT_SECRET, env.TWITCH_REFRESH_TOKEN);
+        await updateSecret('TWITCH_USER_AUTH', accessToken, env);
+        await updateSecret('TWITCH_REFRESH_TOKEN', refreshToken, env);
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Client-ID': env.TWITCH_CLIENT_ID,
+                'Authorization': `Bearer ${env.TWITCH_USER_AUTH}`
+            }
+        });
+    }
+
     if (!response.ok) {
-        // TODO: Custom error types and handling
-        throw new Error(`Failed to send whisper: ${response.status} - ${response.statusText}`);
+        throw new Error(`Failed to send whisper to ${userId}: ${response.status} - ${response.statusText}`);
+    }
+}
+
+async function refreshTwitchToken(twitchClientId: string, twitchClientSecret: string, refreshToken: string): Promise<{ accessToken: string, refreshToken: string }> {
+    const url = "https://id.twitch.tv/oauth2/token";
+    const body = new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+        client_id: twitchClientId,
+        client_secret: twitchClientSecret,
+    })
+    
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: body.toString()
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+        return { accessToken: data.access_token, refreshToken: data.refresh_token };
+    } else {
+        throw new Error(`Failed to refresh token: ${response.status} - ${response.statusText}`);
+    }
+}
+
+async function updateSecret(secretName: string, secretValue: string, env: Env): Promise<void> {
+    const url = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/workers/scripts/${env.CLOUDFLARE_WORKER_NAME}/secrets`;
+    const body = JSON.stringify({
+        name: secretName,
+        text: secretValue,
+        type: "secret_text"
+    });
+
+    const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${env.CLOUDFLARE_API_KEY}`
+        },
+        body: body
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to update secret: ${response.status} - ${response.statusText}`);
     }
 }

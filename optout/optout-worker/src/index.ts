@@ -1,18 +1,7 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.toml`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
-
 import { handleWhisper, verifyTwitch, TwitchNotification } from "./twitch";
-import { handleDiscordCommand, verifyDiscord } from "./discord";
+import { verifyDiscord, handlePing, handleUnknownDiscordType, handleDiscordCommand } from "./discord";
+import { DiscordInteraction, DiscordCommandInteraction } from "./discordTypes";
+import { InteractionType } from 'discord-interactions';
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -22,28 +11,39 @@ export default {
 			case "/discord":
 				return await preHandleDiscord(request, env);
 			case "/twitch":
-				return await preHandleTwitch(request, env, ctx);
+				return await preHandleTwitch(request, env);
 			default:
 				return new Response("route not found", { status: 404 });
 		}
 	},
 } satisfies ExportedHandler<Env>;
 
-async function preHandleDiscord(request: Request, env: Env): Promise<Response> {
-	const valid = await verifyDiscord(request, env);
+async function preHandleDiscord(request: Request<unknown, IncomingRequestCfProperties>, env: Env): Promise<Response> {
+	const body = await request.text();
+	const valid = await verifyDiscord(env.DISCORD_PUBLIC_KEY, request, body);
 
 	if (!valid) {
+		console.warn("Invalid signature for discord request");
 		return new Response("Invalid signature", { status: 403 });
 	}
 
-	return await handleDiscordCommand(request, env);
+	const discordRequest: DiscordInteraction = JSON.parse(body);
+	switch (discordRequest.type) {
+		case InteractionType.PING:
+			return handlePing();
+		case InteractionType.APPLICATION_COMMAND:
+			return await handleDiscordCommand(discordRequest as DiscordCommandInteraction, env);
+		default:
+			return handleUnknownDiscordType();
+	}
 }
 
-async function preHandleTwitch(request: Request<unknown, IncomingRequestCfProperties>, env: Env, ctx: ExecutionContext): Promise<Response> {
+async function preHandleTwitch(request: Request<unknown, IncomingRequestCfProperties>, env: Env): Promise<Response> {
 	const body = await request.text();
 	const valid = verifyTwitch(env.TWITCH_WEBHOOK_SECRET, request.headers, body);
 
 	if (!valid) {
+		console.warn("Invalid signature for twitch request");
 		return new Response("Invalid signature", { status: 403 });
 	}
 
