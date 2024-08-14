@@ -70,6 +70,8 @@ impl ChatLogProcessor {
     /// A function to export the user performances to the leaderboards and save them
     pub async fn export_to_leaderboards(performances: Vec<UserChatPerformance>) {
         let mut leaderboard_processor = LeaderboardProcessor::new();
-        leaderboard_processor.run(performances).await;
+        // FIXME: this is literally only commented out because I broke leaderboard processing
+        //        please do not let this merge anywhere with this still commented out
+        // leaderboard_processor.run(performances).await;
     }
 }

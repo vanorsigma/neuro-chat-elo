@@ -26,6 +26,10 @@ async fn main() {
     let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
     interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
+    let leaderboard_processor = elo::leaderboards::LeaderboardProcessor::new();
+    let (broadcast_send, broadcast_recv) = tokio::sync::broadcast::channel(10000);
+    let leaderboard_processor_task = leaderboard_processor.run_streaming(broadcast_recv).await;
+
     loop {
         let message = tokio::select! {
             msg = provider_set.next_message() => Action::Message(msg),
@@ -46,12 +50,22 @@ async fn main() {
                 let performances = message_processor.peek_performances().await;
 
                 debug!("got intermediate performances {performances:?}");
+
+                if let Some(performances) = performances {
+                    for performance in performances.into_values() {
+                        broadcast_send.send(performance).unwrap();
+                    }
+                }
             }
             Action::Finish => {
                 break;
             }
         }
     }
+
+    // this has to be dropped to allow `leaderboard_processor_task` to end
+    drop(broadcast_send);
+    leaderboard_processor_task.await.unwrap();
 
     info!("finished getting messages");
     let extras = provider_set.finish().await;

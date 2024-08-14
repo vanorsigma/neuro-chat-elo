@@ -16,7 +16,7 @@ use crate::{
 };
 
 async fn calc_leaderboard<M: AbstractLeaderboard + Sync + Send + 'static>(
-    leaderboard: &mut M,
+    mut leaderboard: M,
     mut reciever: broadcast::Receiver<UserChatPerformance>,
 ) {
     /*
@@ -28,6 +28,12 @@ async fn calc_leaderboard<M: AbstractLeaderboard + Sync + Send + 'static>(
             Err(_) => break,
         };
         leaderboard.update_leaderboard(user_chat_performance);
+        println!("leaderboard {}", leaderboard.get_name());
+        let mut leaders = leaderboard.__get_state().iter().collect::<Vec<_>>();
+        leaders.sort_by(|(_, l), (_, r)| l.elo.partial_cmp(&r.elo).unwrap_or(std::cmp::Ordering::Less).reverse());
+        for (index, (uid, state)) in leaders.into_iter().enumerate() {
+            println!("{index}: {} {}", uid, state.elo)
+        }
     }
     leaderboard.save();
 }
@@ -60,19 +66,32 @@ impl LeaderboardProcessor {
         }
     }
 
-    pub async fn run(&mut self, performances: Vec<UserChatPerformance>) {
-        let (broadcast_sender, broadcast_reciever) = broadcast::channel(100000);
-
-        join!(
-            send_performances(broadcast_sender, performances),
-            calc_leaderboard(&mut self.bitsonly, broadcast_reciever.resubscribe()),
-            calc_leaderboard(&mut self.chatonly, broadcast_reciever.resubscribe()),
-            calc_leaderboard(&mut self.copypasta, broadcast_reciever.resubscribe()),
-            calc_leaderboard(&mut self.nonvips, broadcast_reciever.resubscribe()),
-            calc_leaderboard(&mut self.overall, broadcast_reciever.resubscribe()),
-            calc_leaderboard(&mut self.subsonly, broadcast_reciever.resubscribe()),
-        );
+    pub async fn run_streaming(self, broadcast_reciever: broadcast::Receiver<UserChatPerformance>) -> tokio::task::JoinHandle<()> {
+        tokio::task::spawn(async move {
+            join!(
+                calc_leaderboard(self.bitsonly, broadcast_reciever.resubscribe()),
+                calc_leaderboard(self.chatonly, broadcast_reciever.resubscribe()),
+                calc_leaderboard(self.copypasta, broadcast_reciever.resubscribe()),
+                calc_leaderboard(self.nonvips, broadcast_reciever.resubscribe()),
+                calc_leaderboard(self.overall, broadcast_reciever.resubscribe()),
+                calc_leaderboard(self.subsonly, broadcast_reciever.resubscribe()),
+            );
+        })
     }
+
+    // pub async fn run(&mut self, performances: Vec<UserChatPerformance>) {
+    //     let (broadcast_sender, broadcast_reciever) = broadcast::channel(100000);
+
+    //     join!(
+    //         send_performances(broadcast_sender, performances),
+    //         calc_leaderboard(&mut self.bitsonly, broadcast_reciever.resubscribe()),
+    //         calc_leaderboard(&mut self.chatonly, broadcast_reciever.resubscribe()),
+    //         calc_leaderboard(&mut self.copypasta, broadcast_reciever.resubscribe()),
+    //         calc_leaderboard(&mut self.nonvips, broadcast_reciever.resubscribe()),
+    //         calc_leaderboard(&mut self.overall, broadcast_reciever.resubscribe()),
+    //         calc_leaderboard(&mut self.subsonly, broadcast_reciever.resubscribe()),
+    //     );
+    // }
 }
 
 pub async fn send_performances(

@@ -68,7 +68,7 @@ impl MessageProcessor {
 
     pub async fn peek_performances(&mut self) -> Option<HashMap<String, UserChatPerformance>> {
         self.peek_send.send(()).await.unwrap();
-        
+
         self.peek_recv.recv().await
     }
 
@@ -125,7 +125,7 @@ pub async fn user_chat_performance_processor(
                 });
             }
             Some(_) = incoming_peek_recv.recv() => {
-                outgoing_peek_send.send(user_performances.clone()).await.unwrap();
+                outgoing_peek_send.send(std::mem::take(&mut user_performances.clone())).await.unwrap();
             }
             else => break,
         }
