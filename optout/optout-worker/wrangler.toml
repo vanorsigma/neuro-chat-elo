@@ -7,6 +7,8 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 FIREBASE_BASE_URL = "https://firestore.googleapis.com/v1"
 FIREBASE_PROJECT_ID = "neuro-chat-elo"
+TWITCH_BOT_USERNAME = "neurochatelo"
+TWITCH_BOT_ID = "1125901438"
 
 # Automatically place your workloads in an optimal location to minimize latency.
 # If you are running back-end logic in a Worker, running it closer to your back-end infrastructure

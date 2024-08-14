@@ -18,7 +18,7 @@ interface WhisperEvent {
     whisper: Whisper;
 }
 
-interface TwitchNotification {
+export interface TwitchNotification {
     event: WhisperEvent;
 }
 
@@ -93,27 +93,43 @@ export async function handleWhisper(event: WhisperEvent, env: Env): Promise<Comm
     console.log(`Received whisper from ${user} (${userId}): ${text}`);
 
     switch (text) {
-        case '!optout':
+        case '/optout':
             return await handleOptout(userId, env);
-        case '!optin':
+        case '/optin':
             return await handleOptin(userId, env);
         default:
-            // TODO: Send a whisper to the user welcoming them to the leaderboards and explaining how to opt out
             return {
-                success: false,
-                reason: 'Unknown command'
+                success: true,
             }
     }
 }
 
 async function handleOptout(userId: string, env: Env): Promise<CommandResponse> {
-    // TODO: Send a whisper to the user acknowledging the opt-out
     console.log(`Opting out ${userId}`);
-    return await addOptOut(userId, 'twitch', env);
+    const result = await addOptOut(userId, 'twitch', env);
+    await sendWhisper(userId, 'You have been opted out of the leaderboards', env);
+    return result;
 }
 
 async function handleOptin(userId: string, env: Env): Promise<CommandResponse> {
-    // TODO: Send a whisper to the user acknowledging the opt-in
     console.log(`Opting in ${userId}`);
-    return await removeOptOut(userId, 'twitch', env);
+    const result = await removeOptOut(userId, 'twitch', env);
+    await sendWhisper(userId, 'You have been opted back into the leaderboards', env);
+    return result;
+}
+
+async function sendWhisper(userId: string, text: string, env: Env): Promise<void> {
+    const url = `https://api.twitch.tv/helix/whispers?from_user_id=${env.TWITCH_BOT_ID}&to_user_id=${userId}&message=${encodeURIComponent(text)}`;
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Client-ID': env.TWITCH_CLIENT_ID,
+            'Authorization': `Bearer ${env.TWITCH_USER_AUTH}`
+        }
+    });
+
+    if (!response.ok) {
+        // TODO: Custom error types and handling
+        throw new Error(`Failed to send whisper: ${response.status} - ${response.statusText}`);
+    }
 }

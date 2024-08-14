@@ -1,7 +1,6 @@
 import { getTokenFromGCPServiceAccount } from '@sagi.io/workers-jwt'
 
 export async function getAccessToken(env: Env) {
-    console.log(JSON.parse(env.FIREBASE_CREDS));
     const jwtToken = await getTokenFromGCPServiceAccount({
         serviceAccountJSON: JSON.parse(env.FIREBASE_CREDS),
         aud: 'https://oauth2.googleapis.com/token',
@@ -11,7 +10,6 @@ export async function getAccessToken(env: Env) {
             ].join(' '),
         },
     })
-    console.log(jwtToken);
     
     const accessToken = await (
         await fetch('https://oauth2.googleapis.com/token', {
@@ -25,7 +23,6 @@ export async function getAccessToken(env: Env) {
             }),
         })
     ).json()
-    console.log(accessToken);
     
     return accessToken
 }

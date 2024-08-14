@@ -11,16 +11,16 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import { handleWhisper, verifyTwitch } from "./twitch";
-import { TwitchNotification } from "./whisperMessage";
+import { handleWhisper, verifyTwitch, TwitchNotification } from "./twitch";
+import { handleDiscordCommand, verifyDiscord } from "./discord";
 
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
+	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const url = new URL(request.url);
 
 		switch (url.pathname) {
 			case "/discord":
-				return new Response("discord request");
+				return await preHandleDiscord(request, env);
 			case "/twitch":
 				return await preHandleTwitch(request, env, ctx);
 			default:
@@ -28,6 +28,16 @@ export default {
 		}
 	},
 } satisfies ExportedHandler<Env>;
+
+async function preHandleDiscord(request: Request, env: Env): Promise<Response> {
+	const valid = await verifyDiscord(request, env);
+
+	if (!valid) {
+		return new Response("Invalid signature", { status: 403 });
+	}
+
+	return await handleDiscordCommand(request, env);
+}
 
 async function preHandleTwitch(request: Request<unknown, IncomingRequestCfProperties>, env: Env, ctx: ExecutionContext): Promise<Response> {
 	const body = await request.text();

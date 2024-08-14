@@ -10,11 +10,7 @@ __all__ = ("TwitchSetup",)
 
 log = logging.getLogger(__name__)
 
-TWITCH_AUTH_SCOPES = [
-    AuthScope.USER_MANAGE_WHISPERS,
-    AuthScope.WHISPERS_READ,
-    AuthScope.WHISPERS_EDIT,
-]
+TWITCH_AUTH_SCOPES = [AuthScope.USER_MANAGE_WHISPERS]
 
 
 class TwitchSetup:
