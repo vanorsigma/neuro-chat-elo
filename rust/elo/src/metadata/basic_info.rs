@@ -41,6 +41,7 @@ impl AbstractMetadata for BasicInfo {
                     MetadataTypes::BasicInfo(msg.author.nickname, msg.author.avatar_url),
                 )]),
             },
+            _ => MetadataUpdate::default(),
         }
     }
 }

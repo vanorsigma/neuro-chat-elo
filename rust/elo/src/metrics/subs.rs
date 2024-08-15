@@ -45,8 +45,8 @@ impl AbstractMetric for Subs {
 
                 let score = total_subs as f32 * WEIGHT_SUBS;
                 self._shortcut_for_this_comment_user(comment, score)
-            },
-            _ => MetricUpdate::empty_with_name(self.get_name())
+            }
+            _ => MetricUpdate::empty_with_name(self.get_name()),
         }
     }
 }

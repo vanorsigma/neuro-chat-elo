@@ -35,6 +35,7 @@ impl AbstractMetric for Text {
                     f32::max(0.0, calculate_score(msg.content.len())),
                 )]),
             },
+            _ => MetricUpdate::default(),
         }
     }
 }

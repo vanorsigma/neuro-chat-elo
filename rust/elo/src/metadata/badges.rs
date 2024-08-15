@@ -1,5 +1,5 @@
 //! Assigns badges to each user
-use discord_utils::DiscordMapping;
+use discord_utils::{DiscordMapping, DiscordMessage};
 use lazy_static::lazy_static;
 use log::error;
 use std::collections::HashMap;
@@ -100,6 +100,27 @@ impl Badges {
             )]),
         }
     }
+
+    fn get_metadata_discord(&self, msg: DiscordMessage) -> MetadataUpdate {
+        let metadata = msg
+            .author
+            .roles
+            .iter()
+            .filter(|item| DISCORD_ROLE_MAPPING.contains_key(&item.id))
+            .map(|item| {
+                let discord_info = DISCORD_ROLE_MAPPING.get(&item.id).unwrap();
+                BadgeInformation {
+                    description: discord_info.name.clone(),
+                    image_url: discord_info.image_url.clone(),
+                }
+            })
+            .collect();
+
+        MetadataUpdate {
+            metadata_name: self.get_name(),
+            updates: HashMap::from([(msg.author.id, MetadataTypes::BadgeList(metadata))]),
+        }
+    }
 }
 
 impl AbstractMetadata for Badges {
@@ -141,26 +162,8 @@ impl AbstractMetadata for Badges {
     fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
         match message {
             Message::Twitch(comment) => self.get_metadata_twitch(comment),
-            Message::Discord(msg) => {
-                let metadata = msg
-                    .author
-                    .roles
-                    .iter()
-                    .filter(|item| DISCORD_ROLE_MAPPING.contains_key(&item.id))
-                    .map(|item| {
-                        let discord_info = DISCORD_ROLE_MAPPING.get(&item.id).unwrap();
-                        BadgeInformation {
-                            description: discord_info.name.clone(),
-                            image_url: discord_info.image_url.clone(),
-                        }
-                    })
-                    .collect();
-
-                MetadataUpdate {
-                    metadata_name: self.get_name(),
-                    updates: HashMap::from([(msg.author.id, MetadataTypes::BadgeList(metadata))]),
-                }
-            }
+            Message::Discord(msg) => self.get_metadata_discord(msg),
+            _ => MetadataUpdate::default(),
         }
     }
 }

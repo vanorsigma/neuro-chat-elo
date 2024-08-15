@@ -107,8 +107,8 @@ impl AbstractMetric for Emote {
                     })
                     .sum();
                 self._shortcut_for_this_comment_user(comment, score)
-            },
-            _ => MetricUpdate::empty_with_name(self.get_name()) // TODO: discord emotes
+            }
+            _ => MetricUpdate::empty_with_name(self.get_name()), // TODO: discord emotes
         }
     }
 }

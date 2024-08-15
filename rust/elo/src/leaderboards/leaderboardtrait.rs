@@ -1,4 +1,4 @@
-use crate::_types::clptypes::{BadgeInformation, MetadataTypes, UserChatPerformance};
+use crate::_types::clptypes::{BadgeInformation, MessageTag, MetadataTypes, UserChatPerformance};
 use crate::_types::leaderboardtypes::{LeaderboardExportItem, LeaderboardInnerState};
 use log::{debug, info, warn};
 use serde_json::Value;
@@ -100,7 +100,9 @@ pub trait AbstractLeaderboard {
         // Update rank and delta
         let mut sorted_to_save = to_save.clone();
         sorted_to_save.sort_by(|a, b| b.elo.partial_cmp(&a.elo).unwrap());
-        if sorted_to_save.len() < 1 {warn!("Nothing to save for leaderboard {}", self.get_name())}
+        if sorted_to_save.len() < 1 {
+            warn!("Nothing to save for leaderboard {}", self.get_name())
+        }
 
         let updated_to_save: Vec<LeaderboardExportItem> = sorted_to_save
             .into_iter()
@@ -168,7 +170,7 @@ pub trait AbstractLeaderboard {
         if scores.is_empty() {
             return Vec::new();
         }
-        
+
         let mut sorted_scores = scores.to_vec();
         sorted_scores.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let step_count = ((end - start) / step) as usize + 1;
@@ -177,16 +179,16 @@ pub trait AbstractLeaderboard {
         let percentiles: Vec<f32> = chunks.map(|chunk| chunk[chunk.len() / 2]).collect();
         percentiles
     }
+}
 
-    fn is_discord_message(&self, performance: &UserChatPerformance) -> bool {
-        if let MetadataTypes::Bool(true) = performance
-            .metadata
-            .get("is_discord_chat")
-            .unwrap_or(&MetadataTypes::Bool(false))
-        {
-            true
-        } else {
-            false
-        }
-    }
+#[macro_export]
+macro_rules! is_message_origin {
+    ($performance:expr, $tag:pat) => {
+        matches!(
+            $performance.metadata.get("chat_origin").unwrap_or(
+                &crate::_types::clptypes::MetadataTypes::ChatOrigin(MessageTag::None)
+            ),
+            crate::_types::clptypes::MetadataTypes::ChatOrigin($tag)
+        )
+    };
 }

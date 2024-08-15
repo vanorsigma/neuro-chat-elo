@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate};
+use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate, MetricUpdate};
 use crate::metadata::metadatatrait::AbstractMetadata;
 use discord_utils::DiscordMessage;
 use twitch_utils::twitchtypes::Comment;
@@ -49,9 +49,7 @@ impl SpecialRole {
                 .roles
                 .iter()
                 .rfind(|role| SPECIAL_ROLES_DISCORD.contains(&role.name.as_str()))
-                .map(|_| {
-                    HashMap::from([(msg.author.id, MetadataTypes::Bool(true))])
-                })
+                .map(|_| HashMap::from([(msg.author.id, MetadataTypes::Bool(true))]))
                 .unwrap_or_default(),
         }
     }
@@ -74,6 +72,7 @@ impl AbstractMetadata for SpecialRole {
         match message {
             Message::Twitch(comment) => self.get_metadata_twitch(comment),
             Message::Discord(msg) => self.get_metadata_discord(msg),
+            _ => MetadataUpdate::default(),
         }
     }
 }

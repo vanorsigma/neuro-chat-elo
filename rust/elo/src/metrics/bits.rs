@@ -24,8 +24,8 @@ impl AbstractMetric for Bits {
             Message::Twitch(comment) => {
                 let score = comment.message.bits_spent as f32 * WEIGHT_BITS;
                 self._shortcut_for_this_comment_user(comment, score)
-            },
-            _ => MetricUpdate::empty_with_name(self.get_name())
+            }
+            _ => MetricUpdate::empty_with_name(self.get_name()),
         }
     }
 }
