@@ -46,6 +46,7 @@ async fn main() {
                 message_processor.process_message(message.unwrap()).await;
             }
             Action::PopPerformances => {
+                debug!("requesting intermediate performances");
                 let performances = message_processor.pop_performances().await;
 
                 debug!("got intermediate performances {performances:?}");

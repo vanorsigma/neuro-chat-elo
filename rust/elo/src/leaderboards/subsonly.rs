@@ -7,8 +7,6 @@ use crate::_types::leaderboardtypes::LeaderboardInnerState;
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
 use std::collections::HashMap;
 
-use super::Leaderboard;
-
 #[derive(Default, Debug)]
 pub struct SubsOnly {
     state: HashMap<String, LeaderboardInnerState>,
@@ -36,11 +34,5 @@ impl AbstractLeaderboard for SubsOnly {
             return Some(performance.metrics["subs"]);
         }
         Some(0.0)
-    }
-}
-
-impl Into<Leaderboard> for SubsOnly {
-    fn into(self) -> Leaderboard {
-        Leaderboard::SubsOnly(self)
     }
 }

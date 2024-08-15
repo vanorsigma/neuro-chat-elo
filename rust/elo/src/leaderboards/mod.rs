@@ -55,38 +55,60 @@ enum Action {
     Peek,
 }
 
-pub enum Leaderboard {
-    BitsOnly(bitsonly::BitsOnly),
-    ChatOnly(chatonly::ChatOnly),
-    Copypasta(copypastaleaders::CopypastaLeaders),
-    NonVips(nonvips::NonVIPS),
-    Overall(overall::Overall),
-    SubsOnly(subsonly::SubsOnly),
+macro_rules! leaderboard_gen {
+    ($( $enum_entry_name:ident => $leaderboard_type:ty ),* $(,)?) => {
+        pub enum Leaderboard {
+            $(
+                $enum_entry_name($leaderboard_type),
+            )*
+        }
+
+        impl Leaderboard {
+            pub fn get_as_abstract(&self) -> &dyn AbstractLeaderboard {
+                match self {
+                    $(
+                        Leaderboard::$enum_entry_name(v) => v,
+                    )*
+                }
+            }
+
+            pub fn get_as_abstract_mut(&mut self) -> &mut dyn AbstractLeaderboard {
+                match self {
+                    $(
+                        Leaderboard::$enum_entry_name(v) => v,
+                    )*
+                }
+            }
+        }
+
+        impl LeaderboardProcessorBuilder {
+            pub fn all_leaderboards() -> Self {
+                let mut builder = Self::new();
+                $(
+                    builder.add_leaderboard(<$leaderboard_type>::new());
+                )*
+                builder
+            }
+        }
+
+        $(
+            impl From<$leaderboard_type> for Leaderboard {
+                fn from(value: $leaderboard_type) -> Leaderboard {
+                    Leaderboard::$enum_entry_name(value)
+                }
+            }
+        )*
+    };
 }
 
-impl Leaderboard {
-    fn get_as_abstract(&self) -> &dyn AbstractLeaderboard {
-        match self {
-            Leaderboard::BitsOnly(v) => v,
-            Leaderboard::ChatOnly(v) => v,
-            Leaderboard::Copypasta(v) => v,
-            Leaderboard::NonVips(v) => v,
-            Leaderboard::Overall(v) => v,
-            Leaderboard::SubsOnly(v) => v,
-        }
-    }
-
-    fn get_as_abstract_mut(&mut self) -> &mut dyn AbstractLeaderboard {
-        match self {
-            Leaderboard::BitsOnly(v) => v,
-            Leaderboard::ChatOnly(v) => v,
-            Leaderboard::Copypasta(v) => v,
-            Leaderboard::NonVips(v) => v,
-            Leaderboard::Overall(v) => v,
-            Leaderboard::SubsOnly(v) => v,
-        }
-    }
-}
+leaderboard_gen!(
+    BitsOnly => bitsonly::BitsOnly,
+    ChatOnly => chatonly::ChatOnly,
+    Copypasta => copypastaleaders::CopypastaLeaders,
+    NonVips => nonvips::NonVIPS,
+    Overall => overall::Overall,
+    SubsOnly => subsonly::SubsOnly,
+);
 
 pub struct LeaderboardProcessorBuilder {
     leaderboards: Vec<Leaderboard>,
@@ -105,17 +127,6 @@ impl Default for LeaderboardProcessorBuilder {
 impl LeaderboardProcessorBuilder {
     pub fn new() -> Self {
         Self::default()
-    }
-
-    pub fn all_leaderboards() -> Self {
-        let mut builder = Self::new();
-        builder.add_leaderboard(bitsonly::BitsOnly::new());
-        builder.add_leaderboard(chatonly::ChatOnly::new());
-        builder.add_leaderboard(copypastaleaders::CopypastaLeaders::new());
-        builder.add_leaderboard(nonvips::NonVIPS::new());
-        builder.add_leaderboard(overall::Overall::new());
-        builder.add_leaderboard(subsonly::SubsOnly::new());
-        builder
     }
 
     pub fn add_leaderboard<L: Into<Leaderboard>>(&mut self, leaderboard: L) {
