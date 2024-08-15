@@ -100,9 +100,7 @@ pub trait AbstractLeaderboard {
         // Update rank and delta
         let mut sorted_to_save = to_save.clone();
         sorted_to_save.sort_by(|a, b| b.elo.partial_cmp(&a.elo).unwrap());
-        if sorted_to_save.len() < 1 {
-            warn!("Nothing to save for leaderboard {}", self.get_name())
-        }
+        if sorted_to_save.len() < 1 {warn!("Nothing to save for leaderboard {}", self.get_name())}
 
         let updated_to_save: Vec<LeaderboardExportItem> = sorted_to_save
             .into_iter()
