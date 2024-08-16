@@ -1,5 +1,5 @@
 import os
-from typing import List, Self
+from typing import List, Self, Tuple
 import logging
 import requests
 from twitchAPI.twitch import Twitch, EventSubSubscription
@@ -30,23 +30,25 @@ class TwitchSetup:
             ]
         )
 
+        log.debug(twitch._app_auth_token)
+        log.debug(twitch._user_auth_token)
+        return cls(twitch)
+
+    async def get_user_auth(self) -> Tuple[str, str]:
         auth = UserAuthenticator(
-            twitch,
+            self.api,
             TWITCH_AUTH_SCOPES,
             force_verify=False,
         )
         token, refresh_token = await auth.authenticate(browser_new=1)
-        print(f"token: {token}")
-        print(f"refresh: {refresh_token}")
-        await twitch.set_user_authentication(
+        log.debug(f"TWITCH_USER_AUTH: {token}")
+        log.debug(f"TWITCH_REFRESH_TOKEN: {refresh_token}")
+        await self.api.set_user_authentication(
             token,
             TWITCH_AUTH_SCOPES,
             refresh_token,
         )
-
-        log.debug(twitch._app_auth_token)
-        log.debug(twitch._user_auth_token)
-        return cls(twitch)
+        return token, refresh_token
 
     async def remove_whisper_event_subs(self) -> None:
         subs = await self.get_whisper_event_subs()
