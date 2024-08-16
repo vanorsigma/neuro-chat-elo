@@ -47,13 +47,22 @@ pub struct LeaderboardProcessor {
 
 impl LeaderboardProcessor {
     pub fn new(optouts: &HashSet<String>) -> Self {
-        let bitsonly = bitsonly::BitsOnly::new(optouts);
-        let chatonly = chatonly::ChatOnly::new(optouts);
-        let copypasta = copypastaleaders::CopypastaLeaders::new(optouts);
-        let nonvips = nonvips::NonVIPS::new(optouts);
-        let overall = overall::Overall::new(optouts);
-        let subsonly = subsonly::SubsOnly::new(optouts);
-        let discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new(optouts);
+        let mut bitsonly = bitsonly::BitsOnly::new();
+        let mut chatonly = chatonly::ChatOnly::new();
+        let mut copypasta = copypastaleaders::CopypastaLeaders::new();
+        let mut nonvips = nonvips::NonVIPS::new();
+        let mut overall = overall::Overall::new();
+        let mut subsonly = subsonly::SubsOnly::new();
+        let mut discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
+
+        bitsonly.cull_ids(optouts);
+        chatonly.cull_ids(optouts);
+        copypasta.cull_ids(optouts);
+        nonvips.cull_ids(optouts);
+        overall.cull_ids(optouts);
+        subsonly.cull_ids(optouts);
+
+        discordlivestreamchat.cull_ids(optouts);
 
         Self {
             bitsonly,

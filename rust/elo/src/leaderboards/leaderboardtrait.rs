@@ -14,7 +14,7 @@ use std::{fs, fs::File};
 const K: f32 = 2.0;
 
 pub trait AbstractLeaderboard {
-    fn new(optout_list: &HashSet<String>) -> Self
+    fn new() -> Self
     where
         Self: Sized;
 
@@ -47,8 +47,12 @@ pub trait AbstractLeaderboard {
         info!("{} leaderboard loading ok", self.get_name());
     }
 
-    fn cull_optout(&mut self, optout_list: &HashSet<String>) {
-        self.__get_state().retain(|id, _| !optout_list.contains(id));
+    /// Remove the given ids from the leaderboard
+    ///
+    /// # Arguments
+    /// - `ids` - A HashSet of ids to remove
+    fn cull_ids(&mut self, ids: &HashSet<String>) {
+        self.__get_state().retain(|id, _| !ids.contains(id));
     }
 
     fn update_leaderboard(&mut self, performance: UserChatPerformance) {
