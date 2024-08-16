@@ -184,9 +184,9 @@ macro_rules! is_message_origin {
     ($performance:expr, $tag:pat) => {
         matches!(
             $performance.metadata.get("chat_origin").unwrap_or(
-                &crate::_types::clptypes::MetadataTypes::ChatOrigin(MessageTag::None)
+                &$crate::_types::clptypes::MetadataTypes::ChatOrigin(MessageTag::None)
             ),
-            crate::_types::clptypes::MetadataTypes::ChatOrigin($tag)
+            $crate::_types::clptypes::MetadataTypes::ChatOrigin($tag)
         )
     };
 }
