@@ -26,7 +26,7 @@ impl AbstractMetric for Text {
         match message {
             Message::Twitch(comment) => {
                 let score = f32::max(0.0, calculate_score(comment.message.body.len()));
-                self._shortcut_for_this_comment_user(comment, score)
+                self.twitch_comment_shortcut(comment, score)
             }
             Message::Discord(msg) => MetricUpdate {
                 metric_name: self.get_name(),
