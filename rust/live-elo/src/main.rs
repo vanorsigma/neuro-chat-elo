@@ -59,7 +59,8 @@ async fn main() {
 
                 let leaderboards = leaderboard_processor.peek().await;
 
-                println!("got intermediate leaderboards {leaderboards:?}");
+                // TODO: use leaderboards
+                drop(leaderboards);
             }
             Action::Finish => {
                 break;
@@ -80,8 +81,9 @@ async fn main() {
     }
 
     let performances = message_processor.finish().await;
-
-    println!("{performances:?}");
+    debug!("got final performances");
+    // TODO: use performances
+    drop(performances);
 }
 
 enum Action {
