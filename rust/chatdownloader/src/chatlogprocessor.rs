@@ -1,6 +1,6 @@
 use elo::MessageProcessor;
 use elo::_types::clptypes::{Message, UserChatPerformance};
-use elo::leaderboards::LeaderboardProcessor;
+use elo::leaderboards::{LeaderboardProcessor, LeaderboardProcessorBuilder};
 use log::{debug, info};
 use std::fs;
 use std::time::Instant;
@@ -69,7 +69,10 @@ impl ChatLogProcessor {
 
     /// A function to export the user performances to the leaderboards and save them
     pub async fn export_to_leaderboards(performances: Vec<UserChatPerformance>) {
-        let mut leaderboard_processor = LeaderboardProcessor::new();
-        leaderboard_processor.run(performances).await;
+        let leaderboard_processor = LeaderboardProcessorBuilder::all_leaderboards().spawn();
+        for performance in performances {
+            leaderboard_processor.send_performance(performance);
+        }
+        leaderboard_processor.finish().await;
     }
 }
