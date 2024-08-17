@@ -1,5 +1,7 @@
+use futures_util::{SinkExt, StreamExt};
 use live_elo::provider::ProviderSet;
 use log::{debug, info};
+use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
 #[tokio::main]
 async fn main() {
@@ -10,6 +12,13 @@ async fn main() {
         .write_style_or("MY_LOG_STYLE", "always");
 
     env_logger::init_from_env(env);
+
+    let (ws_stream, _) = connect_async("ws://localhost:8000")
+        .await
+        .expect("Failed to connect");
+    let (mut write, _) = ws_stream.split();
+
+    write.send(Message::text("neuroWave")).await.expect("oi wtf");
 
     let twitch = twitch_utils::TwitchAPIWrapper::new().await.unwrap();
     let mut message_processor = elo::MessageProcessor::new(&twitch).await;
@@ -43,6 +52,10 @@ async fn main() {
                     break;
                 }
 
+                write
+                    .send(Message::Text(format!("{:#?}", message)))
+                    .await
+                    .expect("Failed to send WS message");
                 message_processor.process_message(message.unwrap()).await;
             }
             Action::PopPerformances => {
