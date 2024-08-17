@@ -28,7 +28,7 @@ impl AbstractMetadata for ChatOrigin {
             updates: HashMap::from([(
                 match &message {
                     Message::Discord(msg) => &msg.author.id,
-                    Message::Twitch(comment) => &comment._id,
+                    Message::Twitch(comment) => &comment.commenter._id,
                     _ => return MetadataUpdate::default(),
                 }
                 .to_string(),
