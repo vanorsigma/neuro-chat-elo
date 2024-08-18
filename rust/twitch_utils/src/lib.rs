@@ -83,6 +83,7 @@ impl TwitchAPIWrapper {
             .iter()
             .take(num)
             .map(|v| v.id.clone().to_string())
+            .rev()
             .collect()
     }
 
