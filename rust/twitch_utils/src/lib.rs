@@ -73,10 +73,17 @@ impl TwitchAPIWrapper {
         Ok(Self { twitch, token })
     }
 
-    pub async fn get_latest_vod_id(&self, ch_id: String) -> String {
+    pub async fn get_latest_vods(&self, ch_id: String, num: usize) -> Vec<String> {
         let request = GetVideosRequest::user_id(ch_id.clone());
         let response = self.twitch.req_get(request, &self.token);
-        response.await.unwrap().data[0].id.clone().to_string()
+        response
+            .await
+            .unwrap()
+            .data
+            .iter()
+            .take(num)
+            .map(|v| v.id.clone().to_string())
+            .collect()
     }
 
     /// Returns a tuple (start timestamp and end timestamp) of the VOD
