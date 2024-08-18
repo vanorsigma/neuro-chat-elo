@@ -1,8 +1,8 @@
-use crate::optout::OptOutList;
 use elo::MessageProcessor;
 use elo::_types::clptypes::{Message, UserChatPerformance};
 use elo::leaderboards::LeaderboardProcessor;
 use log::{debug, info};
+use optout::OptOutManager;
 use std::collections::HashSet;
 use std::fs;
 use std::time::Instant;
@@ -20,16 +20,16 @@ pub struct ChatLogProcessor<'a> {
     metadata to the right people
     */
     message_processor: MessageProcessor,
-    optout_list: &'a OptOutList,
+    optout_manager: &'a OptOutManager,
 }
 
 impl<'a> ChatLogProcessor<'a> {
-    pub async fn new(twitch: &TwitchAPIWrapper, optout_list: &'a OptOutList) -> Self {
+    pub async fn new(twitch: &TwitchAPIWrapper, optout_manager: &'a OptOutManager) -> Self {
         let message_processor = MessageProcessor::new(twitch).await;
 
         Self {
             message_processor,
-            optout_list,
+            optout_manager,
         }
     }
 
@@ -46,7 +46,7 @@ impl<'a> ChatLogProcessor<'a> {
         debug!("Starting chat log processing");
 
         for message in messages {
-            if self.optout_list.is_opted_out(&message) {
+            if self.optout_manager.is_opted_out(&message) {
                 debug!("Skipping opted out user for message: {:#?}", message);
                 continue;
             }

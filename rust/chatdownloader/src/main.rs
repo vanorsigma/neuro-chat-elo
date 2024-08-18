@@ -8,7 +8,7 @@ mod twitchdownloaderproxy;
 use elo::_types::clptypes::Message;
 use env_logger::Env;
 use log::info;
-use optout::OptOutList;
+use optout::OptOutManager;
 use std::{env, process::exit};
 use twitch_utils::TwitchAPIWrapper;
 
@@ -19,7 +19,7 @@ async fn main() {
     dotenv::dotenv().ok();
 
     let env = Env::default()
-        .filter_or("MY_LOG_LEVEL", "info")
+        .filter_or("MY_LOG_LEVEL", "debug")
         .write_style_or("MY_LOG_STYLE", "always");
 
     env_logger::init_from_env(env);
@@ -30,7 +30,13 @@ async fn main() {
     }
 
     info!("Loading opt-out list...");
-    let optout_list = OptOutList::new().await.unwrap();
+    let mut optout_manager =
+        OptOutManager::new(env::var("GOOGLE_CREDENTIALS").expect("Google credentials found"))
+            .expect("Credentials can create a service account");
+    optout_manager
+        .refresh_optouts()
+        .await
+        .expect("Optouts refreshed");
 
     info!("Authenticating with Twitch...");
 
@@ -71,14 +77,14 @@ async fn main() {
     .into_iter()
     .map(|m| Message::Discord(m));
 
-    let processor = chatlogprocessor::ChatLogProcessor::new(&twitch, &optout_list).await;
+    let processor = chatlogprocessor::ChatLogProcessor::new(&twitch, &optout_manager).await;
     // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());
     let user_performances = processor
         .process_from_messages(chat_log.chain(discord_messages))
         .await;
     chatlogprocessor::ChatLogProcessor::export_to_leaderboards(
         user_performances,
-        &optout_list.twitch_ids,
+        &optout_manager.twitch_ids,
     )
     .await;
 }

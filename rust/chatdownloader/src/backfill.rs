@@ -2,11 +2,13 @@
 A function to backfill given video IDs
 */
 
+use std::env;
+
 use log::info;
 
 use crate::chatlogprocessor::{self, ChatLogProcessor};
-use crate::optout::OptOutList;
 use crate::twitchdownloaderproxy::TwitchChatDownloader;
+use optout::OptOutManager;
 use twitch_utils::TwitchAPIWrapper;
 
 const VIDEO_IDS: [&str; 12] = [
@@ -36,7 +38,13 @@ pub async fn backfill() {
             .await
             .expect("Could not download chat log: {e:?}");
 
-        let optout_list = OptOutList::new().await.unwrap();
+        let mut optout_list =
+            OptOutManager::new(env::var("GOOGLE_CREDENTIALS").expect("Google credentials found"))
+                .expect("Credentials can create a service account");
+        optout_list
+            .refresh_optouts()
+            .await
+            .expect("Optouts refreshed");
 
         let processor = chatlogprocessor::ChatLogProcessor::new(&twitch, &optout_list).await;
         let user_performances = processor.process_from_log_object(chat_log).await;

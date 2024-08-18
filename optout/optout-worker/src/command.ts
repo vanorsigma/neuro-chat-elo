@@ -6,7 +6,7 @@ type CommandSucess = {
 
 type Failure = {
     success: false,
-}
+};
 
 type InvalidSignature = Failure & {
     reason: "signature was not valid",
@@ -14,8 +14,4 @@ type InvalidSignature = Failure & {
 
 type UnknownCommand = Failure & {
     reason: "Unknown command",
-};
-
-type FirebaseFailure = Failure & {
-    reason: "Firebase request failed",
 };

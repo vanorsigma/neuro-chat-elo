@@ -36,7 +36,7 @@ async function fetchWithAuth(url: string, options: RequestInit, env: Env): Promi
     return fetch(url, { ...options, headers });
 }
 
-async function documentExists(userId: string, type: string, env: Env): Promise<boolean> {
+async function documentExists(userId: string, platform: string, env: Env): Promise<boolean> {
     const queryData = {
         structuredQuery: {
             where: {
@@ -44,7 +44,7 @@ async function documentExists(userId: string, type: string, env: Env): Promise<b
                     op: "AND",
                     filters: [
                         { fieldFilter: { field: { fieldPath: "id" }, op: "EQUAL", value: { stringValue: userId } } },
-                        { fieldFilter: { field: { fieldPath: "type" }, op: "EQUAL", value: { stringValue: type } } }
+                        { fieldFilter: { field: { fieldPath: "platform" }, op: "EQUAL", value: { stringValue: platform } } }
                     ]
                 }
             },
@@ -65,20 +65,20 @@ async function documentExists(userId: string, type: string, env: Env): Promise<b
     return results.length > 0 && results[0].document;
 }
 
-export async function addOptOut(userId: string, type: string, env: Env): Promise<CommandResponse> {
-    if (await documentExists(userId, type, env)) {
+export async function addOptOut(userId: string, platform: string, env: Env): Promise<CommandResponse> {
+    if (await documentExists(userId, platform, env)) {
         return { success: true };
     }
     
     const url = `${env.FIREBASE_BASE_URL}/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/opt_outs/`;
-    const documentData = { fields: { id: { stringValue: userId }, type: { stringValue: type } } };
+    const documentData = { fields: { id: { stringValue: userId }, platform: { stringValue: platform } } };
     const response = await fetchWithAuth(url, { method: 'POST', body: JSON.stringify(documentData) }, env);
     
     return response.ok ? { success: true } : { success: false, reason: 'Firebase request failed' };
 }
 
-export async function removeOptOut(userId: string, type: string, env: Env): Promise<CommandResponse> {
-    console.log(`Opting in ${userId} with type ${type}`);
+export async function removeOptOut(userId: string, platform: string, env: Env): Promise<CommandResponse> {
+    console.log(`Opting in ${userId} on platform ${platform}`);
     
     const queryData = {
         structuredQuery: {
@@ -87,7 +87,7 @@ export async function removeOptOut(userId: string, type: string, env: Env): Prom
                     op: "AND",
                     filters: [
                         { fieldFilter: { field: { fieldPath: "id" }, op: "EQUAL", value: { stringValue: userId } } },
-                        { fieldFilter: { field: { fieldPath: "type" }, op: "EQUAL", value: { stringValue: type } } }
+                        { fieldFilter: { field: { fieldPath: "platform" }, op: "EQUAL", value: { stringValue: platform } } }
                     ]
                 }
             },

@@ -1,10 +1,9 @@
 import {
     InteractionResponseType,
-    InteractionType,
     verifyKey,
 } from 'discord-interactions';
 import { addOptOut, removeOptOut } from "./firebase";
-import { DiscordInteraction, DiscordBaseInteraction, DiscordPingInteraction, DiscordCommandInteraction, DiscordChannelCommandInteraction } from './discordTypes';
+import { DiscordCommandInteraction } from './discordTypes';
 
 export function handleUnknownDiscordType(): Response {
     console.error('Unknown Type for Discord Interaction');

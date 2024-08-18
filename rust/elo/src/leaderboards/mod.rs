@@ -15,7 +15,8 @@ use log::error;
 use tokio::sync::broadcast;
 
 use crate::{
-    _types::clptypes::UserChatPerformance, leaderboards::leaderboardtrait::AbstractLeaderboard,
+    _types::clptypes::UserChatPerformance, cull_leaderboards,
+    leaderboards::leaderboardtrait::AbstractLeaderboard,
 };
 
 async fn calc_leaderboard<M: AbstractLeaderboard + Sync + Send + 'static>(
@@ -55,12 +56,7 @@ impl LeaderboardProcessor {
         let mut subsonly = subsonly::SubsOnly::new();
         let mut discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
 
-        bitsonly.cull_ids(optouts);
-        chatonly.cull_ids(optouts);
-        copypasta.cull_ids(optouts);
-        nonvips.cull_ids(optouts);
-        overall.cull_ids(optouts);
-        subsonly.cull_ids(optouts);
+        cull_leaderboards!(optouts, bitsonly, chatonly, copypasta, nonvips, overall, subsonly);
 
         discordlivestreamchat.cull_ids(optouts);
 

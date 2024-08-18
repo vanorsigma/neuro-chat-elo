@@ -201,3 +201,19 @@ macro_rules! is_message_origin {
         )
     };
 }
+
+/// Macro to cull all leaderboards passed
+///
+/// # Arguments
+/// - `set` - A HashSet of ids to remove
+/// - `leaderboard` - A list of leaderboards to cull
+#[macro_export]
+macro_rules! cull_leaderboards {
+    ($set:expr, $($leaderboard:expr),+ $(,)?) => {
+        use log::{debug};
+        $(
+            debug!("Culling leaderboard: {}", $leaderboard.get_name());
+            $leaderboard.cull_ids(&$set);
+        )+
+    };
+}
