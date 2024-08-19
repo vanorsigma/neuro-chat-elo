@@ -1,6 +1,8 @@
 <script lang="ts">
-  import RevealCard from './revealCard.svelte';
+  import RevealCardConfetti from './revealCardConfetti.svelte';
+  import RevealCardBasic from './revealCardBasic.svelte';
   import type { RevealMetadata } from './revealMetadata';
+  import RevealCardCollection from './revealCardCollection.svelte';
 
   let currentIndex = 0;
   export let revealMetadatas: RevealMetadata[] = [];
@@ -11,14 +13,17 @@
       setTimeout(allAnimationsDone, 1000);
     }
 
-    currentIndex += 1;
+    // currentIndex += 1;
   }
 </script>
 
 <button class="absolute z-50 top-10" on:click={allAnimationsDone}>Skip</button>
+
+<RevealCardCollection {revealMetadatas} />
+<!--
 {#each revealMetadatas as metadata, index}
   {#if index === currentIndex}
-    <RevealCard
+    <RevealCardConfetti
       avatarUrl={metadata.avatarUrl}
       avatarName={metadata.avatarName}
       topChatterRevealTitle={`${metadata.leaderboardName} top chatter is...`}
@@ -26,3 +31,4 @@
     />
   {/if}
 {/each}
+-->
