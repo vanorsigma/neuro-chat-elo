@@ -19,9 +19,6 @@
   const bilibiliMenuItemMapping = {
     bilibili: 8
   };
-  const discordMenuItemMapping = {
-    '#livestream-chat': 6
-  };
 
   export let itemClicked: (arg0: number) => void;
   export let selectedPage: number;

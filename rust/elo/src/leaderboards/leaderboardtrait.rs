@@ -1,5 +1,5 @@
 use crate::_types::{
-    clptypes::UserChatPerformance,
+    clptypes::{MetadataTypes, UserChatPerformance},
     leaderboardtypes::{
         export_item_to_inner_state, BadgeInformation, LeaderboardExport, LeaderboardExportItem,
         LeaderboardInnerState,

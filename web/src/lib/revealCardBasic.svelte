@@ -5,9 +5,7 @@
   let offscreen: OffscreenCanvas;
 
   let maxAvatarWidth = NaN;
-  const crownSize = 100;
   const textSize = 40;
-  const titleSize = 30;
 
   let offscreenDone = false;
 
@@ -16,6 +14,9 @@
   export let heightOffset = 0;
   export let title = '';
   export let winner = false;
+
+  const defaultAvatarUrl =
+    'https://static-cdn.jtvnw.net/user-default-pictures-uv/ebe4cd89-b4f4-4cd9-adac-2f30151b4209-profile_image-300x300.png';
 
   export let onFinishedLoading = () => {};
 
@@ -36,8 +37,13 @@
       const laurel = new Image();
       laurel.src = 'https://upload.wikimedia.org/wikipedia/commons/8/80/Laurel.svg';
 
+      const imgCancelIfDoneTimeout = setTimeout(() => {
+        img.src = defaultAvatarUrl;
+      }, 2000);
+
       img.onload = () => {
         img_loaded = true;
+        clearTimeout(imgCancelIfDoneTimeout);
         both_images_loaded_callback();
       };
 

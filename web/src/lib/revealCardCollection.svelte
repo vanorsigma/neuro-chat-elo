@@ -3,17 +3,19 @@
   import RevealCardBasic from './revealCardBasic.svelte';
   import canvasConfetti from 'canvas-confetti';
   import type { RevealMetadata } from './revealMetadata';
-  import { fade, fly } from 'svelte/transition';
+  import { fade } from 'svelte/transition';
 
   let collection: HTMLDivElement;
   let winnerCard: HTMLDivElement;
   let confettiCanvas: HTMLCanvasElement;
   let offscreenDone = false;
   let finishedLoadingCount = 0;
+  let mouseIsDown = false;
+  let mouseOriginX = -1;
+  let mouseOriginY = -1;
   export let revealMetadatas: RevealMetadata[] = [];
   // NOTE: this variable should not be used directly. use the cards element below
   let _cards: HTMLDivElement[] = [];
-  $: other_cards = _cards.filter((card) => card);
 
   function drawConfetti(canvas: HTMLCanvasElement) {
     canvasConfetti.create(canvas, {
@@ -76,6 +78,23 @@
     });
   }
 
+  function onMouseDown(e: MouseEvent) {
+    mouseIsDown = true;
+    mouseOriginX = e.clientX;
+    mouseOriginY = e.clientY;
+  }
+
+  function onMouseUp() {
+    mouseIsDown = false;
+  }
+
+  function onMouseMove(e: MouseEvent) {
+    if (mouseIsDown) {
+      collection.scrollBy(mouseOriginX - e.clientX, 0);
+      mouseOriginX = e.clientX;
+    }
+  }
+
   // CSS animations don't play properly
   function performAppearAnimation() {
     winnerCard.style.opacity = '0.0';
@@ -113,11 +132,21 @@
   <p>Loading...</p>
 {/if}
 
+<canvas
+  bind:this={confettiCanvas}
+  in:fade={{ duration: 200, delay: 200 }}
+  class="absolute w-full h-[90%] {offscreenDone ? '' : 'invisible'}"
+></canvas>
+
 <div
-  bind:this={collection}
   class="absolute flex h-full overflow-x-scroll w-full items-center gap-5 {offscreenDone
     ? ''
     : 'invisible'}"
+  on:mousedown={onMouseDown}
+  on:mouseup={onMouseUp}
+  on:mouseleave={onMouseUp}
+  on:mousemove={onMouseMove}
+  bind:this={collection}
 >
   {#each revealMetadataOrdered as metadata, index}
     {#if metadata.leaderboardName == 'Overall'}
@@ -144,9 +173,3 @@
     {/if}
   {/each}
 </div>
-
-<canvas
-  bind:this={confettiCanvas}
-  in:fade={{ duration: 200, delay: 200 }}
-  class="absolute w-full h-[90%] {offscreenDone ? '' : 'invisible'}"
-></canvas>
