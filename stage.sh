@@ -5,4 +5,4 @@
 CHATDOWNLOADER="rust"
 WEB="web/static"
 
-cp ${CHATDOWNLOADER}/*.json ${WEB}/
+cp ${CHATDOWNLOADER}/*.bin ${WEB}/

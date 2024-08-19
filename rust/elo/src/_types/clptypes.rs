@@ -1,5 +1,4 @@
 use discord_utils::DiscordMessage;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use twitch_utils::twitchtypes::Comment;
 
@@ -12,10 +11,13 @@ pub struct UserChatPerformance {
     pub metadata: HashMap<String, MetadataTypes>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BadgeInformation {
-    pub description: String,
-    pub image_url: String,
+    #[prost(string, tag = "1")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub image_url: ::prost::alloc::string::String,
 }
 
 #[derive(Debug, Clone)]

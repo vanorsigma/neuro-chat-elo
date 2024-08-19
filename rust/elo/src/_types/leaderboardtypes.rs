@@ -1,23 +1,35 @@
 /*
 Publically accessible leaderboard types
 */
-
-use serde::{Deserialize, Serialize};
-
 use super::clptypes::BadgeInformation;
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LeaderboardExportItem {
-    pub id: String,
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "2")]
     pub rank: u32,
+    #[prost(float, tag = "3")]
     pub elo: f32,
-    pub username: String,
+    #[prost(string, tag = "4")]
+    pub username: ::prost::alloc::string::String,
+    #[prost(int64, tag = "5")]
     pub delta: i64,
-    pub avatar: String,
-    pub badges: Option<Vec<BadgeInformation>>,
+    #[prost(string, tag = "6")]
+    pub avatar: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "7")]
+    pub badges: ::prost::alloc::vec::Vec<BadgeInformation>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LeaderboardExport {
+    #[prost(message, repeated, tag = "1")]
+    pub items: ::prost::alloc::vec::Vec<LeaderboardExportItem>,
+}
+
+#[derive(Debug, Clone)]
 pub struct LeaderboardInnerState {
     pub id: String,
     pub username: String,

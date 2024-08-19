@@ -16,8 +16,8 @@
     "@sveltejs/adapter-static": "^3.0.1",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
-    "@types/eslint": "^8.56.0",
     "@types/canvas-confetti": "^1.6.4",
+    "@types/eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "autoprefixer": "^10.4.19",
@@ -39,6 +39,7 @@
   "dependencies": {
     "animejs": "^3.2.2",
     "axios": "^1.7.2",
-    "canvas-confetti": "^1.9.3"
+    "canvas-confetti": "^1.9.3",
+    "protobufjs": "^7.3.2"
   }
 }

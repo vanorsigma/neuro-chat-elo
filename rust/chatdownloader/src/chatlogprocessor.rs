@@ -56,7 +56,7 @@ impl ChatLogProcessor {
             chat_log
                 .comments
                 .into_iter()
-                .map(|comment| Message::from(comment)),
+                .map(Message::from),
         )
         .await
     }

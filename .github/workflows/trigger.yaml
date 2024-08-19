@@ -15,7 +15,7 @@ jobs:
       id: restore-leaderboards
       with:
         path: |
-          chatdownloader/*.json
+          chatdownloader/*.bin
         key: ${{ hashFiles('season.txt') }}
     
     - name: Restore Rust Builds
