@@ -10,6 +10,7 @@
     nonvipsRank,
     bitsRank,
     subsRank,
+    positiveRank,
     discordRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
@@ -27,7 +28,8 @@
     'Copypasta Leaders',
     'Bits',
     'Subs',
-    '#livestream-chat'
+    '#livestream-chat',
+    'Positivity'
   ];
   $: ranking = [
     $overallRank,
@@ -36,7 +38,8 @@
     $copypastaRank,
     $bitsRank,
     $subsRank,
-    $discordRank
+    $discordRank,
+    $positiveRank
   ];
 
   let menuAppear = false;

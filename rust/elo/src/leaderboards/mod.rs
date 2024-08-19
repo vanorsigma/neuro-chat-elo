@@ -5,6 +5,7 @@ mod discordlivestreamchat;
 mod leaderboardtrait;
 mod nonvips;
 mod overall;
+mod positive;
 mod subsonly;
 
 use futures::join;
@@ -14,6 +15,7 @@ use tokio::sync::broadcast;
 
 use crate::{
     _types::clptypes::UserChatPerformance, leaderboards::leaderboardtrait::AbstractLeaderboard,
+    metrics::sentiment,
 };
 
 async fn calc_leaderboard<M: AbstractLeaderboard + Sync + Send + 'static>(
@@ -40,6 +42,7 @@ pub struct LeaderboardProcessor {
     nonvips: nonvips::NonVIPS,
     overall: overall::Overall,
     subsonly: subsonly::SubsOnly,
+    positive: positive::Positive,
     discordlivestreamchat: discordlivestreamchat::DiscordLivestreamChat,
 }
 
@@ -51,6 +54,7 @@ impl LeaderboardProcessor {
         let nonvips = nonvips::NonVIPS::new();
         let overall = overall::Overall::new();
         let subsonly = subsonly::SubsOnly::new();
+        let positive = positive::Positive::new();
         let discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
 
         Self {
@@ -60,6 +64,7 @@ impl LeaderboardProcessor {
             nonvips,
             overall,
             subsonly,
+            positive,
             discordlivestreamchat,
         }
     }
@@ -75,6 +80,7 @@ impl LeaderboardProcessor {
             calc_leaderboard(&mut self.nonvips, broadcast_reciever.resubscribe()),
             calc_leaderboard(&mut self.overall, broadcast_reciever.resubscribe()),
             calc_leaderboard(&mut self.subsonly, broadcast_reciever.resubscribe()),
+            calc_leaderboard(&mut self.positive, broadcast_reciever.resubscribe()),
             calc_leaderboard(
                 &mut self.discordlivestreamchat,
                 broadcast_reciever.resubscribe()

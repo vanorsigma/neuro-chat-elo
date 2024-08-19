@@ -73,4 +73,5 @@ export const nonvipsRank = readable([], makeRankingInfo('nonvips.bin'));
 export const copypastaRank = readable([], makeRankingInfo('copypasta.bin'));
 export const bitsRank = readable([], makeRankingInfo('bits-only.bin'));
 export const subsRank = readable([], makeRankingInfo('subs-only.bin'));
+export const positiveRank = readable([], makeRankingInfo('positive.bin'))
 export const discordRank = readable([], makeRankingInfo('discordlivestream.bin'))
