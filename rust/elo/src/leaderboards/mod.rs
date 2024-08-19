@@ -47,7 +47,7 @@ pub struct LeaderboardProcessor {
 }
 
 impl LeaderboardProcessor {
-    pub fn new(optouts: &HashSet<String>) -> Self {
+    pub fn new(twitch_ids: &HashSet<String>, discord_ids: &HashSet<String>) -> Self {
         let mut bitsonly = bitsonly::BitsOnly::new();
         let mut chatonly = chatonly::ChatOnly::new();
         let mut copypasta = copypastaleaders::CopypastaLeaders::new();
@@ -56,9 +56,9 @@ impl LeaderboardProcessor {
         let mut subsonly = subsonly::SubsOnly::new();
         let mut discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
 
-        cull_leaderboards!(optouts, bitsonly, chatonly, copypasta, nonvips, overall, subsonly);
+        cull_leaderboards!(twitch_ids, bitsonly, chatonly, copypasta, nonvips, overall, subsonly);
 
-        discordlivestreamchat.cull_ids(optouts);
+        cull_leaderboards!(discord_ids, discordlivestreamchat);
 
         Self {
             bitsonly,

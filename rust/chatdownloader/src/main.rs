@@ -2,7 +2,6 @@ mod backfill;
 mod chatlogprocessor;
 mod discorddownloaderproxy;
 mod github;
-mod optout;
 mod twitchdownloaderproxy;
 
 use elo::_types::clptypes::Message;
@@ -19,7 +18,7 @@ async fn main() {
     dotenv::dotenv().ok();
 
     let env = Env::default()
-        .filter_or("MY_LOG_LEVEL", "debug")
+        .filter_or("MY_LOG_LEVEL", "info")
         .write_style_or("MY_LOG_STYLE", "always");
 
     env_logger::init_from_env(env);
@@ -82,9 +81,6 @@ async fn main() {
     let user_performances = processor
         .process_from_messages(chat_log.chain(discord_messages))
         .await;
-    chatlogprocessor::ChatLogProcessor::export_to_leaderboards(
-        user_performances,
-        &optout_manager.twitch_ids,
-    )
-    .await;
+    chatlogprocessor::ChatLogProcessor::export_to_leaderboards(user_performances, &optout_manager)
+        .await;
 }

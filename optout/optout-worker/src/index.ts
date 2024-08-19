@@ -26,6 +26,7 @@ async function preHandleDiscord(request: Request<unknown, IncomingRequestCfPrope
 		console.warn("Invalid signature for discord request");
 		return new Response("Invalid signature", { status: 403 });
 	}
+	console.log(`Verified Discord request`);
 
 	const discordRequest: DiscordInteraction = JSON.parse(body);
 	switch (discordRequest.type) {
@@ -43,9 +44,10 @@ async function preHandleTwitch(request: Request<unknown, IncomingRequestCfProper
 	const valid = verifyTwitch(env.TWITCH_WEBHOOK_SECRET, request.headers, body);
 
 	if (!valid) {
-		console.warn("Invalid signature for twitch request");
+		console.warn("Invalid signature for Twitch request");
 		return new Response("Invalid signature", { status: 403 });
 	}
+	console.log(`Verified Twitch request`);
 
 	const messageType = request.headers.get("Twitch-Eventsub-Message-Type");
 	switch (messageType) {

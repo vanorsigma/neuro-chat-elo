@@ -49,6 +49,6 @@ pub async fn backfill() {
         let processor = chatlogprocessor::ChatLogProcessor::new(&twitch, &optout_list).await;
         let user_performances = processor.process_from_log_object(chat_log).await;
 
-        ChatLogProcessor::export_to_leaderboards(user_performances, &optout_list.twitch_ids).await;
+        ChatLogProcessor::export_to_leaderboards(user_performances, &optout_list).await;
     }
 }

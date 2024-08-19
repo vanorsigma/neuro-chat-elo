@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate, MetricUpdate};
+use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate};
 use crate::metadata::metadatatrait::AbstractMetadata;
 use discord_utils::DiscordMessage;
 use twitch_utils::twitchtypes::Comment;

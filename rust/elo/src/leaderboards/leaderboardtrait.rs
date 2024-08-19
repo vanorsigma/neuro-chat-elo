@@ -210,9 +210,7 @@ macro_rules! is_message_origin {
 #[macro_export]
 macro_rules! cull_leaderboards {
     ($set:expr, $($leaderboard:expr),+ $(,)?) => {
-        use log::{debug};
         $(
-            debug!("Culling leaderboard: {}", $leaderboard.get_name());
             $leaderboard.cull_ids(&$set);
         )+
     };

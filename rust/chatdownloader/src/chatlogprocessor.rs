@@ -6,9 +6,8 @@ use optout::OptOutManager;
 use std::collections::HashSet;
 use std::fs;
 use std::time::Instant;
-use twitch_utils::TwitchAPIWrapper;
-
 use twitch_utils::twitchtypes::ChatLog;
+use twitch_utils::TwitchAPIWrapper;
 
 pub struct ChatLogProcessor<'a> {
     /*
@@ -80,9 +79,10 @@ impl<'a> ChatLogProcessor<'a> {
     /// A function to export the user performances to the leaderboards and save them
     pub async fn export_to_leaderboards(
         performances: Vec<UserChatPerformance>,
-        optout_list: &HashSet<String>,
+        optout_manager: &OptOutManager,
     ) {
-        let mut leaderboard_processor = LeaderboardProcessor::new(optout_list);
+        let mut leaderboard_processor =
+            LeaderboardProcessor::new(&optout_manager.twitch_ids, &optout_manager.discord_ids);
         leaderboard_processor.run(performances).await;
     }
 }

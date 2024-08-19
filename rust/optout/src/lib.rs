@@ -30,7 +30,7 @@ struct StringValue {
 pub struct OptOutManager {
     pub service_account: CustomServiceAccount,
     pub twitch_ids: HashSet<String>,
-    pub _discord_ids: HashSet<String>,
+    pub discord_ids: HashSet<String>,
 }
 
 impl OptOutManager {
@@ -47,7 +47,7 @@ impl OptOutManager {
         Ok(Self {
             service_account,
             twitch_ids: twitch_names,
-            _discord_ids: discord_names,
+            discord_ids: discord_names,
         })
     }
 
@@ -56,7 +56,7 @@ impl OptOutManager {
         match self.get_optouts().await {
             Ok((twitch_names, discord_names)) => {
                 self.twitch_ids = twitch_names;
-                self._discord_ids = discord_names;
+                self.discord_ids = discord_names;
                 Ok(())
             }
             Err(e) => Err(e),
@@ -107,6 +107,8 @@ impl OptOutManager {
     pub fn is_opted_out(&self, message: &Message) -> bool {
         match message {
             Message::Twitch(comment) => self.twitch_ids.contains(&comment.commenter._id),
+            Message::Discord(message) => self.discord_ids.contains(&message.author.id),
+            _ => false,
         }
     }
 }
