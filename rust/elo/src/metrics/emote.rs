@@ -106,8 +106,9 @@ impl AbstractMetric for Emote {
                             * WEIGHT_EMOTES
                     })
                     .sum();
-                self._shortcut_for_this_comment_user(comment, score)
-            },
+                self.twitch_comment_shortcut(comment, score)
+            }
+            _ => MetricUpdate::empty_with_name(self.get_name()), // TODO: discord emotes
         }
     }
 }

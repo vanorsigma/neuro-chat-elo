@@ -2,8 +2,9 @@
 The overall leaderboard
 */
 
-use crate::_types::clptypes::UserChatPerformance;
+use crate::_types::clptypes::{MessageTag, UserChatPerformance};
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
+use crate::is_message_origin;
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
 use std::collections::HashMap;
 
@@ -30,6 +31,10 @@ impl AbstractLeaderboard for Overall {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        return Some(performance.metrics.values().sum());
+        if is_message_origin!(performance, MessageTag::Twitch) {
+            Some(performance.metrics.values().sum())
+        } else {
+            None
+        }
     }
 }

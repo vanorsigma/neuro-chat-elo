@@ -1,5 +1,6 @@
 pub mod badges;
 pub mod basic_info;
+pub mod chat_origin;
 pub mod metadatatrait;
 pub mod special_role;
 
@@ -23,6 +24,7 @@ pub struct MetadataProcessor {
     basic_info: basic_info::BasicInfo,
     badges: badges::Badges,
     special_role: special_role::SpecialRole,
+    chat_origin: chat_origin::ChatOrigin,
 }
 
 impl MetadataProcessor {
@@ -37,11 +39,13 @@ impl MetadataProcessor {
         let basic_info = basic_info::BasicInfo::new(twitch).await;
         let badges = badges::Badges::new(twitch).await;
         let special_role = special_role::SpecialRole::new(twitch).await;
+        let chat_origin = chat_origin::ChatOrigin::new(twitch).await;
 
         // Add names and default values to the metadata
         defaults.insert(basic_info.get_name(), basic_info.get_default_value());
         defaults.insert(badges.get_name(), badges.get_default_value());
         defaults.insert(special_role.get_name(), special_role.get_default_value());
+        defaults.insert(chat_origin.get_name(), chat_origin.get_default_value());
 
         Self {
             defaults,
@@ -50,6 +54,7 @@ impl MetadataProcessor {
             basic_info,
             badges,
             special_role,
+            chat_origin,
         }
     }
 
@@ -67,6 +72,11 @@ impl MetadataProcessor {
             ),
             calc_metadata(
                 &mut self.special_role,
+                self.mpsc_sender.clone(),
+                self.broadcast_receiver.resubscribe(),
+            ),
+            calc_metadata(
+                &mut self.chat_origin,
                 self.mpsc_sender.clone(),
                 self.broadcast_receiver.resubscribe(),
             ),
@@ -90,9 +100,8 @@ async fn calc_metadata<M: AbstractMetadata + Send + Sync + 'static>(
                 warn!("Failed to send metadata result {}", e)
             };
         } else {
-            break
+            break;
         };
-
     }
 }
 

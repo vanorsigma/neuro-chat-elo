@@ -10,7 +10,7 @@
     nonvipsRank,
     bitsRank,
     subsRank,
-    type RankingInfo
+    discordRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
   import Menu from '$lib/menu.svelte';
@@ -26,9 +26,18 @@
     'Only Chat Messages',
     'Copypasta Leaders',
     'Bits',
-    'Subs'
+    'Subs',
+    '#livestream-chat'
   ];
-  $: ranking = [$overallRank, $nonvipsRank, $chatOnlyRank, $copypastaRank, $bitsRank, $subsRank];
+  $: ranking = [
+    $overallRank,
+    $nonvipsRank,
+    $chatOnlyRank,
+    $copypastaRank,
+    $bitsRank,
+    $subsRank,
+    $discordRank
+  ];
 
   let menuAppear = false;
 

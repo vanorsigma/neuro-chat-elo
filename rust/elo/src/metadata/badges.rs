@@ -1,4 +1,6 @@
 //! Assigns badges to each user
+use discord_utils::{DiscordMapping, DiscordMessage};
+use lazy_static::lazy_static;
 use log::error;
 use std::collections::HashMap;
 use twitch_utils::twitchtypes::Comment;
@@ -7,6 +9,51 @@ use crate::_constants::VED_CH_ID;
 use crate::_types::clptypes::{BadgeInformation, Message, MetadataTypes, MetadataUpdate};
 use crate::metadata::metadatatrait::AbstractMetadata;
 use twitch_utils::TwitchAPIWrapper;
+
+lazy_static! {
+    static ref DISCORD_ROLE_MAPPING: HashMap<String, DiscordMapping> = HashMap::from([
+    (
+            "574720716025626654".to_string(),
+            DiscordMapping {
+                id: "574720716025626654".to_string(),
+                name: "Admin".to_string(),
+                image_url: "https://cdn.discordapp.com/role-icons/574720716025626654/fdba9a82d5acd7285cb800c030fb48ef.webp?size=128&quality=lossless".to_string(),
+            },
+        ),
+        (
+            "574931772781887488".to_string(),
+            DiscordMapping {
+                id: "574931772781887488".to_string(),
+                name: "Moderator".to_string(),
+                image_url: "https://cdn.discordapp.com/role-icons/574931772781887488/409144b2ac07f5868b1341759fd34e17.webp?size=128&quality=lossless".to_string(),
+            },
+        ),
+        (
+            "604550016320929792".to_string(),
+            DiscordMapping {
+                id: "574931772781887488".to_string(),
+                name: "Twitch Mod".to_string(),
+                image_url: "https://cdn.discordapp.com/role-icons/574931772781887488/409144b2ac07f5868b1341759fd34e17.webp?size=128&quality=lossless".to_string(),
+            },
+        ),
+        (
+            "1059341815754530937".to_string(),
+            DiscordMapping {
+                id: "1059341815754530937".to_string(),
+                name: "VIP".to_string(),
+                image_url: "https://cdn.discordapp.com/role-icons/1059341815754530937/760a124960bb2fba95741c9e8c921c50.webp?size=128&quality=lossless".to_string(),
+            },
+        ),
+        (
+            "1127037809564327946".to_string(),
+            DiscordMapping {
+                id: "1127037809564327946".to_string(),
+                name: "Super Neuro Fans".to_string(),
+                image_url: "https://cdn.discordapp.com/role-icons/1127037809564327946/caa9be70d7da2df4c92933927f70df78.webp?size=128&quality=lossless".to_string(),
+            },
+        )
+    ]);
+}
 
 pub struct Badges {
     badges: HashMap<String, HashMap<String, BadgeInformation>>,
@@ -53,6 +100,27 @@ impl Badges {
             )]),
         }
     }
+
+    fn get_metadata_discord(&self, msg: DiscordMessage) -> MetadataUpdate {
+        let metadata = msg
+            .author
+            .roles
+            .iter()
+            .filter(|item| DISCORD_ROLE_MAPPING.contains_key(&item.id))
+            .map(|item| {
+                let discord_info = DISCORD_ROLE_MAPPING.get(&item.id).unwrap();
+                BadgeInformation {
+                    description: discord_info.name.clone(),
+                    image_url: discord_info.image_url.clone(),
+                }
+            })
+            .collect();
+
+        MetadataUpdate {
+            metadata_name: self.get_name(),
+            updates: HashMap::from([(msg.author.id, MetadataTypes::BadgeList(metadata))]),
+        }
+    }
 }
 
 impl AbstractMetadata for Badges {
@@ -94,6 +162,8 @@ impl AbstractMetadata for Badges {
     fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
         match message {
             Message::Twitch(comment) => self.get_metadata_twitch(comment),
+            Message::Discord(msg) => self.get_metadata_discord(msg),
+            _ => MetadataUpdate::default(),
         }
     }
 }

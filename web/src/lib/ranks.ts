@@ -33,3 +33,4 @@ export const nonvipsRank = readable([], makeRankingInfo('nonvips.json'));
 export const copypastaRank = readable([], makeRankingInfo('copypasta.json'));
 export const bitsRank = readable([], makeRankingInfo('bits-only.json'));
 export const subsRank = readable([], makeRankingInfo('subs-only.json'));
+export const discordRank = readable([], makeRankingInfo('discordlivestream.json'))

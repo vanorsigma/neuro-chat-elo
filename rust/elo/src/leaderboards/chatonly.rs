@@ -2,8 +2,9 @@
 Chat-only leaderboard
 */
 
-use crate::_types::clptypes::UserChatPerformance;
+use crate::_types::clptypes::{MessageTag, UserChatPerformance};
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
+use crate::is_message_origin;
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
 use std::collections::HashMap;
 
@@ -30,6 +31,10 @@ impl AbstractLeaderboard for ChatOnly {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        Some(*performance.metrics.get("text").unwrap_or(&0.0))
+        if is_message_origin!(performance, MessageTag::Twitch) {
+            Some(*performance.metrics.get("text").unwrap_or(&0.0))
+        } else {
+            None
+        }
     }
 }

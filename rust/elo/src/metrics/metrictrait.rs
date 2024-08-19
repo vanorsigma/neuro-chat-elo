@@ -9,7 +9,7 @@ pub trait AbstractMetric {
     where
         Self: Sized;
 
-    fn _shortcut_for_this_comment_user(&self, comment: Comment, score: f32) -> MetricUpdate {
+    fn twitch_comment_shortcut(&self, comment: Comment, score: f32) -> MetricUpdate {
         let mut map: HashMap<String, f32> = HashMap::new();
         map.insert(comment.commenter._id, score);
         MetricUpdate {

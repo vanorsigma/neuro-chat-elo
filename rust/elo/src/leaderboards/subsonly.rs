@@ -2,8 +2,9 @@
 Subs leaderboard
 */
 
-use crate::_types::clptypes::UserChatPerformance;
+use crate::_types::clptypes::{MessageTag, UserChatPerformance};
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
+use crate::is_message_origin;
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
 use std::collections::HashMap;
 
@@ -30,6 +31,10 @@ impl AbstractLeaderboard for SubsOnly {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
+        if !is_message_origin!(performance, MessageTag::Twitch) {
+            return None;
+        }
+
         if performance.metrics.contains_key("subs") {
             return Some(performance.metrics["subs"]);
         }

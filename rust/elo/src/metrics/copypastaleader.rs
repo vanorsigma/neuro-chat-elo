@@ -125,6 +125,7 @@ impl AbstractMetric for CopypastaLeader {
     fn get_metric(&mut self, message: Message, sequence_no: u32) -> MetricUpdate {
         match message {
             Message::Twitch(comment) => self.get_metric_for_twitch_message(comment, sequence_no),
+            _ => MetricUpdate::empty_with_name(self.get_name()), // TODO: Discord copypasta leader
         }
     }
 

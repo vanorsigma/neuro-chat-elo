@@ -1,8 +1,9 @@
+use discord_utils::DiscordMessage;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use twitch_utils::twitchtypes::Comment;
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct UserChatPerformance {
     pub id: String,
     pub username: String,
@@ -17,11 +18,12 @@ pub struct BadgeInformation {
     pub image_url: String,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub enum MetadataTypes {
     Bool(bool),
     BadgeList(Vec<BadgeInformation>),
     BasicInfo(String, String),
+    ChatOrigin(MessageTag),
 }
 
 impl MetadataTypes {
@@ -79,14 +81,42 @@ impl MetadataUpdate {
 
 /// Message enum representing all possible messages that go through
 /// chat log processor.
-#[derive(Debug, Clone)]
-pub enum Message {
-    /// Represents a Twitch message
-    Twitch(Comment),
+macro_rules! declare_messages {
+    ($(($variant:ident, $raw_message:ty)),*) => {
+        /// Message wraps the underlying data type, to be used as a supertype for message processing
+        #[derive(Debug, Clone)]
+        #[non_exhaustive]
+        pub enum Message {
+            $(
+                $variant($raw_message),
+            )*
+            None,
+        }
+
+        /// MessageTag acts as a "tag" for a already processed message
+        #[derive(Debug, Clone)]
+        pub enum MessageTag {
+            $($variant,)*
+            None,
+        }
+
+        $(
+            impl From<$raw_message> for Message {
+                fn from(value: $raw_message) -> Self {
+                    Self::$variant(value)
+                }
+            }
+        )*
+
+        impl From<&Message> for MessageTag {
+            fn from(message: &Message) -> Self {
+                match message {
+                    $(Message::$variant(_) => Self::$variant,)*
+                    _ => Self::None,
+                }
+            }
+        }
+    };
 }
 
-impl From<Comment> for Message {
-    fn from(value: Comment) -> Self {
-        Self::Twitch(value)
-    }
-}
+declare_messages!((Twitch, Comment), (Discord, DiscordMessage));

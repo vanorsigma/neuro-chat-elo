@@ -1,19 +1,16 @@
-/*
-The non-VIPs leaderboard
-*/
+//! Discord #livestream-chat leaderboard
 
 use crate::_types::clptypes::{MessageTag, UserChatPerformance};
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
-use crate::is_message_origin;
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
 use std::collections::HashMap;
 
 #[derive(Default, Debug)]
-pub struct NonVIPS {
+pub struct DiscordLivestreamChat {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for NonVIPS {
+impl AbstractLeaderboard for DiscordLivestreamChat {
     fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
@@ -23,7 +20,7 @@ impl AbstractLeaderboard for NonVIPS {
     }
 
     fn get_name(&self) -> String {
-        "nonvips".to_string()
+        "discordlivestream".to_string()
     }
 
     fn __get_state(&mut self) -> &mut HashMap<String, LeaderboardInnerState> {
@@ -31,15 +28,10 @@ impl AbstractLeaderboard for NonVIPS {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        if is_message_origin!(performance, MessageTag::Discord) {
-            return None;
+        if crate::is_message_origin!(performance, MessageTag::Discord) {
+            Some(performance.metrics.values().sum())
+        } else {
+            None
         }
-
-        if let Some(special_role) = performance.metadata.get("special_role") {
-            if *special_role.get_bool().unwrap_or(&false) {
-                return None;
-            }
-        }
-        Some(performance.metrics.values().sum())
     }
 }
