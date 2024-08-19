@@ -6,7 +6,10 @@ use std::collections::HashMap;
 use twitch_utils::twitchtypes::Comment;
 
 use crate::_constants::VED_CH_ID;
-use crate::_types::clptypes::{BadgeInformation, Message, MetadataTypes, MetadataUpdate};
+use crate::_types::{
+    clptypes::{Message, MetadataTypes, MetadataUpdate},
+    leaderboardtypes::BadgeInformation,
+};
 use crate::metadata::metadatatrait::AbstractMetadata;
 use twitch_utils::TwitchAPIWrapper;
 

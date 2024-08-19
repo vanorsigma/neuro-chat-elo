@@ -1,5 +1,5 @@
+use crate::_types::leaderboardtypes::BadgeInformation;
 use discord_utils::DiscordMessage;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use twitch_utils::twitchtypes::Comment;
 
@@ -10,12 +10,6 @@ pub struct UserChatPerformance {
     pub avatar: String,
     pub metrics: HashMap<String, f32>,
     pub metadata: HashMap<String, MetadataTypes>,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct BadgeInformation {
-    pub description: String,
-    pub image_url: String,
 }
 
 #[derive(Debug, Clone)]

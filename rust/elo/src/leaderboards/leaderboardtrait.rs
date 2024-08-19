@@ -1,9 +1,15 @@
-use crate::_types::clptypes::{BadgeInformation, MessageTag, MetadataTypes, UserChatPerformance};
-use crate::_types::leaderboardtypes::{LeaderboardExportItem, LeaderboardInnerState};
+use crate::_types::{
+    clptypes::UserChatPerformance,
+    leaderboardtypes::{
+        export_item_to_inner_state, BadgeInformation, LeaderboardExport, LeaderboardExportItem,
+        LeaderboardInnerState,
+    },
+};
 use log::{debug, info, warn};
-use serde_json::Value;
+use prost::Message;
 use std::collections::HashMap;
-use std::fs;
+use std::io::{Read, Write};
+use std::{fs, fs::File};
 
 const K: f32 = 2.0;
 
@@ -20,29 +26,23 @@ pub trait AbstractLeaderboard {
 
     fn read_initial_state(&mut self) {
         info!("Loading {} leaderboard...", self.get_name());
-        let path = format!("{}.json", self.get_name());
+        let path = format!("{}.bin", self.get_name());
         if !std::path::Path::new(&path).exists() {
             info!("{} leaderboard doesn't already exist.", self.get_name());
             return;
         }
 
-        let data = fs::read_to_string(&path).expect("Unable to read file");
-        let items: Vec<Value> = serde_json::from_str(&data).expect("JSON was not well-formatted");
-        self.__get_state().extend(items.into_iter().map(|item| {
-            let export_item: LeaderboardExportItem = serde_json::from_value(item).unwrap();
-            (
-                export_item.id.clone(),
-                LeaderboardInnerState {
-                    id: export_item.id,
-                    username: export_item.username,
-                    avatar: export_item.avatar,
-                    badges: export_item.badges,
-                    previous_rank: Some(export_item.rank),
-                    elo: export_item.elo,
-                    score: 0.0,
-                },
-            )
-        }));
+        let mut file = File::open(path).unwrap();
+
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf).unwrap();
+
+        let leaderboard = LeaderboardExport::decode(&*buf).unwrap();
+
+        for item in leaderboard.items {
+            self.__get_state()
+                .insert(item.id.clone(), export_item_to_inner_state(item));
+        }
 
         info!("{} leaderboard loading ok", self.get_name());
     }
@@ -93,14 +93,19 @@ pub trait AbstractLeaderboard {
                 username: inner_state.username.clone(),
                 delta: 0,
                 avatar: inner_state.avatar.clone(),
-                badges: inner_state.badges.clone(),
+                badges: inner_state.badges.clone().unwrap_or_default(),
             })
             .collect();
 
         // Update rank and delta
         let mut sorted_to_save = to_save.clone();
         sorted_to_save.sort_by(|a, b| b.elo.partial_cmp(&a.elo).unwrap());
-        if sorted_to_save.len() < 1 {warn!("Nothing to save for leaderboard {}", self.get_name())}
+        if sorted_to_save.is_empty() {
+            warn!("Nothing to save for leaderboard {}", self.get_name())
+        }
+        if sorted_to_save.is_empty() {
+            warn!("Nothing to save for leaderboard {}", self.get_name())
+        }
 
         let updated_to_save: Vec<LeaderboardExportItem> = sorted_to_save
             .into_iter()
@@ -116,11 +121,12 @@ pub trait AbstractLeaderboard {
             })
             .collect();
 
-        // Save to file
-        let path = format!("{}.json", self.get_name());
-        let data =
-            serde_json::to_string(&updated_to_save).expect("Unable to serialize leaderboard data");
-        fs::write(path, data).expect("Unable to write file");
+        let msg = LeaderboardExport::from(updated_to_save);
+        let path = format!("{}.bin", self.get_name());
+        let buf = msg.encode_to_vec();
+
+        fs::File::create(path).unwrap().write_all(&buf).unwrap();
+
         info!("{} leaderboard saved", self.get_name());
     }
 

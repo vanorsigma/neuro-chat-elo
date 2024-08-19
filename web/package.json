@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "npm run compileProtos && vite build",
+    "compileProtos": "protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_opt esModuleInterop=true --ts_proto_out=./src/gen/ --proto_path=../models/ ../models/*.proto",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
@@ -16,8 +17,8 @@
     "@sveltejs/adapter-static": "^3.0.1",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
-    "@types/eslint": "^8.56.0",
     "@types/canvas-confetti": "^1.6.4",
+    "@types/eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "autoprefixer": "^10.4.19",
@@ -39,6 +40,7 @@
   "dependencies": {
     "animejs": "^3.2.2",
     "axios": "^1.7.2",
-    "canvas-confetti": "^1.9.3"
+    "canvas-confetti": "^1.9.3",
+    "ts-proto": "^1.181.1"
   }
 }

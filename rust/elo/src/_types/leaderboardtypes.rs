@@ -2,22 +2,16 @@
 Publically accessible leaderboard types
 */
 
-use serde::{Deserialize, Serialize};
+// Includes the protobuf types defined in models/leaderboardExportTypes.proto
+include!(concat!(env!("OUT_DIR"), "/leaderboard_export_types.rs"));
 
-use super::clptypes::BadgeInformation;
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct LeaderboardExportItem {
-    pub id: String,
-    pub rank: u32,
-    pub elo: f32,
-    pub username: String,
-    pub delta: i64,
-    pub avatar: String,
-    pub badges: Option<Vec<BadgeInformation>>,
+impl From<Vec<LeaderboardExportItem>> for LeaderboardExport {
+    fn from(items: Vec<LeaderboardExportItem>) -> Self {
+        LeaderboardExport { items }
+    }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct LeaderboardInnerState {
     pub id: String,
     pub username: String,
@@ -26,4 +20,16 @@ pub struct LeaderboardInnerState {
     pub previous_rank: Option<u32>,
     pub elo: f32,
     pub score: f32,
+}
+
+pub fn export_item_to_inner_state(item: LeaderboardExportItem) -> LeaderboardInnerState {
+    LeaderboardInnerState {
+        id: item.id,
+        username: item.username,
+        avatar: item.avatar,
+        badges: Some(item.badges),
+        previous_rank: Some(item.rank),
+        elo: item.elo,
+        score: 1200.0,
+    }
 }
