@@ -6,7 +6,7 @@
 *.bin
 
 # Generated TypeScript Files
-web/src/gen/
+web/src/gen/*
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

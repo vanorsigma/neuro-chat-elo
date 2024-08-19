@@ -10,6 +10,9 @@
     Bits: 4,
     Subs: 5
   };
+  const discordMenuItemMapping = {
+    '#livestream-chat': 6
+  };
 
   export let itemClicked: (arg0: number) => void;
   export let selectedPage: number;
@@ -35,6 +38,15 @@
 
   <p class="text-xl">Twitch</p>
   {#each Object.entries(twitchMenuItemMapping) as menuItem}
+    <MenuItem
+      text={menuItem[0]}
+      onClick={() => onMenuItemClick(menuItem[1])}
+      selected={selectedPage == menuItem[1]}
+    />
+  {/each}
+  <br />
+  <p class="text-xl">Discord</p>
+  {#each Object.entries(discordMenuItemMapping) as menuItem}
     <MenuItem
       text={menuItem[0]}
       onClick={() => onMenuItemClick(menuItem[1])}
