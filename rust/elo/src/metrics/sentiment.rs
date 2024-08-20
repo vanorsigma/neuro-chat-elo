@@ -1,4 +1,5 @@
 //! The sentiment metric
+use log::{info, log};
 use sentiment::analyze;
 use std::collections::HashMap;
 
@@ -42,7 +43,12 @@ impl AbstractMetric for Sentiment {
 
 impl Sentiment {
     fn calculate_score(&self, text: String) -> f32 {
-        let score: f32 = analyze(text).score;
+        let score: f32 = analyze(text.clone()).score;
+        info!(
+            "Sentiment score: {} for text {}",
+            score * WEIGHT_SENTIMENT,
+            text
+        );
         score * WEIGHT_SENTIMENT
     }
 }
