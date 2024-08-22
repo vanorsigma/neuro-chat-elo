@@ -1,3 +1,5 @@
+pub mod seventvclient;
+
 use std::collections::HashMap;
 
 use chrono::{DateTime, FixedOffset};

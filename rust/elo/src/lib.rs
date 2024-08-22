@@ -1,10 +1,14 @@
-use std::{collections::HashMap, sync::atomic::AtomicU32};
+use std::{
+    collections::HashMap,
+    sync::{atomic::AtomicU32, Arc},
+};
 
 use _types::clptypes::{Message, MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
 use log::{debug, warn};
 use metadata::setup_metadata_and_channels;
 use metrics::setup_metrics_and_channels;
 use tokio::sync::mpsc;
+use twitch_utils::seventvclient::SevenTVClient;
 
 pub mod _constants;
 pub mod _types;
@@ -22,9 +26,12 @@ pub struct MessageProcessor {
 }
 
 impl MessageProcessor {
-    pub async fn new(twitch: &twitch_utils::TwitchAPIWrapper) -> Self {
+    pub async fn new(
+        twitch: &twitch_utils::TwitchAPIWrapper,
+        seventv_client: Arc<SevenTVClient>,
+    ) -> Self {
         let (mut metric_processor, metric_sender, metric_receiver) =
-            setup_metrics_and_channels().await;
+            setup_metrics_and_channels(seventv_client).await;
 
         let (mut metadata_processor, metadata_sender, metadata_receiver) =
             setup_metadata_and_channels(twitch).await;

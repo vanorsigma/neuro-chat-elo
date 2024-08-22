@@ -9,8 +9,10 @@ use futures::join;
 use log::debug;
 use log::warn;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc;
+use twitch_utils::seventvclient::SevenTVClient;
 
 use crate::_types::clptypes::Message;
 use crate::_types::clptypes::MetricUpdate;
@@ -31,6 +33,7 @@ impl MetricProcessor {
     /// Create a new MetricProcessor
     /// get_defaults_and_setup_channels must be called before run
     pub async fn new(
+        seventv_client: Arc<SevenTVClient>,
         broadcast_receiver: broadcast::Receiver<(Message, u32)>,
         mpsc_sender: mpsc::Sender<MetricUpdate>,
     ) -> Self {
@@ -40,7 +43,9 @@ impl MetricProcessor {
         let subs = subs::Subs::new().await;
         let text = text::Text::new().await;
         let copypastaleader = copypastaleader::CopypastaLeader::new().await;
-        let emote = emote::Emote::new().await;
+        let mut emote = emote::Emote::new().await;
+
+        emote.set_seventv_client(seventv_client);
 
         defaults.insert(bits.get_name(), 0.0);
         defaults.insert(subs.get_name(), 0.0);
@@ -119,13 +124,16 @@ async fn calc_metric<M: AbstractMetric + Sync + Send + 'static>(
 
 #[allow(clippy::type_complexity)]
 /// Get the default values for the metrics and set up the channels
-pub async fn setup_metrics_and_channels() -> (
+pub async fn setup_metrics_and_channels(
+    seventv_client: Arc<SevenTVClient>,
+) -> (
     MetricProcessor,
     broadcast::Sender<(Message, u32)>,
     mpsc::Receiver<MetricUpdate>,
 ) {
     let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);
     let (mpsc_sender, mpsc_receiver) = mpsc::channel(100000);
-    let metric_processor = MetricProcessor::new(broadcast_receiver, mpsc_sender).await;
+    let metric_processor =
+        MetricProcessor::new(seventv_client, broadcast_receiver, mpsc_sender).await;
     (metric_processor, broadcast_sender, mpsc_receiver)
 }

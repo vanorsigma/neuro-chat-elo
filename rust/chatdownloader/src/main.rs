@@ -7,8 +7,8 @@ mod twitchdownloaderproxy;
 use elo::_types::clptypes::Message;
 use env_logger::Env;
 use log::info;
-use std::{env, process::exit};
-use twitch_utils::TwitchAPIWrapper;
+use std::{env, process::exit, sync::Arc};
+use twitch_utils::{seventvclient::SevenTVClient, TwitchAPIWrapper};
 
 const CHANNEL_ID: &str = "1067638175478071307";
 
@@ -66,7 +66,9 @@ async fn main() {
     .into_iter()
     .map(|m| Message::Discord(m));
 
-    let processor = chatlogprocessor::ChatLogProcessor::new(&twitch).await;
+    let seventv_client = Arc::new(SevenTVClient::new().await);
+
+    let processor = chatlogprocessor::ChatLogProcessor::new(&twitch, seventv_client).await;
     // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());
     let user_performances = processor
         .process_from_messages(chat_log.chain(discord_messages))
