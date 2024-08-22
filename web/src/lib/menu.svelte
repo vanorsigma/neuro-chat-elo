@@ -9,7 +9,8 @@
     Copypasta: 3,
     Bits: 4,
     Subs: 5,
-    'Partner Only': 6
+    'Partner Only': 6,
+    'Top Emotes': 8
   };
   const discordMenuItemMapping = {
     '#livestream-chat': 7

@@ -1,7 +1,7 @@
 use crate::_types::leaderboardtypes::BadgeInformation;
 use discord_utils::DiscordMessage;
 use std::collections::HashMap;
-use twitch_utils::twitchtypes::Comment;
+use twitch_utils::twitchtypes::{Comment, TwitchEmote};
 
 #[derive(Debug, Clone)]
 pub struct UserChatPerformance {
@@ -110,7 +110,17 @@ macro_rules! declare_messages {
                 }
             }
         }
+
+        impl From<&TwitchEmote> for MessageTag {
+            fn from(_emote: &TwitchEmote) -> Self {
+                Self::TwitchEmote
+            }
+        }
     };
 }
 
-declare_messages!((Twitch, Comment), (Discord, DiscordMessage));
+declare_messages!(
+    (Twitch, Comment),
+    (Discord, DiscordMessage),
+    (TwitchEmote, TwitchEmote)
+);

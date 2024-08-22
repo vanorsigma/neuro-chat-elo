@@ -10,8 +10,9 @@
     nonvipsRank,
     bitsRank,
     subsRank,
+    partnersRank,
     discordRank,
-    partnersRank
+    emoteRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
   import Menu from '$lib/menu.svelte';
@@ -30,7 +31,8 @@
     'Bits',
     'Subs',
     'Partners',
-    '#livestream-chat'
+    '#livestream-chat',
+    'Top Emotes'
   ];
   $: ranking = [
     $overallRank,
@@ -39,8 +41,9 @@
     $copypastaRank,
     $bitsRank,
     $subsRank,
+    $discordRank,
     $partnersRank,
-    $discordRank
+    $emoteRank
   ];
 
   $: allRanksLoaded = ranking.every((r) => r.length > 0);

@@ -1,5 +1,5 @@
 /*
-The non-VIPs leaderboard
+Top Emotes leaderboard
 */
 
 use crate::_types::clptypes::{MessageTag, UserChatPerformance};
@@ -8,12 +8,14 @@ use crate::is_message_origin;
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
 use std::collections::HashMap;
 
+const K: f32 = 1.0;
+
 #[derive(Default, Debug)]
-pub struct NonVIPS {
+pub struct TopEmote {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for NonVIPS {
+impl AbstractLeaderboard for TopEmote {
     fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
@@ -23,7 +25,7 @@ impl AbstractLeaderboard for NonVIPS {
     }
 
     fn get_name(&self) -> String {
-        "nonvips".to_string()
+        "top-emote".to_string()
     }
 
     fn __get_state(&mut self) -> &mut HashMap<String, LeaderboardInnerState> {
@@ -31,15 +33,10 @@ impl AbstractLeaderboard for NonVIPS {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        if !(is_message_origin!(performance, MessageTag::Twitch)) {
-            return None;
+        if is_message_origin!(performance, MessageTag::TwitchEmote) {
+            Some(*performance.metrics.get("emote_use").unwrap_or(&0.0) * K)
+        } else {
+            None
         }
-
-        if let Some(special_role) = performance.metadata.get("special_role") {
-            if *special_role.get_bool().unwrap_or(&false) {
-                return None;
-            }
-        }
-        Some(performance.metrics.values().sum())
     }
 }
