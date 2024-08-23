@@ -1,4 +1,4 @@
-use std::{collections::HashSet, vec};
+use std::collections::HashSet;
 use crate::seventvtypes::SevenTVResponse;
 
 use log::{debug, info};
@@ -32,7 +32,7 @@ impl SevenTVClient {
             .iter()
             .map(|emote| SevenTVEmote::from(emote.clone()))
             .collect();
-        
+
         let seventv_lookup: HashSet<String> = seventv_emotes
             .iter()
             .map(|emote| emote.name.clone())
