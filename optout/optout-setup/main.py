@@ -78,7 +78,7 @@ async def main():
             SECRETS["CLOUDFLARE_API_KEY"],
         )
     # Must be run after worker has Twitch webhook secret
-    ts.create_whisper_webhook_sub(os.environ["CLOUDFLARE_WORKER_URL"])
+    await ts.create_whisper_webhook_sub(os.environ["CLOUDFLARE_WORKER_URL"])
 
     print("Setup complete")
 
