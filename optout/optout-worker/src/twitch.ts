@@ -111,8 +111,7 @@ async function handleOptout(userId: string, env: Env) {
         await sendWhisper(userId, 'You have been opted out of the leaderboards', env);
     } catch (error) {
         if (error instanceof TwitchAuthFailureError) {
-            await update_twitch_secrets(env);
-            await sendWhisper(userId, 'You have been opted out of the leaderboards', env);
+            await updateTwitchAndWhisper(userId, 'You have been opted out of the leaderboards', env);
         } else {
             throw error;
         }
@@ -126,8 +125,7 @@ async function handleOptin(userId: string, env: Env) {
         await sendWhisper(userId, 'You have been opted back into the leaderboards', env);
     } catch (error) {
         if (error instanceof TwitchAuthFailureError) {
-            await update_twitch_secrets(env);
-            await sendWhisper(userId, 'You have been opted back into the leaderboards', env);
+            await updateTwitchAndWhisper(userId, 'You have been opted back into the leaderboards', env);
         } else {
             throw error;
         }
@@ -188,12 +186,33 @@ async function refreshTwitchToken(
     }
 }
 
-async function update_twitch_secrets(env: Env) {
+async function updateTwitchSecrets(env: Env) {
     const { accessToken, refreshToken } = await refreshTwitchToken(
         env.TWITCH_CLIENT_ID,
         env.TWITCH_CLIENT_SECRET,
         env.TWITCH_REFRESH_TOKEN,
     );
+    await updateSecret('TWITCH_USER_AUTH', accessToken, env);
+    await updateSecret('TWITCH_REFRESH_TOKEN', refreshToken, env);
+}
+
+/**
+ * Updates the Twitch user auth token and sends a whisper to the user before updating the secrets.
+ * bot updateSecret calls can take a while to propagate, so we want to make sure the whisper is sent first.
+ * @param userId - The user ID.
+ * @param text - The whisper text.
+ * @param env - The worker's environment variables.
+ * @returns A promise that resolves when the whisper has been sent and the secrets have been updated.
+ */
+async function updateTwitchAndWhisper(userId: string, text: string, env: Env) {
+    const { accessToken, refreshToken } = await refreshTwitchToken(
+        env.TWITCH_CLIENT_ID,
+        env.TWITCH_CLIENT_SECRET,
+        env.TWITCH_REFRESH_TOKEN,
+    );
+    env.TWITCH_USER_AUTH = accessToken;
+    env.TWITCH_REFRESH_TOKEN = refreshToken;
+    await sendWhisper(userId, text, env);
     await updateSecret('TWITCH_USER_AUTH', accessToken, env);
     await updateSecret('TWITCH_REFRESH_TOKEN', refreshToken, env);
 }
