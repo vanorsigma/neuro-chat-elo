@@ -45,36 +45,23 @@ async def update_cloudflare_secret(
 
 
 async def setup_twitch(
-    twitch_client_id: str, twitch_client_secret: str, cloudflare_worker_url: str
-) -> Tuple[str, str]:
+    twitch_client_id: str, twitch_client_secret: str
+) -> twitch_setup.TwitchSetup:
     log.info("reading twitch env variables")
     ts: twitch_setup.TwitchSetup = await twitch_setup.TwitchSetup.from_id_and_secret(
         twitch_client_id, twitch_client_secret
     )
-    subs = await ts.get_whisper_event_subs()
 
-    log.info([sub.transport["callback"] for sub in subs])
-
-    if not any(
-        sub.transport["callback"] == f"{cloudflare_worker_url}/twitch" for sub in subs
-    ):
-        log.info("creating whisper webhook subscription")
-        await ts.create_whisper_webhook_sub(f"{cloudflare_worker_url}/twitch")
-    else:
-        log.info("whisper webhook subscription already exists")
-
-    log.info([f"${sub.transport}" for sub in subs])
-
-    return await ts.get_user_auth()
+    return ts
 
 
 async def main():
     log.info("running twitch setup")
-    twitchUser, twitchRefresh = await setup_twitch(
+    ts: twitch_setup.TwitchSetup = await setup_twitch(
         SECRETS["TWITCH_CLIENT_ID"],
         SECRETS["TWITCH_CLIENT_SECRET"],
-        os.environ["CLOUDFLARE_WORKER_URL"],
     )
+    twitchUser, twitchRefresh = await ts.get_user_auth()
     SECRETS["TWITCH_USER_AUTH"] = twitchUser
     SECRETS["TWITCH_REFRESH_TOKEN"] = twitchRefresh
 
@@ -90,6 +77,9 @@ async def main():
             os.environ["CLOUDFLARE_WORKER_NAME"],
             SECRETS["CLOUDFLARE_API_KEY"],
         )
+    # Must be run after worker has Twitch webhook secret
+    ts.create_whisper_webhook_sub(os.environ["CLOUDFLARE_WORKER_URL"])
+
     print("Setup complete")
 
 

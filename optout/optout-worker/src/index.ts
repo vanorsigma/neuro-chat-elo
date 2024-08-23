@@ -1,4 +1,4 @@
-import { handleWhisper, verifyTwitch, TwitchNotification } from './twitch';
+import { verifyTwitch, handleTwitchNotification, handleTwitchRevocation, handleTwitchVerification } from './twitch';
 import { InvalidSignatureError } from './errors';
 
 export default {
@@ -41,31 +41,4 @@ async function preHandleTwitch(request: Request<unknown, IncomingRequestCfProper
             console.log(`Unknown message type: ${messageType}`);
             return new Response('Unknown message type', { status: 500 });
     }
-}
-
-async function handleTwitchNotification(request: Request, body: string, env: Env): Promise<Response> {
-    console.log(`Processing Twitch notification with body: ${body}`);
-
-    const data: TwitchNotification = JSON.parse(body);
-    await handleWhisper(data.event, env);
-
-    return new Response('Notification received');
-}
-
-async function handleTwitchVerification(body: string): Promise<Response> {
-    const bodyJson = JSON.parse(body);
-    const challenge = bodyJson['challenge'] as string;
-
-    return new Response(challenge, {
-        headers: {
-            'Content-Type': challenge.length.toString(),
-        },
-        status: 200,
-    });
-}
-
-async function handleTwitchRevocation(): Promise<Response> {
-    console.log('Handling revocation, but why tho?');
-
-    return new Response(null, { status: 204 });
 }

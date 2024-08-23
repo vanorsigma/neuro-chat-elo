@@ -58,7 +58,34 @@ export async function verifyTwitch(
     return verifyMessage(hmac, messageSignature);
 }
 
-export async function handleWhisper(event: WhisperEvent, env: Env): Promise<Response> {
+export async function handleTwitchNotification(request: Request, body: string, env: Env): Promise<Response> {
+    console.log(`Processing Twitch notification with body: ${body}`);
+
+    const data: TwitchNotification = JSON.parse(body);
+    await handleWhisper(data.event, env);
+
+    return new Response('Notification received');
+}
+
+export async function handleTwitchVerification(body: string): Promise<Response> {
+    const bodyJson = JSON.parse(body);
+    const challenge = bodyJson['challenge'] as string;
+
+    return new Response(challenge, {
+        headers: {
+            'Content-Type': challenge.length.toString(),
+        },
+        status: 200,
+    });
+}
+
+export async function handleTwitchRevocation(): Promise<Response> {
+    console.warn('Handling revocation, but why tho?');
+
+    return new Response(null, { status: 204 });
+}
+
+async function handleWhisper(event: WhisperEvent, env: Env): Promise<Response> {
     const text = event.whisper.text;
     const user = event.from_user_name;
     const userId = event.from_user_id;
