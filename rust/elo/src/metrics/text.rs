@@ -9,11 +9,13 @@ const WEIGHT_TEXT: f32 = 0.02;
 #[derive(Default, Debug)]
 pub struct Text;
 
-impl AbstractMetric for Text {
-    async fn new() -> Self {
-        Self
+impl Text {
+    pub fn new() -> Self {
+        Self {}
     }
+}
 
+impl AbstractMetric for Text {
     fn can_parallelize(&self) -> bool {
         false
     }

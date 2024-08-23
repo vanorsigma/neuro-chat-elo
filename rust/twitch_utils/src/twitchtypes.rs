@@ -4,6 +4,7 @@ Contains all the Twitch types parsable from the chat log
 
 use serde::{Deserialize, Serialize};
 use twitch_api::helix::chat::{ChannelEmote, GlobalEmote};
+use crate::seventvtypes::RawSevenTVEmote;
 
 const TWITCH_EMOTE_URL: &str = "https://static-cdn.jtvnw.net/emoticons/v2";
 const TWITCH_EMOTE_URL_ENDING: &str = "default/light/1.0";
@@ -42,22 +43,32 @@ impl From<SevenTVEmote> for TwitchEmote {
     }
 }
 
-impl From<&GlobalEmote> for TwitchEmote {
-    fn from(global_emote: &GlobalEmote) -> Self {
+impl From<GlobalEmote> for TwitchEmote {
+    fn from(global_emote: GlobalEmote) -> Self {
         Self {
             id: global_emote.id.to_string(),
-            name: global_emote.name.clone(),
-            url: global_emote.images.url_4x.clone(),
+            name: global_emote.name,
+            url: global_emote.images.url_4x,
         }
     }
 }
 
-impl From<&ChannelEmote> for TwitchEmote {
-    fn from(channel_emote: &ChannelEmote) -> Self {
+impl From<ChannelEmote> for TwitchEmote {
+    fn from(channel_emote: ChannelEmote) -> Self {
         Self {
             id: channel_emote.id.to_string(),
-            name: channel_emote.name.clone(),
-            url: channel_emote.images.url_4x.clone(),
+            name: channel_emote.name,
+            url: channel_emote.images.url_4x,
+        }
+    }
+}
+
+impl From<RawSevenTVEmote> for SevenTVEmote {
+    fn from(raw_emote: RawSevenTVEmote) -> Self {
+        Self {
+            id: raw_emote.id,
+            name: raw_emote.name,
+            emote_url: raw_emote.host.url,
         }
     }
 }

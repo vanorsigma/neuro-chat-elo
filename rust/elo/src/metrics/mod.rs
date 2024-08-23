@@ -39,13 +39,11 @@ impl MetricProcessor {
     ) -> Self {
         let mut defaults: HashMap<String, f32> = HashMap::new();
 
-        let bits = bits::Bits::new().await;
-        let subs = subs::Subs::new().await;
-        let text = text::Text::new().await;
-        let copypastaleader = copypastaleader::CopypastaLeader::new().await;
-        let mut emote = emote::Emote::new().await;
-
-        emote.set_seventv_client(seventv_client);
+        let bits = bits::Bits::new();
+        let subs = subs::Subs::new();
+        let text = text::Text::new();
+        let copypastaleader = copypastaleader::CopypastaLeader::new();
+        let emote = emote::Emote::new(seventv_client);
 
         defaults.insert(bits.get_name(), 0.0);
         defaults.insert(subs.get_name(), 0.0);

@@ -1,5 +1,4 @@
 //! The emote metric
-use core::panic;
 use std::sync::Arc;
 
 use crate::_types::clptypes::{Message, MetricUpdate};
@@ -10,22 +9,18 @@ use super::metrictrait::AbstractMetric;
 const WEIGHT_EMOTES: f32 = 0.02;
 
 pub struct Emote {
-    seventv_client: Option<Arc<SevenTVClient>>,
+    seventv_client: Arc<SevenTVClient>,
 }
 
 impl Emote {
-    pub fn set_seventv_client(&mut self, client: Arc<SevenTVClient>) {
-        self.seventv_client = Some(client);
+    pub fn new(seventv_client: Arc<SevenTVClient>) -> Self {
+        Self {
+            seventv_client,
+        }
     }
 }
 
 impl AbstractMetric for Emote {
-    async fn new() -> Self {
-        Self {
-            seventv_client: None,
-        }
-    }
-
     fn can_parallelize(&self) -> bool {
         false
     }
@@ -39,8 +34,6 @@ impl AbstractMetric for Emote {
             Message::Twitch(comment) => {
                 let score: f32 = self
                     .seventv_client
-                    .as_ref()
-                    .unwrap_or_else(|| panic!("7TV client not set"))
                     .get_emotes_in_comment(&comment)
                     .len() as f32
                     * WEIGHT_EMOTES;

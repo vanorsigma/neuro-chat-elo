@@ -1,5 +1,3 @@
-pub mod seventvclient;
-
 use std::collections::HashMap;
 
 use chrono::{DateTime, FixedOffset};
@@ -9,6 +7,8 @@ use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
 use twitch_api::HelixClient;
 
+pub mod seventvclient;
+pub mod seventvtypes;
 pub mod twitchtypes;
 
 pub const USER_AGENT: &str = concat!(
