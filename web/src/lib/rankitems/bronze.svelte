@@ -1,5 +1,4 @@
 <script>
-  import { onMount } from 'svelte';
   import { loadImageAsBase64URL } from './rankutils';
   const fontFamily = 'Comic Sans MS';
   export let username = 'alternate person';
@@ -12,10 +11,13 @@
   var avatarUrlResolved = '';
   var iconUrlResolved = '';
 
-  onMount(async () => {
-    avatarUrlResolved = await loadImageAsBase64URL(avatarUrl);
-    iconUrlResolved = await loadImageAsBase64URL(iconUrl);
-  });
+  $: {
+    const promise = async () => {
+      avatarUrlResolved = await loadImageAsBase64URL(avatarUrl);
+      iconUrlResolved = await loadImageAsBase64URL(iconUrl);
+    };
+    promise();
+  }
 </script>
 
 <svg
