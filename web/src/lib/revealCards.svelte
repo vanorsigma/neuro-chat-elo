@@ -5,6 +5,7 @@
   import RevealCardCollection from './revealCardCollection.svelte';
 
   let currentIndex = 0;
+  let currentTimeout;
   export let revealMetadatas: RevealMetadata[] = [];
   export let allAnimationsDone = () => {};
 
@@ -17,9 +18,17 @@
   }
 </script>
 
-<button class="absolute z-50 top-10" on:click={allAnimationsDone}>Skip</button>
+<button
+  class="absolute z-50 top-10"
+  on:click={() => {
+    allAnimationsDone();
+    if (currentTimeout) {
+      clearTimeout(currentTimeout);
+    }
+  }}>Skip</button
+>
 
-<RevealCardCollection {revealMetadatas} />
+<RevealCardCollection {revealMetadatas} bind:currentTimeout />
 <!--
 {#each revealMetadatas as metadata, index}
   {#if index === currentIndex}

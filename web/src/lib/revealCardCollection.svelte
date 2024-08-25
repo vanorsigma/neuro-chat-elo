@@ -12,7 +12,8 @@
   let finishedLoadingCount = 0;
   let mouseIsDown = false;
   let mouseOriginX = -1;
-  let mouseOriginY = -1;
+
+  export let currentTimeout;
   export let revealMetadatas: RevealMetadata[] = [];
   // NOTE: this variable should not be used directly. use the cards element below
   let _cards: HTMLDivElement[] = [];
@@ -38,13 +39,6 @@
     return copied;
   }
 
-  function getHeightOffset(metadata: RevealMetadata) {
-    if (metadata.leaderboardName === 'Overall') {
-      return 0;
-    }
-    return 100;
-  }
-
   function onFinishedLoading() {
     finishedLoadingCount += 1;
     if (finishedLoadingCount >= revealMetadataOrdered.length) {
@@ -68,7 +62,7 @@
         setTimeout(() => {
           element.style.transition = 'transform 2s ease, opacity 1s ease';
         });
-      }, 1000);
+      }, 2000);
     };
 
     _cards.forEach((card) => {
@@ -81,7 +75,6 @@
   function onMouseDown(e: MouseEvent) {
     mouseIsDown = true;
     mouseOriginX = e.clientX;
-    mouseOriginY = e.clientY;
   }
 
   function onMouseUp() {
@@ -104,12 +97,12 @@
       }
     });
 
-    setTimeout(() => {
+    currentTimeout = setTimeout(() => {
       winnerCard.style.opacity = '1.0';
-      setTimeout(() => {
+      currentTimeout = setTimeout(() => {
         winnerCard.style.transition = 'opacity 1s ease';
       });
-      setTimeout(() => {
+      currentTimeout = setTimeout(() => {
         _performAppearAnimationForOtherCards();
         drawConfetti(confettiCanvas);
       }, 1000);
@@ -154,7 +147,6 @@
         <RevealCardBasic
           avatarUrl={metadata.avatarUrl}
           avatarName={metadata.avatarName}
-          heightOffset={getHeightOffset(metadata)}
           title={metadata.leaderboardName}
           onFinishedLoading={() => onFinishedLoading()}
           winner={true}
@@ -165,7 +157,6 @@
         <RevealCardBasic
           avatarUrl={metadata.avatarUrl}
           avatarName={metadata.avatarName}
-          heightOffset={getHeightOffset(metadata)}
           title={metadata.leaderboardName}
           onFinishedLoading={() => onFinishedLoading()}
         ></RevealCardBasic>
