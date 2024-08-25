@@ -70,4 +70,9 @@
       selected={selectedPage == menuItem[1]}
     />
   {/each}
+
+  <br />
+  <p class="flex-none text-center hidden sm:block">
+    Public Alpha. Please ping @vanorsigma for feedback
+  </p>
 </div>

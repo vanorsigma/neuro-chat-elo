@@ -132,7 +132,7 @@
 ></canvas>
 
 <div
-  class="absolute flex h-full overflow-x-scroll w-full items-center gap-5 {offscreenDone
+  class="absolute flex h-[90%] overflow-x-scroll w-full items-center gap-5 {offscreenDone
     ? ''
     : 'invisible'}"
   on:mousedown={onMouseDown}
