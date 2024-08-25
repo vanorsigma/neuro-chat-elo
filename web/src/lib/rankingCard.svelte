@@ -22,6 +22,14 @@
         avatar: data.avatar
       }));
   }
+
+  let currentTimeout;
+  function onSearchTextValueInput(e: InputEvent) {
+    clearTimeout(currentTimeout);
+    currentTimeout = setTimeout(() => {
+      userSearchTextValue = e.target?.value;
+    }, 200);
+  }
 </script>
 
 <div class="flex flex-col md:flex-row justify-center items-center w-full h-full gap-3 min-h-0">
@@ -46,7 +54,7 @@
       type="text"
       placeholder="Search username..."
       alt="Username"
-      bind:value={userSearchTextValue}
+      on:input={(e) => onSearchTextValueInput(e)}
     />
     {#if rankingInfoLength > 3}
       <Leaderboard {isActive} searchTerm={userSearchTextValue} currentData={rankingInfo} />
