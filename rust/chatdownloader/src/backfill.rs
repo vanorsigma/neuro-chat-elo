@@ -2,7 +2,10 @@
 A function to backfill given video IDs
 */
 
+use std::sync::Arc;
+
 use log::info;
+use twitch_utils::seventvclient::SevenTVClient;
 
 use crate::chatlogprocessor::ChatLogProcessor;
 use crate::twitchdownloaderproxy::TwitchChatDownloader;
@@ -25,6 +28,7 @@ const VIDEO_IDS: [&str; 12] = [
 
 pub async fn backfill() {
     let twitch = TwitchAPIWrapper::new().await.unwrap();
+    let seventv_client = Arc::new(SevenTVClient::new().await);
     let mut downloader = TwitchChatDownloader::new();
 
     for video_id in VIDEO_IDS.iter() {
@@ -35,7 +39,7 @@ pub async fn backfill() {
             .await
             .expect("Could not download chat log: {e:?}");
 
-        let user_performances = ChatLogProcessor::new(&twitch)
+        let user_performances = ChatLogProcessor::new(&twitch, seventv_client.clone())
             .await
             .process_from_log_object(chat_log)
             .await;

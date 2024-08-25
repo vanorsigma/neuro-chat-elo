@@ -3,7 +3,9 @@ use elo::_types::clptypes::{Message, UserChatPerformance};
 use elo::leaderboards::LeaderboardProcessor;
 use log::{debug, info};
 use std::fs;
+use std::sync::Arc;
 use std::time::Instant;
+use twitch_utils::seventvclient::SevenTVClient;
 use twitch_utils::TwitchAPIWrapper;
 
 use twitch_utils::twitchtypes::ChatLog;
@@ -21,8 +23,8 @@ pub struct ChatLogProcessor {
 }
 
 impl ChatLogProcessor {
-    pub async fn new(twitch: &TwitchAPIWrapper) -> Self {
-        let message_processor = MessageProcessor::new(twitch).await;
+    pub async fn new(twitch: &TwitchAPIWrapper, seventv_client: Arc<SevenTVClient>) -> Self {
+        let message_processor = MessageProcessor::new(twitch, seventv_client).await;
 
         Self { message_processor }
     }
@@ -52,13 +54,8 @@ impl ChatLogProcessor {
     }
 
     pub async fn process_from_log_object(self, chat_log: ChatLog) -> Vec<UserChatPerformance> {
-        self.process_from_messages(
-            chat_log
-                .comments
-                .into_iter()
-                .map(Message::from),
-        )
-        .await
+        self.process_from_messages(chat_log.comments.into_iter().map(Message::from))
+            .await
     }
 
     #[allow(dead_code)]

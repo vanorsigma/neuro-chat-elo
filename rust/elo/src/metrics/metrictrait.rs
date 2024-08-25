@@ -4,11 +4,6 @@ use twitch_utils::twitchtypes::Comment;
 
 /// Defines the trait for a metric
 pub trait AbstractMetric {
-    /// Initializes the metric
-    async fn new() -> Self
-    where
-        Self: Sized;
-
     fn twitch_comment_shortcut(&self, comment: Comment, score: f32) -> MetricUpdate {
         let mut map: HashMap<String, f32> = HashMap::new();
         map.insert(comment.commenter._id, score);

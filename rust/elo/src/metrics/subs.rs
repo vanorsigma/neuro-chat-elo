@@ -20,11 +20,13 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct Subs;
 
-impl AbstractMetric for Subs {
-    async fn new() -> Self {
-        Self
+impl Subs {
+    pub fn new() -> Self {
+        Self {}
     }
+}
 
+impl AbstractMetric for Subs {
     fn can_parallelize(&self) -> bool {
         true
     }

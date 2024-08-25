@@ -14,6 +14,14 @@ pub struct CopypastaLeader {
 }
 
 impl CopypastaLeader {
+    pub fn new() -> Self {
+        Self {
+            history: Vec::new(),
+        }
+    }
+}
+
+impl CopypastaLeader {
     fn get_metric_for_twitch_message(
         &mut self,
         comment: Comment,
@@ -108,12 +116,6 @@ impl CopypastaLeader {
 }
 
 impl AbstractMetric for CopypastaLeader {
-    async fn new() -> Self {
-        Self {
-            history: Vec::new(),
-        }
-    }
-
     fn can_parallelize(&self) -> bool {
         false
     }

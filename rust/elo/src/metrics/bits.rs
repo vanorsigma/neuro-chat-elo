@@ -6,11 +6,13 @@ const WEIGHT_BITS: f32 = 0.1;
 #[derive(Default, Debug)]
 pub struct Bits;
 
-impl AbstractMetric for Bits {
-    async fn new() -> Self {
-        Self
+impl Bits {
+    pub fn new() -> Self {
+        Self {}
     }
+}
 
+impl AbstractMetric for Bits {
     fn can_parallelize(&self) -> bool {
         true
     }
