@@ -34,7 +34,7 @@ function makeRankingInfo(path: string) {
           handleError(path, error);
         }
       });
-    return () => { };
+    return () => {};
   };
 }
 
@@ -74,3 +74,4 @@ export const copypastaRank = readable([], makeRankingInfo('copypasta.bin'));
 export const bitsRank = readable([], makeRankingInfo('bits-only.bin'));
 export const subsRank = readable([], makeRankingInfo('subs-only.bin'));
 export const discordRank = readable([], makeRankingInfo('discordlivestream.bin'))
+export const partnersRank = readable([], makeRankingInfo('partners-only.bin'))
