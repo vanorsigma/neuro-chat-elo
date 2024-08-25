@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Tuple
 
-import aiohttp
+import requests
 import asyncio
 import dotenv
 import logging
@@ -35,13 +35,12 @@ async def update_cloudflare_secret(
 
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
 
-    async with aiohttp.ClientSession() as session:
-        async with session.put(url, headers=headers, data=body) as response:
-            if not response.ok:
-                raise Exception(
-                    f"Failed to update secret: {response.status} - {response.reason}"
-                )
-            log.info(f"Updated secret {secretName}")
+    response = requests.put(url, headers=headers, data=body)
+    if not response.ok:
+        raise Exception(
+            f"Failed to update secret: {response.status_code} - {response.reason}"
+        )
+    log.info(f"Updated secret {secretName}")
 
 
 async def setup_twitch(

@@ -100,7 +100,8 @@ async function handleWhisper(event: WhisperEvent, env: Env): Promise<Response> {
             await handleOptin(userId, env);
             return new Response('Success');
         default:
-            return new Response('Who asked lol');
+            await sendWhisper(userId, 'Thank you for checking out the Neuro Chat Elo Leaderboards! If you want to opt out send me /opt_out, and to opt back in send /opt_in', env);
+            return new Response('Success');
     }
 }
 

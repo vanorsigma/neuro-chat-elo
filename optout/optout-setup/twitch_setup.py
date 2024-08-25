@@ -31,8 +31,6 @@ class TwitchSetup:
             ]
         )
 
-        log.debug(twitch._app_auth_token)
-        log.debug(twitch._user_auth_token)
         return cls(twitch)
 
     async def get_user_auth(self) -> Tuple[str, str]:
@@ -45,13 +43,11 @@ class TwitchSetup:
         auth._start()
         while not auth._server_running:
             await asyncio.sleep(0.01)
-        print(auth.return_auth_url())
+        print(f"Authenticate Twitch with the following URL: {auth.return_auth_url()}")
         while auth._user_token is None:
             await asyncio.sleep(0.01)
 
         token, refresh_token = await auth.authenticate(user_token=auth._user_token)
-        log.debug(f"TWITCH_USER_AUTH: {token}")
-        log.debug(f"TWITCH_REFRESH_TOKEN: {refresh_token}")
         await self.api.set_user_authentication(
             token,
             TWITCH_AUTH_SCOPES,
