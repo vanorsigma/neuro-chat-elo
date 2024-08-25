@@ -32,10 +32,10 @@
     let copied = revealMetadatas;
     let length = copied.length;
     let first = copied[0];
-    let middle = copied[Math.round(length / 2)];
+    let middle = copied[Math.floor(length / 2)];
 
     copied[0] = middle;
-    copied[Math.round(length / 2)] = first;
+    copied[Math.floor(length / 2)] = first;
     return copied;
   }
 
