@@ -7,12 +7,12 @@ pub struct SevenTVResponse {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SevenTVEmoteSet {
-    pub emotes: SevenTVEmotesBundle,
+    pub emotes: Vec<SevenTVEmoteBundle>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SevenTVEmotesBundle {
-    pub data: Vec<RawSevenTVEmote>,
+pub struct SevenTVEmoteBundle {
+    pub data: RawSevenTVEmote,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
