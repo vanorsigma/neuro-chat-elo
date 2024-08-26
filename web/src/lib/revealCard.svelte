@@ -1,8 +1,19 @@
 <script lang="ts">
+  import { loadImageAsBase64URL } from './rankitems/rankutils';
+
   export let username = '';
   export let avatarUrl = '';
   export let title = '';
   export let winner = false;
+
+  var avatarUrlResolved = '';
+
+  $: {
+    const promise = async () => {
+      avatarUrlResolved = await loadImageAsBase64URL(avatarUrl);
+    };
+    promise();
+  }
 </script>
 
 <svg
@@ -116,7 +127,7 @@
         </g>
         <g data-cell-id="WxxLEZ8-NIePb2jUWeOi-8">
           <image
-            xlink:href={avatarUrl}
+            xlink:href={avatarUrlResolved}
             x="25"
             y="52.5"
             width="120"
