@@ -1,43 +1,25 @@
 <script lang="ts">
-  import RevealCardConfetti from './revealCardConfetti.svelte';
-  import RevealCardBasic from './revealCardBasic.svelte';
   import type { RevealMetadata } from './revealMetadata';
   import RevealCardCollection from './revealCardCollection.svelte';
 
-  let currentIndex = 0;
-  let currentTimeout;
+  let currentTimeout: number | undefined;
+  let moveToLeaderboardsBtnTxt = 'Skip';
   export let revealMetadatas: RevealMetadata[] = [];
   export let allAnimationsDone = () => {};
 
-  function onAnimationDone() {
-    if (currentIndex + 1 >= revealMetadatas.length) {
-      setTimeout(allAnimationsDone, 1000);
-    }
-
-    // currentIndex += 1;
+  function onRevealDone() {
+    moveToLeaderboardsBtnTxt = 'Continue >>';
   }
 </script>
 
 <button
-  class="absolute z-50 top-10"
+  class="absolute z-50 top-10 left-4"
   on:click={() => {
     allAnimationsDone();
     if (currentTimeout) {
       clearTimeout(currentTimeout);
     }
-  }}>Skip</button
+  }}>{moveToLeaderboardsBtnTxt}</button
 >
 
-<RevealCardCollection {revealMetadatas} bind:currentTimeout />
-<!--
-{#each revealMetadatas as metadata, index}
-  {#if index === currentIndex}
-    <RevealCardConfetti
-      avatarUrl={metadata.avatarUrl}
-      avatarName={metadata.avatarName}
-      topChatterRevealTitle={`${metadata.leaderboardName} top chatter is...`}
-      animationDoneCallback={onAnimationDone}
-    />
-  {/if}
-{/each}
--->
+<RevealCardCollection {onRevealDone} {revealMetadatas} bind:currentTimeout />
