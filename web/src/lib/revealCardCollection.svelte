@@ -145,7 +145,7 @@
 >
   {#each revealMetadataOrdered as metadata, index}
     {#if metadata.leaderboardName == 'Overall'}
-      <div bind:this={winnerCard}>
+      <div bind:this={winnerCard} class="z-50">
         <RevealCardBasic
           avatarUrl={metadata.avatarUrl}
           avatarName={metadata.avatarName}
