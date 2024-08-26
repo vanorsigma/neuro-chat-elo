@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "npm run compileProtos && vite build",
-    "compileProtos": "protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_opt esModuleInterop=true --ts_proto_out=./src/gen/ --proto_path=../models/ ../models/*.proto",
+    "compileProtos": "mkdir -p ./src/gen && protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_opt esModuleInterop=true --ts_proto_out=./src/gen/ --proto_path=../models/ ../models/*.proto",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
