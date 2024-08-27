@@ -12,6 +12,7 @@ use std::io::{Read, Write};
 use std::{fs, fs::File};
 
 const K: f32 = 2.0;
+const STARTING_ELO: f32 = 80.0;
 
 pub trait AbstractLeaderboard {
     fn new() -> Self
@@ -65,7 +66,7 @@ pub trait AbstractLeaderboard {
                         avatar: performance.avatar,
                         badges: None,
                         previous_rank: None,
-                        elo: 1200.0,
+                        elo: STARTING_ELO,
                         score: 0.0,
                     });
 
@@ -133,7 +134,7 @@ pub trait AbstractLeaderboard {
             .values()
             .map(|state| state.score)
             .collect();
-        let sample_scores = self.percentiles(&all_scores, 0.0, 100.0, 0.1);
+        let sample_scores = self.percentiles(&all_scores, 0.0, 100.0, 0.5);
         // Build a vector of sample users, where the first element is the score and the second element is the elo
         // The elo is the elo of the user in state with the closest score
         let sample_users: Vec<(f32, f32)> = sample_scores

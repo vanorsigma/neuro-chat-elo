@@ -27,21 +27,21 @@ impl AbstractMetric for Text {
     fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
         match message {
             Message::Twitch(comment) => {
-                let score = f32::max(0.0, calculate_score(comment.message.body.len()));
+                let score = calculate_score(comment.message.body.len());
                 self.twitch_comment_shortcut(comment, score)
             }
             Message::Discord(msg) => MetricUpdate {
                 metric_name: self.get_name(),
                 updates: HashMap::from([(
                     msg.author.id,
-                    f32::max(0.0, calculate_score(msg.content.len())),
+                    calculate_score(msg.content.len()),
                 )]),
             },
             Message::Bilibili(bilimsg) => MetricUpdate {
                 metric_name: self.get_name(),
                 updates: HashMap::from([(
                     bilimsg.uid,
-                    f32::max(0.0, calculate_score(bilimsg.message.len())),
+                    calculate_score(bilimsg.message.len()),
                 )]),
             },
             _ => MetricUpdate::default(),
@@ -50,5 +50,5 @@ impl AbstractMetric for Text {
 }
 
 fn calculate_score(x: usize) -> f32 {
-    -WEIGHT_TEXT * x as f32 * (x as f32 - 20.0)
+    f32::max(WEIGHT_TEXT, WEIGHT_TEXT * x as f32)
 }
