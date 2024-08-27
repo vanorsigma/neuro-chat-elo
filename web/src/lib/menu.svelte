@@ -8,10 +8,11 @@
     'Chat Only': 2,
     Copypasta: 3,
     Bits: 4,
-    Subs: 5
+    Subs: 5,
+    'Partner Only': 6
   };
   const discordMenuItemMapping = {
-    '#livestream-chat': 6
+    '#livestream-chat': 7
   };
 
   export let itemClicked: (arg0: number) => void;

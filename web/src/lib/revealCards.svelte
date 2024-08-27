@@ -6,7 +6,6 @@
   let moveToLeaderboardsBtnTxt = 'Skip';
   export let revealMetadatas: RevealMetadata[] = [];
   export let allAnimationsDone = () => {};
-
   function onRevealDone() {
     moveToLeaderboardsBtnTxt = 'Continue >>';
   }

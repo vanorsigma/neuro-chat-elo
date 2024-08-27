@@ -5,6 +5,7 @@ mod discordlivestreamchat;
 mod leaderboardtrait;
 mod nonvips;
 mod overall;
+mod partnersonly;
 mod subsonly;
 
 use futures::join;
@@ -41,6 +42,7 @@ pub struct LeaderboardProcessor {
     overall: overall::Overall,
     subsonly: subsonly::SubsOnly,
     discordlivestreamchat: discordlivestreamchat::DiscordLivestreamChat,
+    partnersonly: partnersonly::PartnersOnly,
 }
 
 impl LeaderboardProcessor {
@@ -52,6 +54,7 @@ impl LeaderboardProcessor {
         let overall = overall::Overall::new();
         let subsonly = subsonly::SubsOnly::new();
         let discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
+        let partnersonly = partnersonly::PartnersOnly::new();
 
         Self {
             bitsonly,
@@ -61,6 +64,7 @@ impl LeaderboardProcessor {
             overall,
             subsonly,
             discordlivestreamchat,
+            partnersonly,
         }
     }
 
@@ -78,7 +82,8 @@ impl LeaderboardProcessor {
             calc_leaderboard(
                 &mut self.discordlivestreamchat,
                 broadcast_reciever.resubscribe()
-            )
+            ),
+            calc_leaderboard(&mut self.partnersonly, broadcast_reciever.resubscribe())
         );
     }
 }
