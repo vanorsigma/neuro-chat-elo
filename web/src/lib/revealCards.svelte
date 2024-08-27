@@ -3,18 +3,23 @@
   import RevealCardCollection from './revealCardCollection.svelte';
 
   let currentTimeout: number | undefined;
+  let moveToLeaderboardsBtnTxt = 'Skip';
   export let revealMetadatas: RevealMetadata[] = [];
   export let allAnimationsDone = () => {};
+  
+  function onRevealDone() {
+    moveToLeaderboardsBtnTxt = 'Continue >>';
+  }
 </script>
 
 <button
-  class="absolute z-50 top-10"
+  class="absolute z-50 top-10 left-4"
   on:click={() => {
     allAnimationsDone();
     if (currentTimeout) {
       clearTimeout(currentTimeout);
     }
-  }}>Skip</button
+  }}>{moveToLeaderboardsBtnTxt}</button
 >
 
-<RevealCardCollection {revealMetadatas} bind:currentTimeout />
+<RevealCardCollection {onRevealDone} {revealMetadatas} bind:currentTimeout />

@@ -28,9 +28,8 @@ impl SevenTVClient {
         let response: SevenTVResponse = response.unwrap().json::<SevenTVResponse>().await.unwrap();
         let seventv_emotes: Vec<SevenTVEmote> = response.emote_set
             .emotes
-            .data
             .iter()
-            .map(|emote| SevenTVEmote::from(emote.clone()))
+            .map(|emote| SevenTVEmote::from(emote.data.clone()))
             .collect();
 
         let seventv_lookup: HashSet<String> = seventv_emotes

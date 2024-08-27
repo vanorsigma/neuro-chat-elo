@@ -15,6 +15,7 @@
 
   export let currentTimeout;
   export let revealMetadatas: RevealMetadata[] = [];
+  export let onRevealDone = () => {};
   // NOTE: this variable should not be used directly. use the cards element below
   let _cards: HTMLDivElement[] = [];
 
@@ -61,6 +62,7 @@
         element.style.opacity = '1.0';
         setTimeout(() => {
           element.style.transition = 'transform 2s ease, opacity 1s ease';
+          onRevealDone();
         });
       }, 2000);
     };
@@ -143,7 +145,7 @@
 >
   {#each revealMetadataOrdered as metadata, index}
     {#if metadata.leaderboardName == 'Overall'}
-      <div bind:this={winnerCard}>
+      <div bind:this={winnerCard} class="z-50">
         <RevealCardBasic
           avatarUrl={metadata.avatarUrl}
           avatarName={metadata.avatarName}
