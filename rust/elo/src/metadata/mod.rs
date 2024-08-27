@@ -36,10 +36,10 @@ impl MetadataProcessor {
         let mut defaults: HashMap<String, MetadataTypes> = HashMap::new();
 
         // Initialize the metadata
-        let basic_info = basic_info::BasicInfo::new();
+        let basic_info = basic_info::BasicInfo::new().await;
         let badges = badges::Badges::new(twitch).await;
-        let special_role = special_role::SpecialRole::new();
-        let chat_origin = chat_origin::ChatOrigin::new();
+        let special_role = special_role::SpecialRole::new().await;
+        let chat_origin = chat_origin::ChatOrigin::new().await;
 
         // Add names and default values to the metadata
         defaults.insert(basic_info.get_name(), basic_info.get_default_value());
