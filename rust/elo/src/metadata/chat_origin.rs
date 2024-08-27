@@ -34,7 +34,7 @@ impl AbstractMetadata for ChatOrigin {
 }
 
 impl ChatOrigin {
-    pub async fn new() -> Self {
+    pub fn new() -> Self {
         Self
     }
 }

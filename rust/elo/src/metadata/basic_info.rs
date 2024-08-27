@@ -42,7 +42,7 @@ impl AbstractMetadata for BasicInfo {
 }
 
 impl BasicInfo {
-    pub async fn new() -> Self {
+    pub fn new() -> Self {
         Self
     }
 }

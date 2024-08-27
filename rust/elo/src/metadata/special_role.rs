@@ -13,7 +13,7 @@ const SPECIAL_ROLES_DISCORD: [&str; 3] = ["Admin", "Moderator", "Twitch Mod"];
 pub struct SpecialRole;
 
 impl SpecialRole {
-    pub async fn new() -> Self {
+    pub fn new() -> Self {
         Self
     }
 
