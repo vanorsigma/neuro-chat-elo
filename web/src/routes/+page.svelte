@@ -15,6 +15,7 @@
   import { sanitizeString } from '$lib';
   import Menu from '$lib/menu.svelte';
   import Burger from '$lib/burger.svelte';
+  import { onMount } from 'svelte';
 
   let showRankingsLoading = false;
   let allowRankings = false; // this forces the loading text to appear
@@ -38,6 +39,8 @@
     $subsRank,
     $discordRank
   ];
+
+  $: allRanksLoaded = ranking.every((r) => r.length > 0);
 
   let menuAppear = false;
 
@@ -101,14 +104,19 @@
       <stop offset="0%" style="stop-color: rgb(97, 62, 0); stop-opacity: 1;" />
       <stop offset="100%" style="stop-color: rgb(255, 181, 112); stop-opacity: 1;" />
     </linearGradient>
+
+    <linearGradient x1="0%" y1="0%" x2="0%" y2="100%" id="mx-gradient-ffd700-1-d4c11e-1-s-0">
+      <stop offset="0%" style="stop-color: rgb(255, 215, 0); stop-opacity: 1;" />
+      <stop offset="100%" style="stop-color: rgb(212, 193, 30); stop-opacity: 1;" />
+    </linearGradient>
   </defs>
 </svg>
 
-{#if showRankingsLoading}
+{#if showRankingsLoading || !allRanksLoaded}
   <p class="absolute">Loading...</p>
 {/if}
 
-{#if allowRankings}
+{#if allowRankings && allRanksLoaded}
   <Burger
     onClick={() => {
       menuAppear = !menuAppear;
@@ -143,6 +151,6 @@
   </LoadableFlexContainer>
 {/if}
 
-{#if !showRankingsLoading && !allowRankings && ranking[0]?.length > 0}
+{#if !showRankingsLoading && !allowRankings && ranking[0]?.length > 0 && allRanksLoaded}
   <RevealCards revealMetadatas={metadatas} allAnimationsDone={onAnimationDone} />
 {/if}

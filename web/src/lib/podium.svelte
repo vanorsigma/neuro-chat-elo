@@ -27,6 +27,16 @@
 
   const colors = ['#C0C0C0', '#FFD700', '#CD7F32'];
 
+  const englishUsername = '[\\w!@#$%^&*(){};\':",.<>?/|\\[\\]_+\\- ]+';
+
+  function isAlphaNumeric(str: string) {
+    const matches = str.match(new RegExp(englishUsername));
+    if (!matches) {
+      return null;
+    }
+    return matches[0].length == str.length;
+  }
+
   function calculateRelativeHeights() {
     // NOTE: credit ByronOf39
     let elements = [firstPlace.elo, secondPlace.elo, thirdPlace.elo];
@@ -147,7 +157,11 @@
     image.addEventListener('load', () => {
       context?.drawImage(image, avatarXOffset, avatarYOffset, avatarSize, avatarSize);
 
-      context.font = `${(1 / nameSize) * 175}px arial`;
+      if (isAlphaNumeric(user.name)) {
+        context.font = `${(1 / nameSize) * 175}px arial`;
+      } else {
+        context.font = `${(1 / nameSize) * 100}px arial`;
+      }
       context.fillStyle = 'black';
       context.textAlign = 'center';
       context?.fillText(
