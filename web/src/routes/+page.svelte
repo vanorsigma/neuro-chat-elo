@@ -10,8 +10,8 @@
     nonvipsRank,
     bitsRank,
     subsRank,
-    partnersRank,
     discordRank,
+    partnersRank,
     emoteRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
