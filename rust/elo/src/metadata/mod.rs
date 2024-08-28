@@ -36,10 +36,10 @@ impl MetadataProcessor {
         let mut defaults: HashMap<String, MetadataTypes> = HashMap::new();
 
         // Initialize the metadata
-        let basic_info = basic_info::BasicInfo::new(twitch).await;
+        let basic_info = basic_info::BasicInfo::new();
         let badges = badges::Badges::new(twitch).await;
-        let special_role = special_role::SpecialRole::new(twitch).await;
-        let chat_origin = chat_origin::ChatOrigin::new(twitch).await;
+        let special_role = special_role::SpecialRole::new();
+        let chat_origin = chat_origin::ChatOrigin::new();
 
         // Add names and default values to the metadata
         defaults.insert(basic_info.get_name(), basic_info.get_default_value());
@@ -93,14 +93,10 @@ async fn calc_metadata<M: AbstractMetadata + Send + Sync + 'static>(
     /*
     Find metadata based on chat messages sent by a tokio broadcast channel
     */
-    loop {
-        if let Ok((message, sequence_no)) = reciever.recv().await {
-            let metadata = (*metadata).get_metadata(message, sequence_no);
-            if let Err(e) = sender.send(metadata).await {
-                warn!("Failed to send metadata result {}", e)
-            };
-        } else {
-            break;
+    while let Ok((message, sequence_no)) = reciever.recv().await {
+        let metadata = (*metadata).get_metadata(message, sequence_no);
+        if let Err(e) = sender.send(metadata).await {
+            warn!("Failed to send metadata result {}", e)
         };
     }
 }

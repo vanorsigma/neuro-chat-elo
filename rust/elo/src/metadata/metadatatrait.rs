@@ -1,6 +1,5 @@
 //! Represents an abstract metadata
 use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate};
-use twitch_utils::TwitchAPIWrapper;
 
 pub trait AbstractMetadata: Sized {
     /*
@@ -9,11 +8,6 @@ pub trait AbstractMetadata: Sized {
     Struct should ensure to set self.twtich to the twitch object passed
     if it needs to make API calls
     */
-
-    /// Creates a new metadata object
-    async fn new(twitch: &TwitchAPIWrapper) -> Self
-    where
-        Self: Sized + Send;
 
     /// Name of this piece of metadata
     fn get_name(&self) -> String;

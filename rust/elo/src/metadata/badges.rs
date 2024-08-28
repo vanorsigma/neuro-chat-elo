@@ -63,6 +63,33 @@ pub struct Badges {
 }
 
 impl Badges {
+    pub async fn new(twitch: &TwitchAPIWrapper) -> Self {
+        let badges = twitch
+            .get_badges(VED_CH_ID.to_string())
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|(set_id, badge_set)| {
+                (
+                    set_id.clone(),
+                    badge_set
+                        .into_iter()
+                        .map(|(badge_id, badge)| {
+                            (
+                                badge_id,
+                                BadgeInformation {
+                                    description: set_id.clone(),
+                                    image_url: badge.image_url_4x,
+                                },
+                            )
+                        })
+                        .collect(),
+                )
+            })
+            .collect();
+        Self { badges }
+    }
+
     fn get_metadata_twitch(&self, comment: Comment) -> MetadataUpdate {
         let mut metadata: Vec<BadgeInformation> = vec![];
         let user_badges = if let Some(user_badges) = comment.message.user_badges {
@@ -127,33 +154,6 @@ impl Badges {
 }
 
 impl AbstractMetadata for Badges {
-    async fn new(twitch: &TwitchAPIWrapper) -> Self {
-        let badges = twitch
-            .get_badges(VED_CH_ID.to_string())
-            .await
-            .unwrap()
-            .into_iter()
-            .map(|(set_id, badge_set)| {
-                (
-                    set_id.clone(),
-                    badge_set
-                        .into_iter()
-                        .map(|(badge_id, badge)| {
-                            (
-                                badge_id,
-                                BadgeInformation {
-                                    description: set_id.clone(),
-                                    image_url: badge.image_url_4x,
-                                },
-                            )
-                        })
-                        .collect(),
-                )
-            })
-            .collect();
-        Self { badges }
-    }
-
     fn get_name(&self) -> String {
         "badges".to_string()
     }
