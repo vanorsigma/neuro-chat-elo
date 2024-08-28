@@ -41,8 +41,8 @@
     $copypastaRank,
     $bitsRank,
     $subsRank,
-    $discordRank,
     $partnersRank,
+    $discordRank,
     $emoteRank
   ];
 
