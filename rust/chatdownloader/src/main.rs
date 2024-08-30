@@ -31,7 +31,7 @@ async fn main() {
 
     let twitch = TwitchAPIWrapper::new().await.unwrap();
     let vod_id = twitch
-        .get_latest_vods(elo::_constants::VED_CH_ID.to_string(), 1)
+        .get_latest_vod_ids(elo::_constants::VED_CH_ID.to_string(), 1)
         .await[0]
         .clone();
 

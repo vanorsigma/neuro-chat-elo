@@ -73,7 +73,7 @@ impl TwitchAPIWrapper {
         Ok(Self { twitch, token })
     }
 
-    pub async fn get_latest_vods(&self, ch_id: String, num: usize) -> Vec<String> {
+    pub async fn get_latest_vod_ids(&self, ch_id: String, num: usize) -> Vec<String> {
         let request = GetVideosRequest::user_id(ch_id.clone());
         let response = self.twitch.req_get(request, &self.token);
         response

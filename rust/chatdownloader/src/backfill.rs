@@ -15,7 +15,7 @@ pub async fn backfill() {
     let twitch = TwitchAPIWrapper::new().await.unwrap();
     let seventv_client = Arc::new(SevenTVClient::new().await);
     let video_ids = twitch
-        .get_latest_vods(elo::_constants::VED_CH_ID.to_string(), 5)
+        .get_latest_vod_ids(elo::_constants::VED_CH_ID.to_string(), 5)
         .await;
     let mut downloader = TwitchChatDownloader::new();
 
