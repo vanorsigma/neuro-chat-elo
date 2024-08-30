@@ -32,16 +32,15 @@ impl AbstractMetric for EmoteUse {
     fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
         let update = match message {
             Message::Twitch(comment) => {
-                let mut updates: HashMap<String, f32> = HashMap::new();
-                self.seventv_client
-                    .get_emotes_in_comment(&comment)
-                    .iter()
-                    .for_each(|emote| {
-                        *updates.entry(emote.id.clone()).or_insert(0.0) += WEIGHT_EMOTES;
-                    });
                 MetricUpdate {
                     metric_name: self.get_name(),
-                    updates,
+                    updates: self.seventv_client
+                        .get_emotes_in_comment(&comment)
+                        .iter()
+                        .fold(HashMap::new(), |mut acc, emote| {
+                            *acc.entry(emote.id.clone()).or_insert(0.0) += WEIGHT_EMOTES;
+                            acc
+                        })
                 }
             }
             _ => MetricUpdate::empty_with_name(self.get_name()), // TODO: discord emotes

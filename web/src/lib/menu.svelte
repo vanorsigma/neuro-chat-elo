@@ -10,7 +10,7 @@
     Bits: 4,
     Subs: 5,
     'Partner Only': 6,
-    'Top Emotes': 8
+    'Top Emotes': 9
   };
   const discordMenuItemMapping = {
     '#livestream-chat': 7

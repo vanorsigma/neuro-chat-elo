@@ -32,6 +32,7 @@
     'Subs',
     'Partners',
     '#livestream-chat',
+    '',
     'Top Emotes'
   ];
   $: ranking = [
@@ -43,6 +44,7 @@
     $subsRank,
     $partnersRank,
     $discordRank,
+    $discordRank, // Temp filler
     $emoteRank
   ];
 

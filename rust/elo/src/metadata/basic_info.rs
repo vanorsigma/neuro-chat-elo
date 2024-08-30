@@ -48,18 +48,18 @@ impl BasicInfo {
             metadata_name: self.get_name(),
             updates: self.seventv_client
                 .get_emotes_in_comment(&comment)
-                .iter()
+                .into_iter()
                 .map(|emote| {
                     (
-                        emote.id.clone(),
-                        MetadataTypes::BasicInfo(emote.name.clone(), emote.url.clone()),
+                        emote.id,
+                        MetadataTypes::BasicInfo(emote.name, emote.url),
                     )
                 })
                 .chain(std::iter::once((
-                    comment.commenter._id.clone(),
+                    comment.commenter._id,
                     MetadataTypes::BasicInfo(
-                        comment.commenter.display_name.clone(),
-                        comment.commenter.logo.clone(),
+                        comment.commenter.display_name,
+                        comment.commenter.logo,
                     ),
                 )))
                 .collect(),
