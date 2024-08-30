@@ -1,20 +1,33 @@
 import { verifyTwitch, handleTwitchNotification, handleTwitchRevocation, handleTwitchVerification } from './twitch';
 import { InvalidSignatureError } from './errors';
+import { AutoRouter } from 'itty-router' // ~1kB
 
-export default {
-    async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-        const url = new URL(request.url);
+const router = AutoRouter()
 
-        switch (url.pathname) {
-            case '/discord':
-                return await new Response('Hello Discord!');
-            case '/twitch':
-                return await preHandleTwitch(request, env);
-            default:
-                return new Response('route not found', { status: 404 });
-        }
-    },
-} satisfies ExportedHandler<Env>;
+router.get('/discord', async (request: Request<unknown, IncomingRequestCfProperties>, env: Env) => {
+    return new Response('Hello Discord!')
+})
+
+router.get('/twitch', async (request: Request<unknown, IncomingRequestCfProperties>, env: Env) => {
+    return await preHandleTwitch(request, env)
+})
+
+export default router
+
+// const handler = {
+//     async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+//         const url = new URL(request.url);
+
+//         switch (url.pathname) {
+//             case '/discord':
+//                 return await new Response('Hello Discord!');
+//             case '/twitch':
+//                 return await preHandleTwitch(request, env);
+//             default:
+//                 return new Response('route not found', { status: 404 });
+//         }
+//     },
+// } satisfies ExportedHandler<Env>;
 
 async function preHandleTwitch(request: Request<unknown, IncomingRequestCfProperties>, env: Env): Promise<Response> {
     const body = await request.text();
