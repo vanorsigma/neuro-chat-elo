@@ -29,6 +29,7 @@ impl AbstractMetadata for ChatOrigin {
                 match &message {
                     Message::Discord(msg) => &msg.author.id,
                     Message::Twitch(comment) => &comment.commenter._id,
+                    Message::Bilibili(msg) => &msg.uid,
                     _ => return MetadataUpdate::default(),
                 }
                 .to_string(),

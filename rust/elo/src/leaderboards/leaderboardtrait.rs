@@ -5,6 +5,7 @@ use crate::_types::{
         LeaderboardInnerState,
     },
 };
+use itertools::{traits::HomogeneousTuple, Itertools};
 use log::{debug, info, warn};
 use prost::Message;
 use std::collections::HashMap;
@@ -13,6 +14,191 @@ use std::{fs, fs::File};
 
 const K: f32 = 2.0;
 const STARTING_ELO: f32 = 80.0;
+
+trait PartialWindowable<'a, T: 'a, F: Fn(&&T) -> R, R> {
+    /// Constructs a partial window.
+    /// Qualifier determines based on two consequitive items, prev and
+    /// next, whether they should be considered the same (true) or different (false)
+    /// item.
+    fn partial_window(&'a self, size: usize, qualifier: F)
+        -> impl Iterator<Item = (usize, Vec<T>)>;
+}
+
+fn move_index_by_incrementer_if_predicate<
+    T,
+    I: Fn(usize) -> Option<usize>,
+    P: Fn(&T, &T) -> bool,
+>(
+    view: &[T],
+    at_index: usize,
+    incrementer: I,
+    predicate: P,
+) -> Option<usize> {
+    let mut idx = at_index;
+    let mut next_idx = incrementer(idx)?;
+
+    while predicate(&view[idx], &view[next_idx]) {
+        idx = next_idx;
+        next_idx = incrementer(idx)?;
+        println!("inner > idx: {:#?}, next_idx: {:#?}", idx, next_idx);
+    }
+
+    println!("idx: {:#?}, next_idx: {:#?}", idx, next_idx);
+
+    Some(next_idx)
+}
+
+struct LossyWindow<T> {
+    slice: Vec<T>,
+    window_size: isize,
+    index: isize,
+}
+
+impl<T> LossyWindow<T> {
+    fn new(slice: Vec<T>, window_size: usize) -> Self {
+        LossyWindow {
+            slice,
+            window_size: window_size as isize,
+            index: 0,
+        }
+    }
+}
+
+impl<T: Clone> Iterator for LossyWindow<T> {
+    type Item = (isize, Vec<T>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index as usize >= self.slice.len() {
+            return None;
+        }
+
+        let start = (self.index - self.window_size / 2).max(0) as usize;
+        let end = (self.index + (self.window_size / 2)).min(self.slice.len() as isize) as usize;
+        let window = self.slice[start..end].to_vec();
+        self.index += 1;
+
+        Some(((self.index - start as isize) - 1, window))
+    }
+}
+
+impl<'a, T, F, R> PartialWindowable<'a, T, F, R> for Vec<T>
+where
+    T: 'a + Clone,
+    F: Fn(&&T) -> R + Copy + 'a,
+    R: std::cmp::PartialEq + 'a,
+{
+    fn partial_window(
+        &'a self,
+        size: usize,
+        qualifier: F,
+    ) -> impl Iterator<Item = (usize, Vec<T>)> {
+        let result = self
+            .iter()
+            .chunk_by(qualifier)
+            .into_iter()
+            .map(|(_, view)| view.collect_vec())
+            .collect::<Vec<_>>();
+
+        LossyWindow::new(result, size).flat_map(|(idx, window)| {
+            let flattened_index: usize = window
+                .iter()
+                .take(idx as usize)
+                .map(|inner_window| inner_window.len())
+                .sum();
+
+            (0..window[idx as usize].len()).map(move |jdx| {
+                (
+                    flattened_index as usize + jdx,
+                    window
+                        .clone()
+                        .into_iter()
+                        .flatten()
+                        .collect::<Vec<_>>()
+                        .into_iter()
+                        .map(|item| item.clone())
+                        .collect::<Vec<_>>(),
+                )
+            })
+        })
+        // self.iter()
+        //     .chunk_by(qualifier)
+        //     .into_iter()
+        //     .map(|(_, view)| view.collect_vec())
+        //     .collect::<Vec<_>>()
+        //     .windows(size)
+        //     .enumerate()
+        //     .map(|(idx, bigview)| {
+        //         (
+        //             idx,
+        //             bigview
+        //                 .iter()
+        //                 .map(|group| {
+        //                     group
+        //                         .clone()
+        //                         .into_iter()
+        //                         .map(|item| item.clone())
+        //                         .collect::<Vec<_>>()
+        //                 })
+        //                 .flatten()
+        //                 .collect::<Vec<_>>(),
+        //         )
+        //     })
+        //     .map(|(idx, window)| {
+        //         let view = window.as_slice();
+
+        //         if idx == 0 {
+        //             [view]
+        //                 .repeat(size)
+        //                 .into_iter()
+        //                 .map(|view| view.to_vec())
+        //                 .enumerate()
+        //                 .map(|(offset, view)| (offset, view[0..(size / 2 - offset)].to_vec()))
+        //                 .collect::<Vec<_>>()
+        //         } else if (idx + size / 2) >= self.len() {
+        //             [view]
+        //                 .repeat(size)
+        //                 .into_iter()
+        //                 .enumerate()
+        //                 .map(|(offset, view)| (size / 2 + offset, view[offset..size].to_vec()))
+        //                 .collect()
+        //         } else {
+        //             [view]
+        //                 .repeat(1)
+        //                 .into_iter()
+        //                 .enumerate()
+        //                 .map(|(_, view)| (size / 2, view[0..size].to_vec()))
+        //                 .collect()
+        //         }
+        //     })
+        //     .flatten()
+        //     .collect::<Vec<_>>()
+        //     .into_iter()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::leaderboards::leaderboardtrait::LossyWindow;
+
+    use super::PartialWindowable;
+
+    #[test]
+    fn test_partial_window() {
+        println!(
+            "{:#?}",
+            vec![1, 2, 2, 2, 3, 4]
+                .partial_window(2, |item| { **item })
+                .collect::<Vec<_>>()
+        );
+
+        // println!(
+        //     "{:#?}",
+        //     vec![1, 2, 2, 3, 4]
+        //         .partial_window(3, |item| { **item })
+        //         .collect::<Vec<_>>()
+        // );
+    }
+}
 
 pub trait AbstractLeaderboard {
     fn new() -> Self
@@ -129,43 +315,44 @@ pub trait AbstractLeaderboard {
     }
 
     fn __calculate_new_elo(&mut self) {
-        let all_scores: Vec<f32> = self
+        // Sort all users by old elo, create an immutable sliding window
+        // on each user. Probably do chunking with references to achieve this effect
+        let mut sorted_by_elo = self
             .__get_state()
-            .values()
-            .map(|state| state.score)
-            .collect();
-        let sample_scores = self.percentiles(&all_scores, 0.0, 100.0, 0.5);
-        // Build a vector of sample users, where the first element is the score and the second element is the elo
-        // The elo is the elo of the user in state with the closest score
-        let sample_users: Vec<(f32, f32)> = sample_scores
-            .iter()
-            .map(|score| {
-                let closest_user = self
-                    .__get_state()
-                    .values()
-                    .min_by(|a, b| {
-                        (a.score - score)
-                            .abs()
-                            .partial_cmp(&(b.score - score).abs())
-                            .unwrap()
-                    })
-                    .unwrap();
-                (*score, closest_user.elo)
-            })
-            .collect();
+            .values_mut()
+            .collect::<Vec<_>>();
 
-        // Calculate the new elo for each user
-        self.__get_state().values_mut().for_each(|state| {
-            let diff: f32 = sample_users
-                .iter()
-                .map(|(sample_score, sample_elo)| {
-                    let won = state.score > *sample_score;
-                    let p = 1.0 / (1.0 + 10.0_f32.powf((sample_elo - state.elo) / 400.0));
-                    K * (won as u8 as f32 - p)
-                })
-                .sum();
-            state.elo += diff;
-        });
+        sorted_by_elo.sort_unstable_by(|a, b| a.elo.partial_cmp(&b.elo).unwrap());
+
+        // Based on the sliding window, do battle with the current scores.
+        let new_states = sorted_by_elo
+            .iter()
+            .map(|ele| ele as &LeaderboardInnerState)
+            .collect_vec()
+            .partial_window(9, |item| item.elo)
+            .map(|(relative_center, window)| {
+                let mut current_state = window[relative_center].clone();
+                let diff: f32 = window
+                    .iter()
+                    .enumerate()
+                    .filter(|(idx, _)| *idx != relative_center)
+                    .map(|(_, state)| {
+                        let won = current_state.score > state.score;
+                        let p =
+                            1.0 / (1.0 + 10.0_f32.powf((state.elo - current_state.elo) / 400.0));
+                        K * (won as u8 as f32 - p)
+                    })
+                    .sum();
+                current_state.elo += diff;
+                current_state
+            })
+            .collect::<Vec<_>>();
+
+        // TODO: use a proper setter
+        sorted_by_elo
+            .iter_mut()
+            .enumerate()
+            .for_each(|(idx, state)| state.elo = new_states[idx].elo);
     }
 
     fn percentiles(&self, scores: &[f32], start: f32, end: f32, step: f32) -> Vec<f32> {

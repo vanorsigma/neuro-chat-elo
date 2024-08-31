@@ -1,7 +1,7 @@
 //! Bilibili chat leaderboard
 
 
-use crate::_types::clptypes::UserChatPerformance;
+use crate::_types::clptypes::{MessageTag, UserChatPerformance};
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
 use std::collections::HashMap;
@@ -29,7 +29,7 @@ impl AbstractLeaderboard for BilibiliLivestreamChat {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        if self.is_bilibili_message(performance) {
+        if crate::is_message_origin!(performance, MessageTag::Bilibili) {
             Some(performance.metrics.values().sum())
         } else {
             None

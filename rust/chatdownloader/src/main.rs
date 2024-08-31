@@ -37,36 +37,36 @@ async fn main() {
 
     info!("Script triggered, pulling logs for VOD ID: {}...", vod_id);
 
-    let mut downloader = twitchdownloaderproxy::TwitchChatDownloader::new();
+    // let mut downloader = twitchdownloaderproxy::TwitchChatDownloader::new();
 
-    let chat_log = downloader
-        .download_chat(&vod_id)
-        .await
-        .expect("Failed to download chat")
-        .comments
-        .into_iter()
-        .map(|c| Message::Twitch(c));
+    // let chat_log = downloader
+    //     .download_chat(&vod_id)
+    //     .await
+    //     .expect("Failed to download chat")
+    //     .comments
+    //     .into_iter()
+    //     .map(|c| Message::Twitch(c));
 
-    let discord_messages = match env::var("CHAT_DISCORD_TOKEN") {
-        Ok(token) => {
-            let (start_time, end_time) = twitch.get_vod_times(vod_id).await;
-            discorddownloaderproxy::DiscordChatDownloader::new()
-                .download_chat(
-                    start_time.into(),
-                    end_time.into(),
-                    CHANNEL_ID,
-                    token.as_str(),
-                )
-                .await
-                .expect("Failed to download Discord chat")
-                .messages
-        }
-        _ => {
-            vec![]
-        }
-    }
-    .into_iter()
-        .map(|m| Message::Discord(m));
+    // let discord_messages = match env::var("CHAT_DISCORD_TOKEN") {
+    //     Ok(token) => {
+    //         let (start_time, end_time) = twitch.get_vod_times(vod_id).await;
+    //         discorddownloaderproxy::DiscordChatDownloader::new()
+    //             .download_chat(
+    //                 start_time.into(),
+    //                 end_time.into(),
+    //                 CHANNEL_ID,
+    //                 token.as_str(),
+    //             )
+    //             .await
+    //             .expect("Failed to download Discord chat")
+    //             .messages
+    //     }
+    //     _ => {
+    //         vec![]
+    //     }
+    // }
+    // .into_iter()
+    // .map(|m| Message::Discord(m));
 
     let bilibili_messages = bilidownloaderproxy::BiliChatDownloader::new()
         .from_path(Path::new("./output_fixed_fixed.json"))
@@ -78,7 +78,8 @@ async fn main() {
     let processor = chatlogprocessor::ChatLogProcessor::new(&twitch, seventv_client).await;
     // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());
     let user_performances = processor
-        .process_from_messages(chat_log.chain(discord_messages).chain(bilibili_messages))
+    //.process_from_messages(chat_log.chain(discord_messages).chain(bilibili_messages))
+        .process_from_messages(bilibili_messages)
         .await;
     chatlogprocessor::ChatLogProcessor::export_to_leaderboards(user_performances).await;
 }
