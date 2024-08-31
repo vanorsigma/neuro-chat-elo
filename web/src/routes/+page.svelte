@@ -43,7 +43,35 @@
     $discordRank
   ];
 
-  $: allRanksLoaded = ranking.every((r) => r.length > 0);
+  let allRanksLoaded = false;
+
+  onMount(() => {
+    const start = Date.now();
+    const POLL_RATE = 10;
+    const TIMEOUT = 200;
+
+    function checkLoaded() {
+      if (ranking.every(rank => rank.length > 0)) {
+        allRanksLoaded = true;
+        return;
+      }
+
+      const elapsed = Date.now() - start;
+      if (elapsed >= TIMEOUT) {
+        ranking.forEach((rank, index) => {
+          if (rank.length === 0) {
+            alert(`Leaderboard ${rankingTitles[index]} is empty. Ping @vanorsigma on discord if you see this message.`);
+          }
+        });
+        allRanksLoaded = true;
+        return;
+      }
+
+      setTimeout(checkLoaded, POLL_RATE);
+    }
+
+    checkLoaded();
+  });
 
   let menuAppear = false;
 
