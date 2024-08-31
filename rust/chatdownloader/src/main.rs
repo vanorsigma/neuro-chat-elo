@@ -31,8 +31,9 @@ async fn main() {
 
     let twitch = TwitchAPIWrapper::new().await.unwrap();
     let vod_id = twitch
-        .get_latest_vod_id(elo::_constants::VED_CH_ID.to_string())
-        .await;
+        .get_latest_vod_ids(elo::_constants::VED_CH_ID.to_string(), 1)
+        .await[0]
+        .clone();
 
     info!("Script triggered, pulling logs for VOD ID: {}...", vod_id);
 
