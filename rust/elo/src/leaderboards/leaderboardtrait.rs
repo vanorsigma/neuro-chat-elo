@@ -1,11 +1,11 @@
 use crate::_types::{
-    clptypes::{MetadataTypes, UserChatPerformance},
+    clptypes::UserChatPerformance,
     leaderboardtypes::{
         export_item_to_inner_state, BadgeInformation, LeaderboardExport, LeaderboardExportItem,
         LeaderboardInnerState,
     },
 };
-use itertools::{traits::HomogeneousTuple, Itertools};
+use itertools::Itertools;
 use log::{debug, info, warn};
 use prost::Message;
 use std::collections::HashMap;
@@ -22,30 +22,6 @@ trait PartialWindowable<'a, T: 'a, F: Fn(&&T) -> R, R> {
     /// item.
     fn partial_window(&'a self, size: usize, qualifier: F)
         -> impl Iterator<Item = (usize, Vec<T>)>;
-}
-
-fn move_index_by_incrementer_if_predicate<
-    T,
-    I: Fn(usize) -> Option<usize>,
-    P: Fn(&T, &T) -> bool,
->(
-    view: &[T],
-    at_index: usize,
-    incrementer: I,
-    predicate: P,
-) -> Option<usize> {
-    let mut idx = at_index;
-    let mut next_idx = incrementer(idx)?;
-
-    while predicate(&view[idx], &view[next_idx]) {
-        idx = next_idx;
-        next_idx = incrementer(idx)?;
-        println!("inner > idx: {:#?}, next_idx: {:#?}", idx, next_idx);
-    }
-
-    println!("idx: {:#?}, next_idx: {:#?}", idx, next_idx);
-
-    Some(next_idx)
 }
 
 struct LossyWindow<T> {
@@ -120,83 +96,6 @@ where
                 )
             })
         })
-        // self.iter()
-        //     .chunk_by(qualifier)
-        //     .into_iter()
-        //     .map(|(_, view)| view.collect_vec())
-        //     .collect::<Vec<_>>()
-        //     .windows(size)
-        //     .enumerate()
-        //     .map(|(idx, bigview)| {
-        //         (
-        //             idx,
-        //             bigview
-        //                 .iter()
-        //                 .map(|group| {
-        //                     group
-        //                         .clone()
-        //                         .into_iter()
-        //                         .map(|item| item.clone())
-        //                         .collect::<Vec<_>>()
-        //                 })
-        //                 .flatten()
-        //                 .collect::<Vec<_>>(),
-        //         )
-        //     })
-        //     .map(|(idx, window)| {
-        //         let view = window.as_slice();
-
-        //         if idx == 0 {
-        //             [view]
-        //                 .repeat(size)
-        //                 .into_iter()
-        //                 .map(|view| view.to_vec())
-        //                 .enumerate()
-        //                 .map(|(offset, view)| (offset, view[0..(size / 2 - offset)].to_vec()))
-        //                 .collect::<Vec<_>>()
-        //         } else if (idx + size / 2) >= self.len() {
-        //             [view]
-        //                 .repeat(size)
-        //                 .into_iter()
-        //                 .enumerate()
-        //                 .map(|(offset, view)| (size / 2 + offset, view[offset..size].to_vec()))
-        //                 .collect()
-        //         } else {
-        //             [view]
-        //                 .repeat(1)
-        //                 .into_iter()
-        //                 .enumerate()
-        //                 .map(|(_, view)| (size / 2, view[0..size].to_vec()))
-        //                 .collect()
-        //         }
-        //     })
-        //     .flatten()
-        //     .collect::<Vec<_>>()
-        //     .into_iter()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::leaderboards::leaderboardtrait::LossyWindow;
-
-    use super::PartialWindowable;
-
-    #[test]
-    fn test_partial_window() {
-        println!(
-            "{:#?}",
-            vec![1, 2, 2, 2, 3, 4]
-                .partial_window(2, |item| { **item })
-                .collect::<Vec<_>>()
-        );
-
-        // println!(
-        //     "{:#?}",
-        //     vec![1, 2, 2, 3, 4]
-        //         .partial_window(3, |item| { **item })
-        //         .collect::<Vec<_>>()
-        // );
     }
 }
 
@@ -317,10 +216,7 @@ pub trait AbstractLeaderboard {
     fn __calculate_new_elo(&mut self) {
         // Sort all users by old elo, create an immutable sliding window
         // on each user. Probably do chunking with references to achieve this effect
-        let mut sorted_by_elo = self
-            .__get_state()
-            .values_mut()
-            .collect::<Vec<_>>();
+        let mut sorted_by_elo = self.__get_state().values_mut().collect::<Vec<_>>();
 
         sorted_by_elo.sort_unstable_by(|a, b| a.elo.partial_cmp(&b.elo).unwrap());
 
@@ -367,28 +263,6 @@ pub trait AbstractLeaderboard {
         let chunks = sorted_scores.chunks(chunk_size);
         let percentiles: Vec<f32> = chunks.map(|chunk| chunk[chunk.len() / 2]).collect();
         percentiles
-    }
-
-    fn is_discord_message(&self, performance: &UserChatPerformance) -> bool {
-        if let MetadataTypes::Bool(true) = performance
-            .metadata
-            .get("is_discord_chat")
-            .unwrap_or(&MetadataTypes::Bool(false))
-        {
-            true
-        } else {
-            false
-        }
-    }
-
-    fn is_bilibili_message(&self, performance: &UserChatPerformance) -> bool {
-        matches!(
-            performance
-                .metadata
-                .get("is_bilibili_chat")
-                .unwrap_or(&MetadataTypes::Bool(false)),
-            MetadataTypes::Bool(true)
-        )
     }
 }
 
