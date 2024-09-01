@@ -43,16 +43,19 @@ pub async fn backfill() {
             .await
             .unwrap();
 
-        ChatLogProcessor::new(&twitch, seventv_client.clone())
-            .await
-            .process_from_messages(
-                adventure_ranks
-                    .get("The Farm")
-                    .unwrap()
-                    .into_iter()
-                    .cloned()
-                    .map(|item| Message::Adventures(item)),
-            )
-            .await;
+        ChatLogProcessor::export_to_leaderboards(
+            ChatLogProcessor::new(&twitch, seventv_client.clone())
+                .await
+                .process_from_messages(
+                    adventure_ranks
+                        .get("The Farm")
+                        .unwrap()
+                        .into_iter()
+                        .cloned()
+                        .map(|item| Message::Adventures(item)),
+                )
+                .await,
+        )
+        .await;
     }
 }
