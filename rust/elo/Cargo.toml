@@ -21,3 +21,4 @@ twitch_utils = { path = "../twitch_utils/" }
 discord_utils = { path = "../discord_utils/" }
 prost = "0.13.1"
 prost-types = "0.13.1"
+itertools = "0.13.0"
