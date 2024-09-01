@@ -9,6 +9,7 @@ use elo::_types::clptypes::Message;
 use log::info;
 use twitch_utils::seventvclient::SevenTVClient;
 
+use crate::adventuresdownloaderproxy;
 use crate::chatlogprocessor::ChatLogProcessor;
 use crate::twitchdownloaderproxy::TwitchChatDownloader;
 use crate::{discorddownloaderproxy, CHANNEL_ID};
@@ -60,5 +61,27 @@ pub async fn backfill() {
             .await;
 
         ChatLogProcessor::export_to_leaderboards(user_performances).await;
+    }
+
+    if let Ok(token) = std::env::var("CHAT_DISCORD_TOKEN") {
+        let adventure_ranks = adventuresdownloaderproxy::AdventuresDownloaderProxy::new(token)
+            .get_ranks()
+            .await
+            .unwrap();
+
+        ChatLogProcessor::export_to_leaderboards(
+            ChatLogProcessor::new(&twitch, seventv_client.clone())
+                .await
+                .process_from_messages(
+                    adventure_ranks
+                        .get("The Farm")
+                        .unwrap()
+                        .into_iter()
+                        .cloned()
+                        .map(|item| Message::Adventures(item)),
+                )
+                .await,
+        )
+        .await;
     }
 }

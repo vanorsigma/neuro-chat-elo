@@ -80,9 +80,7 @@ pub trait AbstractLeaderboard {
         }
     }
 
-    fn save(&mut self) {
-        info!("Saving {} leaderboard...", self.get_name());
-        self.__calculate_new_elo();
+    fn save_to_disk(&mut self) {
         let to_save: Vec<LeaderboardExportItem> = self
             .__get_state()
             .values()
@@ -128,6 +126,12 @@ pub trait AbstractLeaderboard {
         fs::File::create(path).unwrap().write_all(&buf).unwrap();
 
         info!("{} leaderboard saved", self.get_name());
+    }
+
+    fn save(&mut self) {
+        info!("Saving {} leaderboard...", self.get_name());
+        self.__calculate_new_elo();
+        self.save_to_disk();
     }
 
     fn __calculate_new_elo(&mut self) {

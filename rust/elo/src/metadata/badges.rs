@@ -166,6 +166,16 @@ impl AbstractMetadata for Badges {
         match message {
             Message::Twitch(comment) => self.get_metadata_twitch(comment),
             Message::Discord(msg) => self.get_metadata_discord(msg),
+            Message::Adventures(rank) => MetadataUpdate {
+                metadata_name: self.get_name(),
+                updates: HashMap::from([(
+                    rank.uid,
+                    MetadataTypes::BadgeList(vec![BadgeInformation {
+                        description: "".to_string(),
+                        image_url: rank.badge,
+                    }]),
+                )]),
+            },
             _ => MetadataUpdate::default(),
         }
     }

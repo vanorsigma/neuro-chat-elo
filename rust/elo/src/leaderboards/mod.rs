@@ -1,3 +1,4 @@
+mod adventures_farm;
 mod bitsonly;
 mod chatonly;
 mod copypastaleaders;
@@ -43,6 +44,7 @@ pub struct LeaderboardProcessor {
     subsonly: subsonly::SubsOnly,
     discordlivestreamchat: discordlivestreamchat::DiscordLivestreamChat,
     partnersonly: partnersonly::PartnersOnly,
+    adventures_farm: adventures_farm::AdventuresFarm,
 }
 
 impl LeaderboardProcessor {
@@ -55,6 +57,7 @@ impl LeaderboardProcessor {
         let subsonly = subsonly::SubsOnly::new();
         let discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
         let partnersonly = partnersonly::PartnersOnly::new();
+        let adventures_farm = adventures_farm::AdventuresFarm::new();
 
         Self {
             bitsonly,
@@ -65,6 +68,7 @@ impl LeaderboardProcessor {
             subsonly,
             discordlivestreamchat,
             partnersonly,
+            adventures_farm,
         }
     }
 
@@ -83,7 +87,8 @@ impl LeaderboardProcessor {
                 &mut self.discordlivestreamchat,
                 broadcast_reciever.resubscribe()
             ),
-            calc_leaderboard(&mut self.partnersonly, broadcast_reciever.resubscribe())
+            calc_leaderboard(&mut self.partnersonly, broadcast_reciever.resubscribe()),
+            calc_leaderboard(&mut self.adventures_farm, broadcast_reciever.resubscribe())
         );
     }
 }
