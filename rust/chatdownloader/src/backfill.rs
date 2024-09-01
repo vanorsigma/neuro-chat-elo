@@ -17,42 +17,52 @@ pub async fn backfill() {
     let twitch = TwitchAPIWrapper::new().await.unwrap();
     let seventv_client = Arc::new(SevenTVClient::new().await);
     let video_ids = twitch
-        .get_latest_vod_ids(elo::_constants::VED_CH_ID.to_string(), 5)
+        .get_latest_vod_ids(elo::_constants::VED_CH_ID.to_string(), 1)
         .await;
     let mut downloader = TwitchChatDownloader::new();
 
-    for video_id in video_ids.iter() {
-        info!("Backfilling for video ID: {}", video_id);
-        // let chat_log = downloader.download_chat(video_id).await.unwrap();
-        let chat_log = downloader
-            .download_chat(video_id)
-            .await
-            .expect("Could not download chat log: {e:?}");
+    // for video_id in video_ids.iter() {
+    //     info!("Backfilling for video ID: {}", video_id);
+    //     // let chat_log = downloader.download_chat(video_id).await.unwrap();
+    //     let chat_log = downloader
+    //         .download_chat(video_id)
+    //         .await
+    //         .expect("Could not download chat log: {e:?}");
 
-        let user_performances = ChatLogProcessor::new(&twitch, seventv_client.clone())
-            .await
-            .process_from_log_object(chat_log)
-            .await;
+    //     let user_performances = ChatLogProcessor::new(&twitch, seventv_client.clone())
+    //         .await
+    //         .process_from_log_object(chat_log)
+    //         .await;
 
-        ChatLogProcessor::export_to_leaderboards(user_performances).await;
-    }
+    //     ChatLogProcessor::export_to_leaderboards(user_performances).await;
+    // }
 
-    if let Ok(token) = std::env::var("CHAT_DISCORD_TOKEN") {
-        let adventure_ranks = adventuresdownloaderproxy::AdventuresDownloaderProxy::new(token)
+    if true {
+        info!("Have discord token, will attempt to get adventure ranks");
+        /*let adventure_ranks = adventuresdownloaderproxy::AdventuresDownloaderProxy::new(token)
             .get_ranks()
             .await
-            .unwrap();
+            .unwrap();*/
 
-        ChatLogProcessor::new(&twitch, seventv_client.clone())
-            .await
-            .process_from_messages(
-                adventure_ranks
-                    .get("The Farm")
-                    .unwrap()
-                    .into_iter()
-                    .cloned()
-                    .map(|item| Message::Adventures(item)),
-            )
-            .await;
+        ChatLogProcessor::export_to_leaderboards(
+            ChatLogProcessor::new(&twitch, seventv_client.clone())
+                .await
+                .process_from_messages(
+                    vec![Message::Adventures(adventures_utils::AdventuresRankItemWithAvatar {
+                        user: "test".to_string(),
+                        avatar: "test".to_string(),
+                        score: 123,
+                        uid: "bruh".to_string(),
+                        badge: "nope".to_string(),
+                    })].into_iter(), // adventure_ranks
+                        //     .get("The Farm")
+                        //     .unwrap()
+                        //     .into_iter()
+                        //     .cloned()
+                        //     .map(|item| Message::Adventures(item)),
+                )
+                .await,
+        )
+        .await;
     }
 }

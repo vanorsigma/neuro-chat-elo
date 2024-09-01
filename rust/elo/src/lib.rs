@@ -7,7 +7,7 @@ use _types::clptypes::{Message, MetadataTypes, MetadataUpdate, MetricUpdate, Use
 use log::{debug, warn};
 use metadata::setup_metadata_and_channels;
 use metrics::setup_metrics_and_channels;
-use tokio::sync::mpsc;
+use tokio::{sync::mpsc, task::yield_now};
 use twitch_utils::seventvclient::SevenTVClient;
 
 pub mod _constants;
@@ -67,7 +67,16 @@ impl MessageProcessor {
     pub async fn finish(self) -> HashMap<String, UserChatPerformance> {
         // These senders need to be dropped before `metadata_processor_task`
         // and `metric_processor_task` will exit.
+        while !self.metric_sender.is_empty() {
+            log::warn!("Metric sender is not empty! Yielding now.");
+            yield_now().await
+        }
         drop(self.metric_sender);
+
+        while !self.metadata_sender.is_empty() {
+            log::warn!("Metadata sender is not empty! Yielding now.");
+            yield_now().await
+        }
         drop(self.metadata_sender);
 
         self.metadata_processor_task.await.unwrap();
