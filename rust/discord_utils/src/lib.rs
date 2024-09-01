@@ -1,39 +1,40 @@
-use chrono::{DateTime, Utc};
-use serde::Deserialize;
+pub mod types;
 
-#[derive(Clone, Deserialize, Debug)]
-pub struct DiscordRole {
-    pub id: String,
-    pub name: String,
-    pub position: u32
+use reqwest;
+pub use types::*;
+
+const DISCORD_PROFILE_URL: &str = "https://discord.com/api/v9/users/{user_id}/profile?with_mutual_guilds=false&with_mutual_friends=false&with_mutual_friends_count=false&guild_id=574720535888396288";
+const DISCORD_AVATAR_URL: &str =
+    "https://cdn.discordapp.com/avatars/{user_id}/{avatar}.webp?size=128";
+
+pub struct DiscordClient {
+    token: String,
 }
 
-#[derive(Clone, Deserialize, Debug)]
-pub struct DiscordAuthor {
-    pub id: String,
-    pub name: String,
-    pub nickname: String,
-    pub roles: Vec<DiscordRole>,
-    #[serde(alias = "avatarUrl")]
-    pub avatar_url: String
+impl DiscordClient {
+    pub fn new(token: String) -> DiscordClient {
+        Self { token }
+    }
+
+    pub async fn get_profile_for_user_id(
+        &self,
+        user_id: String,
+    ) -> Result<DiscordProfileUserResponse, anyhow::Error> {
+        Ok(reqwest::Client::new()
+            .get(DISCORD_PROFILE_URL.replace("{user_id}", &user_id))
+            .header("Authorization", self.token.to_string())
+            .send()
+            .await?
+            .json::<DiscordProfileResponse>()
+            .await?
+            .user)
+    }
 }
 
-#[derive(Clone, Deserialize, Debug)]
-pub struct DiscordMessage {
-    pub id: String,
-    pub timestamp: DateTime<Utc>,
-    pub content: String,
-    pub author: DiscordAuthor
-}
-
-#[derive(Clone, Deserialize, Debug)]
-pub struct DiscordChatLogs {
-    pub messages: Vec<DiscordMessage>,
-}
-
-#[derive(Clone, Debug)]
-pub struct DiscordMapping {
-    pub id: String,
-    pub name: String,
-    pub image_url: String
+impl DiscordProfileUserResponse {
+    pub fn get_profile_url(&self) -> String {
+        DISCORD_AVATAR_URL
+            .replace("{user_id}", &self.id)
+            .replace("{avatar}", &self.avatar)
+    }
 }

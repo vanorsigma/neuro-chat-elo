@@ -15,6 +15,10 @@
     '#livestream-chat': 7
   };
 
+  const communityDerivedMapping = {
+    adventureTheFarm: 10
+  };
+
   export let itemClicked: (arg0: number) => void;
   export let selectedPage: number;
 
@@ -54,4 +58,19 @@
       selected={selectedPage == menuItem[1]}
     />
   {/each}
+
+  <br />
+  <p class="text-xl">Community Derived Mapping</p>
+  {#each Object.entries(communityDerivedMapping) as menuItem}
+    <MenuItem
+      text={menuItem[0]}
+      onClick={() => onMenuItemClick(menuItem[1])}
+      selected={selectedPage == menuItem[1]}
+    />
+  {/each}
+
+  <br />
+  <p class="flex-none text-center hidden sm:block">
+    Public Alpha. Please ping @vanorsigma for feedback
+  </p>
 </div>

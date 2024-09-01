@@ -11,7 +11,8 @@
     bitsRank,
     subsRank,
     discordRank,
-    partnersRank
+    partnersRank,
+    adventureTheFarmRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
   import Menu from '$lib/menu.svelte';
@@ -30,7 +31,8 @@
     'Bits',
     'Subs',
     'Partners',
-    '#livestream-chat'
+    '#livestream-chat',
+    'Neuro Adventures - The Farm'
   ];
   $: ranking = [
     $overallRank,
@@ -40,7 +42,8 @@
     $bitsRank,
     $subsRank,
     $partnersRank,
-    $discordRank
+    $discordRank,
+    $adventureTheFarmRank
   ];
 
   $: allRanksLoaded = ranking.every((r) => r.length > 0);
