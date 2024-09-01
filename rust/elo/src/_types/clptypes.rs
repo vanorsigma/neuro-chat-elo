@@ -1,4 +1,5 @@
 use crate::_types::leaderboardtypes::BadgeInformation;
+use adventures_utils::AdventuresRankItemWithAvatar;
 use bili_utils::BiliChatMessage;
 use discord_utils::DiscordMessage;
 use std::collections::HashMap;
@@ -114,4 +115,9 @@ macro_rules! declare_messages {
     };
 }
 
-declare_messages!((Twitch, Comment), (Discord, DiscordMessage), (Bilibili, BiliChatMessage));
+declare_messages!(
+    (Twitch, Comment),
+    (Discord, DiscordMessage),
+    (Bilibili, BiliChatMessage),
+    (Adventures, AdventuresRankItemWithAvatar)
+);

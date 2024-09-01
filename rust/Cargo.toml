@@ -1,3 +1,3 @@
 [workspace]
-members = [ "bili_utils","chatdownloader", "discord_utils", "elo", "twitch_utils"]
+members = [ "adventures_utils", "bili_utils","chatdownloader", "discord_utils", "elo", "twitch_utils"]
 resolver = "2"

@@ -20,6 +20,10 @@
     bilibili: 8
   };
 
+  const communityDerivedMapping = {
+    adventureTheFarm: 9
+  };
+
   export let itemClicked: (arg0: number) => void;
   export let selectedPage: number;
 
@@ -64,6 +68,16 @@
   <br />
   <p class="text-xl">Bilibili</p>
   {#each Object.entries(bilibiliMenuItemMapping) as menuItem}
+    <MenuItem
+      text={menuItem[0]}
+      onClick={() => onMenuItemClick(menuItem[1])}
+      selected={selectedPage == menuItem[1]}
+    />
+  {/each}
+
+  <br />
+  <p class="text-xl">Community Derived Mapping</p>
+  {#each Object.entries(communityDerivedMapping) as menuItem}
     <MenuItem
       text={menuItem[0]}
       onClick={() => onMenuItemClick(menuItem[1])}

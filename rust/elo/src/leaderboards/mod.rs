@@ -8,10 +8,11 @@ mod nonvips;
 mod overall;
 mod partnersonly;
 mod subsonly;
+mod adventures_farm;
 
 use futures::join;
 
-use log::error;
+use log::{error, info};
 use tokio::sync::broadcast;
 
 use crate::{
@@ -45,6 +46,7 @@ pub struct LeaderboardProcessor {
     discordlivestreamchat: discordlivestreamchat::DiscordLivestreamChat,
     partnersonly: partnersonly::PartnersOnly,
     bilibililivestreamchat: bilibililivestreamchat::BilibiliLivestreamChat,
+    adventures_farm: adventures_farm::AdventuresFarm,
 }
 
 impl LeaderboardProcessor {
@@ -58,6 +60,7 @@ impl LeaderboardProcessor {
         let discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
         let partnersonly = partnersonly::PartnersOnly::new();
         let bilibililivestreamchat = bilibililivestreamchat::BilibiliLivestreamChat::new();
+        let adventures_farm = adventures_farm::AdventuresFarm::new();
 
         Self {
             bitsonly,
@@ -69,6 +72,7 @@ impl LeaderboardProcessor {
             discordlivestreamchat,
             partnersonly,
             bilibililivestreamchat,
+            adventures_farm
         }
     }
 
@@ -90,6 +94,10 @@ impl LeaderboardProcessor {
             calc_leaderboard(&mut self.partnersonly, broadcast_reciever.resubscribe()),
             calc_leaderboard(
                 &mut self.bilibililivestreamchat,
+                broadcast_reciever.resubscribe()
+            ),
+            calc_leaderboard(
+                &mut self.adventures_farm,
                 broadcast_reciever.resubscribe()
             )
         );

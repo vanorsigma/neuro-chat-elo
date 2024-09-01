@@ -10,8 +10,8 @@ use log::info;
 use twitch_utils::seventvclient::SevenTVClient;
 
 use crate::chatlogprocessor::ChatLogProcessor;
-use crate::discorddownloaderproxy;
 use crate::twitchdownloaderproxy::TwitchChatDownloader;
+use crate::{adventuresdownloaderproxy, discorddownloaderproxy};
 use twitch_utils::TwitchAPIWrapper;
 
 const CHANNEL_ID: &str = "1067638175478071307";
@@ -59,7 +59,7 @@ pub async fn backfill() {
             }
         }
         .into_iter()
-            .map(|m| Message::Discord(m));
+        .map(|m| Message::Discord(m));
 
         let user_performances = ChatLogProcessor::new(&twitch, seventv_client.clone())
             .await
@@ -67,5 +67,24 @@ pub async fn backfill() {
             .await;
 
         ChatLogProcessor::export_to_leaderboards(user_performances).await;
+    }
+
+    if let Ok(token) = std::env::var("CHAT_DISCORD_TOKEN") {
+        let adventure_ranks = adventuresdownloaderproxy::AdventuresDownloaderProxy::new(token)
+            .get_ranks()
+            .await
+            .unwrap();
+
+        ChatLogProcessor::new(&twitch, seventv_client.clone())
+            .await
+            .process_from_messages(
+                adventure_ranks
+                    .get("The Farm")
+                    .unwrap()
+                    .into_iter()
+                    .cloned()
+                    .map(|item| Message::Adventures(item)),
+            )
+            .await;
     }
 }

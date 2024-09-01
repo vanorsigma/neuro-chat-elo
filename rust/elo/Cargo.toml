@@ -20,6 +20,7 @@ regex = "1.10.5"
 twitch_utils = { path = "../twitch_utils/" }
 discord_utils = { path = "../discord_utils/" }
 bili_utils = { path = "../bili_utils/" }
+adventures_utils = { path = "../adventures_utils/" }
 prost = "0.13.1"
 prost-types = "0.13.1"
 itertools = "0.13.0"

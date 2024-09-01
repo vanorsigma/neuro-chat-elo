@@ -76,3 +76,4 @@ export const subsRank = readable([], makeRankingInfo('subs-only.bin'));
 export const discordRank = readable([], makeRankingInfo('discordlivestream.bin'))
 export const partnersRank = readable([], makeRankingInfo('partners-only.bin'))
 export const bilibiliRank = readable([], makeRankingInfo('bilibililivestreamchat.bin'))
+export const adventureTheFarmRank = readable([], makeRankingInfo('adventures_farm.bin'))
