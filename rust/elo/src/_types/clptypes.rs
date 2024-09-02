@@ -110,17 +110,11 @@ macro_rules! declare_messages {
                 }
             }
         }
-
-        impl From<&TwitchEmote> for MessageTag {
-            fn from(_emote: &TwitchEmote) -> Self {
-                Self::TwitchEmote
-            }
-        }
     };
 }
 
 declare_messages!(
     (Twitch, Comment),
     (Discord, DiscordMessage),
-    (TwitchEmote, TwitchEmote)
+    (Emote, TwitchEmote)
 );

@@ -50,11 +50,11 @@ impl ChatOrigin {
     ) -> HashMap<String, MetadataTypes> {
         self.seventv_client
             .get_emotes_in_comment(comment)
-            .iter()
+            .into_iter()
             .map(|emote| {
                 (
                     emote.id.clone(),
-                    MetadataTypes::ChatOrigin(MessageTag::from(emote)),
+                    MetadataTypes::ChatOrigin(MessageTag::from(&Message::from(emote))),
                 )
             })
             .chain(std::iter::once((

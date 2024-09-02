@@ -33,7 +33,7 @@ impl AbstractLeaderboard for TopEmote {
     }
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
-        if is_message_origin!(performance, MessageTag::TwitchEmote) {
+        if is_message_origin!(performance, MessageTag::Emote) {
             Some(*performance.metrics.get("emote_use").unwrap_or(&0.0) * K)
         } else {
             None
