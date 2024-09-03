@@ -11,7 +11,8 @@
     bitsRank,
     subsRank,
     discordRank,
-    partnersRank
+    partnersRank,
+    emoteRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
   import Menu from '$lib/menu.svelte';
@@ -30,7 +31,9 @@
     'Bits',
     'Subs',
     'Partners',
-    '#livestream-chat'
+    '#livestream-chat',
+    '',
+    'Top Emotes'
   ];
   $: ranking = [
     $overallRank,
@@ -40,7 +43,9 @@
     $bitsRank,
     $subsRank,
     $partnersRank,
-    $discordRank
+    $discordRank,
+    $discordRank, // Temp filler
+    $emoteRank
   ];
 
   $: allRanksLoaded = ranking.every((r) => r.length > 0);

@@ -75,3 +75,4 @@ export const bitsRank = readable([], makeRankingInfo('bits-only.bin'));
 export const subsRank = readable([], makeRankingInfo('subs-only.bin'));
 export const discordRank = readable([], makeRankingInfo('discordlivestream.bin'))
 export const partnersRank = readable([], makeRankingInfo('partners-only.bin'))
+export const emoteRank = readable([], makeRankingInfo('top-emote.bin'));

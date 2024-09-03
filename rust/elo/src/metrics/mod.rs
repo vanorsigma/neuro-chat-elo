@@ -1,6 +1,7 @@
 pub mod bits;
 pub mod copypastaleader;
 pub mod emote;
+pub mod emoteuse;
 pub mod metrictrait;
 pub mod subs;
 pub mod text;
@@ -27,6 +28,7 @@ pub struct MetricProcessor {
     text: text::Text,
     copypastaleader: copypastaleader::CopypastaLeader,
     emote: emote::Emote,
+    emote_use: emoteuse::EmoteUse,
 }
 
 impl MetricProcessor {
@@ -43,13 +45,15 @@ impl MetricProcessor {
         let subs = subs::Subs::new();
         let text = text::Text::new();
         let copypastaleader = copypastaleader::CopypastaLeader::new();
-        let emote = emote::Emote::new(seventv_client);
+        let emote = emote::Emote::new(seventv_client.clone());
+        let emote_use = emoteuse::EmoteUse::new(seventv_client);
 
         defaults.insert(bits.get_name(), 0.0);
         defaults.insert(subs.get_name(), 0.0);
         defaults.insert(text.get_name(), 0.0);
         defaults.insert(copypastaleader.get_name(), 0.0);
         defaults.insert(emote.get_name(), 0.0);
+        defaults.insert(emote_use.get_name(), 0.0);
 
         Self {
             defaults,
@@ -60,6 +64,7 @@ impl MetricProcessor {
             text,
             copypastaleader,
             emote,
+            emote_use,
         }
     }
 
@@ -87,6 +92,11 @@ impl MetricProcessor {
             ),
             calc_metric(
                 &mut self.emote,
+                self.mpsc_sender.clone(),
+                self.broadcast_receiver.resubscribe(),
+            ),
+            calc_metric(
+                &mut self.emote_use,
                 self.mpsc_sender.clone(),
                 self.broadcast_receiver.resubscribe(),
             ),

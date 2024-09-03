@@ -65,10 +65,21 @@ impl From<ChannelEmote> for TwitchEmote {
 
 impl From<RawSevenTVEmote> for SevenTVEmote {
     fn from(raw_emote: RawSevenTVEmote) -> Self {
-        Self {
-            id: raw_emote.id,
-            name: raw_emote.name,
-            emote_url: raw_emote.host.url,
+        let largest_width_file = raw_emote.host.files.iter().max_by_key(|file| file.width);
+        if let Some(file) = largest_width_file {
+            let url = raw_emote.host.url + "/" + &file.name;
+            Self {
+                id: raw_emote.id,
+                name: raw_emote.name,
+                emote_url: url,
+            }
+        } else {
+            // Use technical difficulties emote if no files are found
+            Self {
+                id: raw_emote.id,
+                name: raw_emote.name,
+                emote_url: String::from("https://cdn.7tv.app/emote/63384017cf7eb48c4e731a79/4x.webp"),
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ mod nonvips;
 mod overall;
 mod partnersonly;
 mod subsonly;
+mod topemote;
 
 use futures::join;
 
@@ -41,6 +42,7 @@ pub struct LeaderboardProcessor {
     nonvips: nonvips::NonVIPS,
     overall: overall::Overall,
     subsonly: subsonly::SubsOnly,
+    topemote: topemote::TopEmote,
     discordlivestreamchat: discordlivestreamchat::DiscordLivestreamChat,
     partnersonly: partnersonly::PartnersOnly,
 }
@@ -53,6 +55,7 @@ impl LeaderboardProcessor {
         let nonvips = nonvips::NonVIPS::new();
         let overall = overall::Overall::new();
         let subsonly = subsonly::SubsOnly::new();
+        let topemote = topemote::TopEmote::new();
         let discordlivestreamchat = discordlivestreamchat::DiscordLivestreamChat::new();
         let partnersonly = partnersonly::PartnersOnly::new();
 
@@ -63,6 +66,7 @@ impl LeaderboardProcessor {
             nonvips,
             overall,
             subsonly,
+            topemote,
             discordlivestreamchat,
             partnersonly,
         }
@@ -79,6 +83,7 @@ impl LeaderboardProcessor {
             calc_leaderboard(&mut self.nonvips, broadcast_reciever.resubscribe()),
             calc_leaderboard(&mut self.overall, broadcast_reciever.resubscribe()),
             calc_leaderboard(&mut self.subsonly, broadcast_reciever.resubscribe()),
+            calc_leaderboard(&mut self.topemote, broadcast_reciever.resubscribe()),
             calc_leaderboard(
                 &mut self.discordlivestreamchat,
                 broadcast_reciever.resubscribe()
