@@ -42,6 +42,18 @@ async fn main() {
 
     let mut downloader = twitchdownloaderproxy::TwitchChatDownloader::new();
 
+    let adventure_ranks = adventuresdownloaderproxy::AdventuresDownloaderProxy::new(token)
+        .get_ranks()
+        .await
+        .unwrap();
+
+    let adventures_farm = adventure_ranks
+        .get("The Farm")
+        .unwrap()
+        .into_iter()
+        .cloned()
+        .map(|item| Message::Adventures(item));
+
     let chat_log = downloader
         .download_chat(&vod_id)
         .await
@@ -75,18 +87,6 @@ async fn main() {
         .from_path(Path::new("./output_fixed_fixed.json"))
         .into_iter()
         .map(|m| Message::Bilibili(m));
-
-    let adventure_ranks = adventuresdownloaderproxy::AdventuresDownloaderProxy::new(token)
-        .get_ranks()
-        .await
-        .unwrap();
-
-    let adventures_farm = adventure_ranks
-        .get("The Farm")
-        .unwrap()
-        .into_iter()
-        .cloned()
-        .map(|item| Message::Adventures(item));
 
     let seventv_client = Arc::new(SevenTVClient::new().await);
 
