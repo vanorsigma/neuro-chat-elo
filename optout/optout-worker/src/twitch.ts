@@ -4,150 +4,70 @@ import { updateSecret } from './cloudflareHelpers';
 import { TwitchAuthFailureError, TwitchRequestFailureError, UnknownCommandError } from './errors';
 import crypto from 'node:crypto';
 import Buffer from 'node:buffer';
+import { RefreshingAuthProvider } from '@twurple/auth';
+import { ApiClient } from '@twurple/api';
+import { EventSubBase, EventSubUserWhisperMessageEventData } from '@twurple/eventsub-base';
+import { get } from 'fireworkers';
 
-const TWITCH_MESSAGE_ID = 'Twitch-Eventsub-Message-Id'.toLowerCase();
-const TWITCH_MESSAGE_TIMESTAMP = 'Twitch-Eventsub-Message-Timestamp'.toLowerCase();
-const TWITCH_MESSAGE_SIGNATURE = 'Twitch-Eventsub-Message-Signature'.toLowerCase();
-
-const HMAC_PREFIX = 'sha256=';
-
-interface Whisper {
-    text: string;
+interface TokenData {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    obtainmentTimestamp: number;
 }
 
-interface WhisperEvent {
-    from_user_id: string;
-    from_user_name: string;
-    whisper: Whisper;
+function getUserTokenData(env: Env): TokenData {
+    const expiresIn = env.TWITCH_USER_EXPIRES_IN ? parseInt(env.TWITCH_USER_EXPIRES_IN) : 0;
+    const obtainmentTimestamp = env.TWITCH_USER_OBTAIN_TIMESTAMP ? parseInt(env.TWITCH_USER_OBTAIN_TIMESTAMP) : 0;
+
+    return {
+        accessToken: env.TWITCH_USER_AUTH,
+        refreshToken: env.TWITCH_REFRESH_TOKEN,
+        expiresIn: expiresIn,
+        obtainmentTimestamp: obtainmentTimestamp,
+    };
 }
 
-export interface TwitchNotification {
-    event: WhisperEvent;
-}
-
-function getHmacMessage(headers: Headers, body: string) {
-    return headers[TWITCH_MESSAGE_ID] + headers[TWITCH_MESSAGE_TIMESTAMP] + body;
-}
-
-function getHmac(secret, message) {
-    return crypto.createHmac('sha256', secret).update(message).digest('hex');
-}
-
-function verifyMessage(hmac, verifySignature) {
-    return crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(verifySignature));
-}
-
-export async function verifyTwitch(
-    twitchWebhookSecret: string,
-    headers: Headers,
-    requestBody: string,
-): Promise<boolean> {
-    const message = getHmacMessage(headers, requestBody);
-
-    if (message == null) {
-        return false;
-    }
-
-    const hmac = HMAC_PREFIX + getHmac(twitchWebhookSecret, message);
-    const messageSignature = headers.get(TWITCH_MESSAGE_SIGNATURE);
-
-    if (messageSignature == null) {
-        return false;
-    }
-
-    return verifyMessage(hmac, messageSignature);
-}
-
-export async function handleTwitchNotification(request: Request, body: string, env: Env): Promise<Response> {
-    console.log(`Processing Twitch notification with body: ${body}`);
-
-    const data: TwitchNotification = JSON.parse(body);
-    await handleWhisper(data.event, env);
-
-    return new Response('Notification received');
-}
-
-export async function handleTwitchVerification(body: string): Promise<Response> {
-    const bodyJson = JSON.parse(body);
-    const challenge = bodyJson['challenge'] as string;
-
-    return new Response(challenge, {
-        headers: {
-            'Content-Type': challenge.length.toString(),
-        },
-        status: 200,
-    });
-}
-
-export async function handleTwitchRevocation(): Promise<Response> {
-    console.warn('Handling revocation, but why tho?');
-
-    return new Response(null, { status: 204 });
-}
-
-async function handleWhisper(event: WhisperEvent, env: Env): Promise<Response> {
-    const text = event.whisper.text;
-    const user = event.from_user_name;
-    const userId = event.from_user_id;
-
-    console.log(`Received whisper from ${user} (${userId}): ${text}`);
-
-    switch (text) {
-        case '/opt_out':
-            await handleOptout(userId, env);
-            return new Response('Success');
-        case '/opt_in':
-            await handleOptin(userId, env);
-            return new Response('Success');
-        default:
-            await sendWhisper(userId, 'Thank you for checking out the Neuro Chat Elo Leaderboards! If you want to opt out send me /opt_out, and to opt back in send /opt_in', env);
-            return new Response('Success');
-    }
-}
-
-async function handleOptout(userId: string, env: Env) {
-    console.log(`Opting out ${userId}`);
-    const result = await addOptOut(userId, 'twitch', env);
-    try {
-        await sendWhisper(userId, 'You have been opted out of the leaderboards', env);
-    } catch (error) {
-        if (error instanceof TwitchAuthFailureError) {
-            await updateTwitchAndWhisper(userId, 'You have been opted out of the leaderboards', env);
-        } else {
-            throw error;
-        }
-    }
-}
-
-async function handleOptin(userId: string, env: Env) {
-    console.log(`Opting in ${userId}`);
-    const result = await removeOptOut(userId, 'twitch', env);
-    try {
-        await sendWhisper(userId, 'You have been opted back into the leaderboards', env);
-    } catch (error) {
-        if (error instanceof TwitchAuthFailureError) {
-            await updateTwitchAndWhisper(userId, 'You have been opted back into the leaderboards', env);
-        } else {
-            throw error;
-        }
-    }
-}
-
-async function sendWhisper(userId: string, text: string, env: Env) {
-    const url = `https://api.twitch.tv/helix/whispers?from_user_id=${env.TWITCH_BOT_ID}&to_user_id=${userId}&message=${encodeURIComponent(text)}`;
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Client-ID': env.TWITCH_CLIENT_ID,
-            Authorization: `Bearer ${env.TWITCH_USER_AUTH}`,
-        },
+export function getTwitchAuthProvider(env: Env): RefreshingAuthProvider {
+    let auth_provider = new RefreshingAuthProvider({
+        clientId: env.TWITCH_CLIENT_ID,
+        clientSecret: env.TWITCH_CLIENT_SECRET,
     });
 
-    if (response.status == 401 || response.status == 403) {
-        throw new TwitchAuthFailureError('Twith Whisper auth failed', await response.json());
-    } else if (!response.ok) {
-        throw new TwitchRequestFailureError('Could not send whisper', await response.json());
-    }
+    auth_provider.onRefresh(async (_userId: String, newTokenData: TokenData) => {
+        await updateSecret('TWITCH_USER_AUTH', newTokenData.accessToken, env);
+        await updateSecret('TWITCH_REFRESH_TOKEN', newTokenData.refreshToken, env);
+        await updateSecret('TWITCH_USER_EXPIRES_IN', newTokenData.expiresIn.toString(), env);
+        await updateSecret('TWITCH_USER_OBTAIN_TIMESTAMP', newTokenData.obtainmentTimestamp.toString(), env);
+    });
+
+    let tokenData = getUserTokenData(env);
+    auth_provider.addUser(env.TWITCH_BOT_ID, tokenData);
+
+    return auth_provider;
+}
+
+export function getTwitchEventSub(env: Env): EventSubBase {
+    let eventSub = new EventSubBase({
+        apiClient: new ApiClient({ authProvider: getTwitchAuthProvider(env) }),
+        hostName: env.CLOUDFLARE_WORKER_URL,
+        pathPrefix: '/twitch',
+        secret: env.TWITCH_WEBHOOK_SECRET,
+    });
+    eventSub.onUserWhisperMessage(env.TWITCH_BOT_ID, async (data: EventSubUserWhisperMessageEventData) => {
+        let command = data.whisper.text.split(' ')[0];
+        let args = data.whisper.text.split(' ').slice(1);
+        if (command === 'optout') {
+            await addOptOut(data.from_user_id, 'twitch', env);
+            // await message.reply('You have been opted out of the leaderboard.');
+        } else if (command === 'optin') {
+            await removeOptOut(data.from_user_id, 'twitch', env);
+            // await message.reply('You have been opted back into the leaderboard.');
+        } else {
+            throw new UnknownCommandError('Unknown command', 'Unknown command');
+        }
+    });
+    return eventSub;
 }
 
 /**
@@ -187,7 +107,7 @@ async function refreshTwitchToken(
     }
 }
 
-async function updateTwitchSecrets(env: Env) {
+async function updateTwitchSecrets(env: Env): Promise<{ accessToken: string; refreshToken: string }> {
     const { accessToken, refreshToken } = await refreshTwitchToken(
         env.TWITCH_CLIENT_ID,
         env.TWITCH_CLIENT_SECRET,
@@ -195,25 +115,5 @@ async function updateTwitchSecrets(env: Env) {
     );
     await updateSecret('TWITCH_USER_AUTH', accessToken, env);
     await updateSecret('TWITCH_REFRESH_TOKEN', refreshToken, env);
-}
-
-/**
- * Updates the Twitch user auth token and sends a whisper to the user before updating the secrets.
- * bot updateSecret calls can take a while to propagate, so we want to make sure the whisper is sent first.
- * @param userId - The user ID.
- * @param text - The whisper text.
- * @param env - The worker's environment variables.
- * @returns A promise that resolves when the whisper has been sent and the secrets have been updated.
- */
-async function updateTwitchAndWhisper(userId: string, text: string, env: Env) {
-    const { accessToken, refreshToken } = await refreshTwitchToken(
-        env.TWITCH_CLIENT_ID,
-        env.TWITCH_CLIENT_SECRET,
-        env.TWITCH_REFRESH_TOKEN,
-    );
-    env.TWITCH_USER_AUTH = accessToken;
-    env.TWITCH_REFRESH_TOKEN = refreshToken;
-    await sendWhisper(userId, text, env);
-    await updateSecret('TWITCH_USER_AUTH', accessToken, env);
-    await updateSecret('TWITCH_REFRESH_TOKEN', refreshToken, env);
+    return { accessToken, refreshToken };
 }
