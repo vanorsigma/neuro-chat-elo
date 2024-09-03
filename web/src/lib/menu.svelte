@@ -22,7 +22,7 @@
   };
 
   const communityDerivedMapping = {
-    adventureTheFarm: 9
+    adventureTheFarm: 10
   };
 
   export let itemClicked: (arg0: number) => void;
