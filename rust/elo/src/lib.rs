@@ -1,13 +1,15 @@
 use std::{
-    collections::HashMap,
-    sync::{atomic::AtomicU32, Arc},
+    collections::HashMap, sync::{atomic::AtomicU32, Arc}
 };
 
 use _types::clptypes::{Message, MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
 use log::{debug, warn};
 use metadata::setup_metadata_and_channels;
 use metrics::setup_metrics_and_channels;
-use tokio::sync::mpsc;
+use tokio::{
+    sync::{ mpsc, broadcast, oneshot }, 
+    task::JoinSet
+};
 use twitch_utils::{seventvclient::SevenTVClient, TwitchAPIWrapper};
 
 pub mod _constants;
@@ -21,11 +23,11 @@ pub mod metrics;
 /// Call .start() to spawn tasks and get a `MessageProcessorRunning` struct
 pub struct MessageProcessorSetup {
     metric_processor: metrics::MetricProcessor,
-    metric_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
-    metric_receiver: tokio::sync::mpsc::Receiver<MetricUpdate>,
+    metric_sender: broadcast::Sender<(Message, u32)>,
+    metric_receiver: mpsc::Receiver<MetricUpdate>,
     metadata_processor: metadata::MetadataProcessor,
-    metadata_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
-    metadata_receiver: tokio::sync::mpsc::Receiver<MetadataUpdate>,
+    metadata_sender: broadcast::Sender<(Message, u32)>,
+    metadata_receiver: mpsc::Receiver<MetadataUpdate>,
 }
 
 impl MessageProcessorSetup {
@@ -50,22 +52,29 @@ impl MessageProcessorSetup {
     }
 
     pub async fn start(mut self) -> MessageProcessorRunning {
-        let performances = user_chat_performance_processor(
+        let (performance_sender, performance_receiver) = oneshot::channel();
+
+        let performances = performance_processor(
             self.metric_processor.defaults.clone(),
             self.metric_receiver,
             self.metadata_processor.defaults.clone(),
             self.metadata_receiver,
+            performance_sender,
         );
 
+        debug!("Starting message processors");
+        let mut joins = JoinSet::new();
+        joins.spawn(async move { self.metric_processor.run().await });
+        joins.spawn(async move { self.metadata_processor.run().await });
+        joins.spawn(performances);
+
+        debug!("Constructing MessageProcessorRunning");
         MessageProcessorRunning {
-            metric_processor_task: tokio::task::spawn(async move { self.metric_processor.run().await }),
+            joins,
             metric_sender: self.metric_sender,
-            metadata_processor_task: tokio::task::spawn(
-                async move { self.metadata_processor.run().await },
-            ),
             metadata_sender: self.metadata_sender,
-            performances_task: tokio::task::spawn(performances),
-            sequence_number: AtomicU32::new(0),
+            performance_receiver,
+            sequence_number: AtomicU32::new(0)
         }
     }
 }
@@ -74,11 +83,10 @@ impl MessageProcessorSetup {
 /// 
 /// This struct should not be constructed on its own, it is created by calling `start` on a `MessageProcessorSetup`
 pub struct MessageProcessorRunning {
-    metric_processor_task: tokio::task::JoinHandle<()>,
+    joins: JoinSet<()>,
     metric_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
-    metadata_processor_task: tokio::task::JoinHandle<()>,
     metadata_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
-    performances_task: tokio::task::JoinHandle<HashMap<String, UserChatPerformance>>,
+    performance_receiver: tokio::sync::oneshot::Receiver<HashMap<String, UserChatPerformance>>,
     sequence_number: AtomicU32,
 }
 
@@ -98,19 +106,19 @@ impl MessageProcessorRunning {
         drop(self.metric_sender);
         drop(self.metadata_sender);
 
-        self.metadata_processor_task.await.unwrap();
-        self.metric_processor_task.await.unwrap();
+        self.joins.join_all().await;
 
-        self.performances_task.await.unwrap()
+        self.performance_receiver.await.expect("Received perfomances")
     }
 }
 
-pub async fn user_chat_performance_processor(
+pub async fn performance_processor(
     metric_defaults: HashMap<String, f32>,
     mut metric_receiver: mpsc::Receiver<MetricUpdate>,
     metadata_defaults: HashMap<String, MetadataTypes>,
     mut metadata_receiver: mpsc::Receiver<MetadataUpdate>,
-) -> HashMap<String, UserChatPerformance> {
+    performance_sender: oneshot::Sender<HashMap<String, UserChatPerformance>>,
+) {
     let mut user_performances: HashMap<String, UserChatPerformance> = HashMap::new();
     loop {
         tokio::select! {
@@ -145,7 +153,7 @@ pub async fn user_chat_performance_processor(
         }
     }
     debug!("Finished processing user performances");
-    user_performances
+    performance_sender.send(user_performances).unwrap();
 }
 
 /// Get a user performance or create a new one if it doesn't exist
