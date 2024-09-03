@@ -3,17 +3,12 @@ use std::collections::HashMap;
 
 use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate};
 use crate::metadata::metadatatrait::AbstractMetadata;
-use twitch_utils::TwitchAPIWrapper;
 
 /// Figures out if the user is a special role
 #[derive(Default, Debug)]
 pub struct BasicInfo;
 
 impl AbstractMetadata for BasicInfo {
-    async fn new(_twitch: &TwitchAPIWrapper) -> Self {
-        Self
-    }
-
     fn get_name(&self) -> String {
         "basic_info".to_string()
     }
@@ -57,5 +52,11 @@ impl AbstractMetadata for BasicInfo {
             },
             _ => MetadataUpdate::default(),
         }
+    }
+}
+
+impl BasicInfo {
+    pub fn new() -> Self {
+        Self
     }
 }

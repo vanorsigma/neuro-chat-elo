@@ -11,25 +11,18 @@ use twitch_utils::seventvclient::SevenTVClient;
 
 use crate::chatlogprocessor::ChatLogProcessor;
 use crate::twitchdownloaderproxy::TwitchChatDownloader;
-use crate::{adventuresdownloaderproxy, discorddownloaderproxy};
+use crate::{adventuresdownloaderproxy, discorddownloaderproxy, CHANNEL_ID};
 use twitch_utils::TwitchAPIWrapper;
-
-const CHANNEL_ID: &str = "1067638175478071307";
-const VIDEO_IDS: &[&str] = &[
-    "2236352117",
-    "2235486105",
-    "2234631158",
-    "2230251136",
-    "2229374664",
-    "2238030872",
-];
 
 pub async fn backfill() {
     let twitch = TwitchAPIWrapper::new().await.unwrap();
     let seventv_client = Arc::new(SevenTVClient::new().await);
+    let video_ids = twitch
+        .get_latest_vod_ids(elo::_constants::VED_CH_ID.to_string(), 5)
+        .await;
     let mut downloader = TwitchChatDownloader::new();
 
-    for video_id in VIDEO_IDS.iter() {
+    for video_id in video_ids.iter() {
         info!("Backfilling for video ID: {}", video_id);
         // let chat_log = downloader.download_chat(video_id).await.unwrap();
         let chat_log = downloader

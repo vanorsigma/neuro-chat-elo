@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
-use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate, MetricUpdate};
+use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate};
 use crate::metadata::metadatatrait::AbstractMetadata;
 use discord_utils::DiscordMessage;
 use twitch_utils::twitchtypes::Comment;
-use twitch_utils::TwitchAPIWrapper;
 
 const SPECIAL_ROLES_TWITCH: [&str; 3] = ["moderator", "vip", "broadcaster"];
 const SPECIAL_ROLES_DISCORD: [&str; 3] = ["Admin", "Moderator", "Twitch Mod"];
@@ -14,6 +13,10 @@ const SPECIAL_ROLES_DISCORD: [&str; 3] = ["Admin", "Moderator", "Twitch Mod"];
 pub struct SpecialRole;
 
 impl SpecialRole {
+    pub fn new() -> Self {
+        Self
+    }
+
     fn get_metadata_twitch(&self, comment: Comment) -> MetadataUpdate {
         let mut metadata: HashMap<String, MetadataTypes> = HashMap::new();
         let user_badges = comment.message.user_badges;
@@ -56,10 +59,6 @@ impl SpecialRole {
 }
 
 impl AbstractMetadata for SpecialRole {
-    async fn new(_twitch: &TwitchAPIWrapper) -> Self {
-        Self
-    }
-
     fn get_name(&self) -> String {
         "special_role".to_string()
     }

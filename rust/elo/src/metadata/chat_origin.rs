@@ -3,17 +3,12 @@ use std::collections::HashMap;
 
 use crate::_types::clptypes::{Message, MessageTag, MetadataTypes, MetadataUpdate};
 use crate::metadata::metadatatrait::AbstractMetadata;
-use twitch_utils::TwitchAPIWrapper;
 
 /// Figures out the association of a message to a chat origin
 #[derive(Default, Debug)]
 pub struct ChatOrigin;
 
 impl AbstractMetadata for ChatOrigin {
-    async fn new(_twitch: &TwitchAPIWrapper) -> Self {
-        Self
-    }
-
     fn get_name(&self) -> String {
         "chat_origin".to_string()
     }
@@ -37,5 +32,11 @@ impl AbstractMetadata for ChatOrigin {
                 MetadataTypes::ChatOrigin(MessageTag::from(&message)),
             )]),
         }
+    }
+}
+
+impl ChatOrigin {
+    pub fn new() -> Self {
+        Self
     }
 }
