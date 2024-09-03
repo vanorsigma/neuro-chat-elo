@@ -8,8 +8,10 @@ use futures::join;
 use log::debug;
 use log::warn;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc;
+use twitch_utils::seventvclient::SevenTVClient;
 
 use crate::_types::clptypes::Message;
 use crate::_types::clptypes::MetadataTypes;
@@ -30,16 +32,17 @@ pub struct MetadataProcessor {
 impl MetadataProcessor {
     pub async fn new(
         twitch: &TwitchAPIWrapper,
+        seventv_client: Arc<SevenTVClient>,
         broadcast_receiver: broadcast::Receiver<(Message, u32)>,
         mpsc_sender: mpsc::Sender<MetadataUpdate>,
     ) -> Self {
         let mut defaults: HashMap<String, MetadataTypes> = HashMap::new();
 
         // Initialize the metadata
-        let basic_info = basic_info::BasicInfo::new();
+        let basic_info = basic_info::BasicInfo::new(seventv_client.clone());
         let badges = badges::Badges::new(twitch).await;
         let special_role = special_role::SpecialRole::new();
-        let chat_origin = chat_origin::ChatOrigin::new();
+        let chat_origin = chat_origin::ChatOrigin::new(seventv_client);
 
         // Add names and default values to the metadata
         defaults.insert(basic_info.get_name(), basic_info.get_default_value());
@@ -101,10 +104,10 @@ async fn calc_metadata<M: AbstractMetadata + Send + Sync + 'static>(
     }
 }
 
-#[allow(clippy::type_complexity)]
 /// Get the default values for the metrics and set up the channels
 pub async fn setup_metadata_and_channels(
     twitch: &TwitchAPIWrapper,
+    seventv_client: Arc<SevenTVClient>,
 ) -> (
     MetadataProcessor,
     broadcast::Sender<(Message, u32)>,
@@ -112,6 +115,7 @@ pub async fn setup_metadata_and_channels(
 ) {
     let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);
     let (mpsc_sender, mpsc_receiver) = mpsc::channel(100000);
-    let metadata_processor = MetadataProcessor::new(twitch, broadcast_receiver, mpsc_sender).await;
+    let metadata_processor =
+        MetadataProcessor::new(twitch, seventv_client, broadcast_receiver, mpsc_sender).await;
     (metadata_processor, broadcast_sender, mpsc_receiver)
 }

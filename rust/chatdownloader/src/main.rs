@@ -61,7 +61,7 @@ async fn main() {
         .expect("Failed to download chat")
         .comments
         .into_iter()
-        .map(|c| Message::Twitch(c));
+        .map(Message::Twitch);
 
     let discord_messages = match env::var("CHAT_DISCORD_TOKEN") {
         Ok(token) => {
@@ -82,7 +82,7 @@ async fn main() {
         }
     }
     .into_iter()
-    .map(|m| Message::Discord(m));
+    .map(Message::Discord);
 
     let bilibili_messages = bilidownloaderproxy::BiliChatDownloader::new()
         .from_path(Path::new("./output_fixed_fixed.json"))

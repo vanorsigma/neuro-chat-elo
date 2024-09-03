@@ -1,10 +1,11 @@
 pub mod bits;
 pub mod copypastaleader;
 pub mod emote;
+pub mod emoteuse;
 pub mod metrictrait;
+pub mod score;
 pub mod subs;
 pub mod text;
-pub mod score;
 
 use futures::join;
 use log::debug;
@@ -28,7 +29,8 @@ pub struct MetricProcessor {
     text: text::Text,
     copypastaleader: copypastaleader::CopypastaLeader,
     emote: emote::Emote,
-    score: score::Score
+    score: score::Score,
+    emote_use: emoteuse::EmoteUse,
 }
 
 impl MetricProcessor {
@@ -45,8 +47,9 @@ impl MetricProcessor {
         let subs = subs::Subs::new();
         let text = text::Text::new();
         let copypastaleader = copypastaleader::CopypastaLeader::new();
-        let emote = emote::Emote::new(seventv_client);
+        let emote = emote::Emote::new(seventv_client.clone());
         let score = score::Score::new();
+        let emote_use = emoteuse::EmoteUse::new(seventv_client);
 
         defaults.insert(bits.get_name(), 0.0);
         defaults.insert(subs.get_name(), 0.0);
@@ -54,6 +57,7 @@ impl MetricProcessor {
         defaults.insert(copypastaleader.get_name(), 0.0);
         defaults.insert(emote.get_name(), 0.0);
         defaults.insert(score.get_name(), 0.0);
+        defaults.insert(emote_use.get_name(), 0.0);
 
         Self {
             defaults,
@@ -65,6 +69,7 @@ impl MetricProcessor {
             copypastaleader,
             emote,
             score,
+            emote_use,
         }
     }
 
@@ -97,6 +102,11 @@ impl MetricProcessor {
             ),
             calc_metric(
                 &mut self.score,
+                self.mpsc_sender.clone(),
+                self.broadcast_receiver.resubscribe(),
+            ),
+            calc_metric(
+                &mut self.emote_use,
                 self.mpsc_sender.clone(),
                 self.broadcast_receiver.resubscribe(),
             ),

@@ -3,7 +3,7 @@ use adventures_utils::AdventuresRankItemWithAvatar;
 use bili_utils::BiliChatMessage;
 use discord_utils::DiscordMessage;
 use std::collections::HashMap;
-use twitch_utils::twitchtypes::Comment;
+use twitch_utils::twitchtypes::{Comment, TwitchEmote};
 
 #[derive(Debug, Clone)]
 pub struct UserChatPerformance {
@@ -119,5 +119,6 @@ declare_messages!(
     (Twitch, Comment),
     (Discord, DiscordMessage),
     (Bilibili, BiliChatMessage),
-    (Adventures, AdventuresRankItemWithAvatar)
+    (Adventures, AdventuresRankItemWithAvatar),
+    (Emote, TwitchEmote)
 );

@@ -8,7 +8,7 @@ use log::{debug, warn};
 use metadata::setup_metadata_and_channels;
 use metrics::setup_metrics_and_channels;
 use tokio::sync::mpsc;
-use twitch_utils::seventvclient::SevenTVClient;
+use twitch_utils::{seventvclient::SevenTVClient, TwitchAPIWrapper};
 
 pub mod _constants;
 pub mod _types;
@@ -26,15 +26,12 @@ pub struct MessageProcessor {
 }
 
 impl MessageProcessor {
-    pub async fn new(
-        twitch: &twitch_utils::TwitchAPIWrapper,
-        seventv_client: Arc<SevenTVClient>,
-    ) -> Self {
+    pub async fn new(twitch: &TwitchAPIWrapper, seventv_client: Arc<SevenTVClient>) -> Self {
         let (mut metric_processor, metric_sender, metric_receiver) =
-            setup_metrics_and_channels(seventv_client).await;
+            setup_metrics_and_channels(seventv_client.clone()).await;
 
         let (mut metadata_processor, metadata_sender, metadata_receiver) =
-            setup_metadata_and_channels(twitch).await;
+            setup_metadata_and_channels(twitch, seventv_client).await;
 
         let performances = user_chat_performance_processor(
             metric_processor.defaults.clone(),

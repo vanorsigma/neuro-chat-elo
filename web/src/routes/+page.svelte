@@ -13,7 +13,8 @@
     discordRank,
     partnersRank,
     bilibiliRank,
-    adventureTheFarmRank
+    adventureTheFarmRank,
+    emoteRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
   import Menu from '$lib/menu.svelte';
@@ -34,6 +35,7 @@
     'Partners',
     '#livestream-chat',
     'bilibili',
+    'Top Emotes',
     'Neuro Adventures - The Farm'
   ];
   $: ranking = [
@@ -46,6 +48,7 @@
     $partnersRank,
     $discordRank,
     $bilibiliRank,
+    $emoteRank,
     $adventureTheFarmRank
   ];
 

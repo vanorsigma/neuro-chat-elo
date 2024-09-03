@@ -9,7 +9,8 @@
     Copypasta: 3,
     Bits: 4,
     Subs: 5,
-    'Partner Only': 6
+    'Partner Only': 6,
+    'Top Emotes': 9
   };
 
   const discordMenuItemMapping = {
