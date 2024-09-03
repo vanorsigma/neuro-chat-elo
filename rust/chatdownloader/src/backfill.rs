@@ -52,7 +52,7 @@ pub async fn backfill() {
             }
         }
         .into_iter()
-        .map(|m| Message::Discord(m));
+        .map(Message::Discord);
 
         let user_performances = ChatLogProcessor::new(&twitch, seventv_client.clone())
             .await
