@@ -16,42 +16,73 @@ pub mod leaderboards;
 pub mod metadata;
 pub mod metrics;
 
-pub struct MessageProcessor {
-    metric_processor_task: tokio::task::JoinHandle<()>,
+/// Struct to setup the spawn metric and metadata processors
+/// 
+/// Call .start() to spawn tasks and get a `MessageProcessorRunning` struct
+pub struct MessageProcessorSetup {
+    metric_processor: metrics::MetricProcessor,
     metric_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
-    metadata_processor_task: tokio::task::JoinHandle<()>,
+    metric_receiver: tokio::sync::mpsc::Receiver<MetricUpdate>,
+    metadata_processor: metadata::MetadataProcessor,
     metadata_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
-    sequence_number: AtomicU32,
-    performances_task: tokio::task::JoinHandle<HashMap<String, UserChatPerformance>>,
+    metadata_receiver: tokio::sync::mpsc::Receiver<MetadataUpdate>,
 }
 
-impl MessageProcessor {
-    pub async fn new(twitch: &TwitchAPIWrapper, seventv_client: Arc<SevenTVClient>) -> Self {
-        let (mut metric_processor, metric_sender, metric_receiver) =
-            setup_metrics_and_channels(seventv_client.clone()).await;
+impl MessageProcessorSetup {
+    pub async fn new(
+        twitch: &TwitchAPIWrapper,
+        seventv_client: Arc<SevenTVClient>,
+    ) -> Self {
+        let (metric_processor, metric_sender, metric_receiver) =
+            setup_metrics_and_channels(seventv_client.clone());
 
-        let (mut metadata_processor, metadata_sender, metadata_receiver) =
+        let (metadata_processor, metadata_sender, metadata_receiver) =
             setup_metadata_and_channels(twitch, seventv_client).await;
 
-        let performances = user_chat_performance_processor(
-            metric_processor.defaults.clone(),
+            MessageProcessorSetup {
+            metric_processor,
+            metric_sender,
             metric_receiver,
-            metadata_processor.defaults.clone(),
+            metadata_processor,
+            metadata_sender,
             metadata_receiver,
+        }
+    }
+
+    pub async fn start(mut self) -> MessageProcessorRunning {
+        let performances = user_chat_performance_processor(
+            self.metric_processor.defaults.clone(),
+            self.metric_receiver,
+            self.metadata_processor.defaults.clone(),
+            self.metadata_receiver,
         );
 
-        Self {
-            metric_processor_task: tokio::task::spawn(async move { metric_processor.run().await }),
-            metric_sender,
+        MessageProcessorRunning {
+            metric_processor_task: tokio::task::spawn(async move { self.metric_processor.run().await }),
+            metric_sender: self.metric_sender,
             metadata_processor_task: tokio::task::spawn(
-                async move { metadata_processor.run().await },
+                async move { self.metadata_processor.run().await },
             ),
-            metadata_sender,
+            metadata_sender: self.metadata_sender,
             performances_task: tokio::task::spawn(performances),
             sequence_number: AtomicU32::new(0),
         }
     }
+}
 
+/// A running message processor that can process messages
+/// 
+/// This struct should not be constructed on its own, it is created by calling `start` on a `MessageProcessorSetup`
+pub struct MessageProcessorRunning {
+    metric_processor_task: tokio::task::JoinHandle<()>,
+    metric_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
+    metadata_processor_task: tokio::task::JoinHandle<()>,
+    metadata_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
+    performances_task: tokio::task::JoinHandle<HashMap<String, UserChatPerformance>>,
+    sequence_number: AtomicU32,
+}
+
+impl MessageProcessorRunning {
     pub async fn process_message(&self, message: Message) {
         let sequence_number = self
             .sequence_number
