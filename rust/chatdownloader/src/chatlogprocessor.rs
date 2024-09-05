@@ -1,4 +1,4 @@
-use elo::MessageProcessor;
+use elo::{MessageProcessorSetup, MessageProcessorRunning};
 use elo::_types::clptypes::{Message, UserChatPerformance};
 use elo::leaderboards::LeaderboardProcessor;
 use log::{debug, info};
@@ -19,12 +19,15 @@ pub struct ChatLogProcessor {
     and the leaderboards package to export the metrics / required user
     metadata to the right people
     */
-    message_processor: MessageProcessor,
+    message_processor: MessageProcessorRunning,
 }
 
 impl ChatLogProcessor {
     pub async fn new(twitch: &TwitchAPIWrapper, seventv_client: Arc<SevenTVClient>) -> Self {
-        let message_processor = MessageProcessor::new(twitch, seventv_client).await;
+        let message_processor = MessageProcessorSetup::new(twitch, seventv_client)
+            .await
+            .start()
+            .await;
 
         Self { message_processor }
     }
