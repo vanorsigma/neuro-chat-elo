@@ -18,7 +18,7 @@ pub mod leaderboards;
 pub mod metadata;
 pub mod metrics;
 
-/// Struct to setup the spawn metric and metadata processors
+/// Struct to setup a MessageProcessorRunning and spawn metric/metadata processors
 /// 
 /// Call .start() to spawn tasks and get a `MessageProcessorRunning` struct
 pub struct MessageProcessorSetup {
@@ -62,7 +62,6 @@ impl MessageProcessorSetup {
             performance_sender,
         );
 
-        debug!("Starting message processors");
         let mut joins = JoinSet::new();
         joins.spawn(async move { self.metric_processor.run().await });
         joins.spawn(async move { self.metadata_processor.run().await });
@@ -80,8 +79,6 @@ impl MessageProcessorSetup {
 }
 
 /// A running message processor that can process messages
-/// 
-/// This struct should not be constructed on its own, it is created by calling `start` on a `MessageProcessorSetup`
 pub struct MessageProcessorRunning {
     joins: JoinSet<()>,
     metric_sender: tokio::sync::broadcast::Sender<(Message, u32)>,
