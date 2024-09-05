@@ -1,22 +1,16 @@
 // TODO: Add proper error handling
-import { addOptOut, removeOptOut } from './firebase';
-import { updateSecret } from './cloudflareHelpers';
-import { TwitchAuthFailureError, TwitchRequestFailureError, UnknownCommandError } from './errors';
+import { addOptOut, removeOptOut } from '../firebase';
+import { updateSecret } from '../cloudflareHelpers';
+import { TwitchAuthFailureError, TwitchRequestFailureError, UnknownCommandError } from '../errors';
 import crypto from 'node:crypto';
 import Buffer from 'node:buffer';
-import { RefreshingAuthProvider } from '@twurple/auth';
-import { ApiClient } from '@twurple/api';
-import { EventSubBase, EventSubUserWhisperMessageEventData } from '@twurple/eventsub-base';
+import { AccessToken, RefreshingAuthProvider } from './twurple/packages/auth/lib';
+import { ApiClient } from './twurple/packages/api/lib';
+import { EventSubBase, EventSubUserWhisperMessageEvent } from './twurple/packages/eventsub-base/lib';
+import { EventSubMiddleware, EventSubMiddlewareConfig } from './twurple/packages/eventsub-http/lib';
 import { get } from 'fireworkers';
 
-interface TokenData {
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-    obtainmentTimestamp: number;
-}
-
-function getUserTokenData(env: Env): TokenData {
+function getUserTokenData(env: Env): AccessToken {
     const expiresIn = env.TWITCH_USER_EXPIRES_IN ? parseInt(env.TWITCH_USER_EXPIRES_IN) : 0;
     const obtainmentTimestamp = env.TWITCH_USER_OBTAIN_TIMESTAMP ? parseInt(env.TWITCH_USER_OBTAIN_TIMESTAMP) : 0;
 
@@ -25,6 +19,7 @@ function getUserTokenData(env: Env): TokenData {
         refreshToken: env.TWITCH_REFRESH_TOKEN,
         expiresIn: expiresIn,
         obtainmentTimestamp: obtainmentTimestamp,
+        scope: [],
     };
 }
 
@@ -34,10 +29,10 @@ export function getTwitchAuthProvider(env: Env): RefreshingAuthProvider {
         clientSecret: env.TWITCH_CLIENT_SECRET,
     });
 
-    auth_provider.onRefresh(async (_userId: String, newTokenData: TokenData) => {
+    auth_provider.onRefresh(async (_userId: String, newTokenData: AccessToken) => {
         await updateSecret('TWITCH_USER_AUTH', newTokenData.accessToken, env);
-        await updateSecret('TWITCH_REFRESH_TOKEN', newTokenData.refreshToken, env);
-        await updateSecret('TWITCH_USER_EXPIRES_IN', newTokenData.expiresIn.toString(), env);
+        await updateSecret('TWITCH_REFRESH_TOKEN', newTokenData.refreshToken ?? '', env);
+        await updateSecret('TWITCH_USER_EXPIRES_IN', newTokenData.expiresIn?.toString() ?? '', env);
         await updateSecret('TWITCH_USER_OBTAIN_TIMESTAMP', newTokenData.obtainmentTimestamp.toString(), env);
     });
 
@@ -47,21 +42,23 @@ export function getTwitchAuthProvider(env: Env): RefreshingAuthProvider {
     return auth_provider;
 }
 
-export function getTwitchEventSub(env: Env): EventSubBase {
-    let eventSub = new EventSubBase({
-        apiClient: new ApiClient({ authProvider: getTwitchAuthProvider(env) }),
+export function getTwitchEventSub(env: Env): EventSubMiddleware {
+    let authProvider = getTwitchAuthProvider(env);
+    let apiClient = new ApiClient({ authProvider });
+    let eventSub = new EventSubMiddleware({
+        apiClient,
         hostName: env.CLOUDFLARE_WORKER_URL,
         pathPrefix: '/twitch',
         secret: env.TWITCH_WEBHOOK_SECRET,
     });
-    eventSub.onUserWhisperMessage(env.TWITCH_BOT_ID, async (data: EventSubUserWhisperMessageEventData) => {
-        let command = data.whisper.text.split(' ')[0];
-        let args = data.whisper.text.split(' ').slice(1);
+    eventSub.onUserWhisperMessage(env.TWITCH_BOT_ID, async (data: EventSubUserWhisperMessageEvent) => {
+        let command = data.messageText.split(' ')[0];
+        let args = data.messageText.split(' ').slice(1);
         if (command === 'optout') {
-            await addOptOut(data.from_user_id, 'twitch', env);
+            await addOptOut(data.senderUserId, 'twitch', env);
             // await message.reply('You have been opted out of the leaderboard.');
         } else if (command === 'optin') {
-            await removeOptOut(data.from_user_id, 'twitch', env);
+            await removeOptOut(data.senderUserId, 'twitch', env);
             // await message.reply('You have been opted back into the leaderboard.');
         } else {
             throw new UnknownCommandError('Unknown command', 'Unknown command');

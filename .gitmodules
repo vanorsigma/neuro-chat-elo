@@ -1,0 +1,4 @@
+[submodule "optout/optout-worker/src/twitch/twurple"]
+	path = optout/optout-worker/src/twitch/twurple
+	url = https://github.com/StimulCross/twurple/
+	branch = feat/eventsub-whisper-messages

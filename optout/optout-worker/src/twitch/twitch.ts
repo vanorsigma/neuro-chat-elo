@@ -1,7 +1,7 @@
 // TODO: Add proper error handling
-import { addOptOut, removeOptOut } from './firebase';
-import { updateSecret } from './cloudflareHelpers';
-import { TwitchAuthFailureError, TwitchRequestFailureError, UnknownCommandError } from './errors';
+import { addOptOut, removeOptOut } from '../firebase';
+import { updateSecret } from '../cloudflareHelpers';
+import { TwitchAuthFailureError, TwitchRequestFailureError, UnknownCommandError } from '../errors';
 import crypto from 'node:crypto';
 import Buffer from 'node:buffer';
 

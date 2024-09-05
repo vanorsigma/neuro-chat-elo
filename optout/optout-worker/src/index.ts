@@ -1,18 +1,36 @@
-import { verifyTwitch, handleTwitchNotification, handleTwitchRevocation, handleTwitchVerification } from './twitch';
+import {
+    verifyTwitch,
+    handleTwitchNotification,
+    handleTwitchRevocation,
+    handleTwitchVerification,
+} from './twitch/twitch';
 import { InvalidSignatureError } from './errors';
-import { AutoRouter } from 'itty-router' // ~1kB
+import { AutoRouter } from 'itty-router'; // ~1kB
+import { RefreshingAuthProvider } from './twitch/twurple/packages/auth/src';
+import { ApiClient } from './twitch/twurple/packages/api/src';
+import { EventSubBase, EventSubUserWhisperMessageEvent } from './twitch/twurple/packages/eventsub-base/src';
+import { get } from 'fireworkers';
+import { getTwitchEventSub } from './twitch/twitchV2';
 
-const router = AutoRouter()
+const router = AutoRouter();
 
 router.get('/discord', async (request: Request<unknown, IncomingRequestCfProperties>, env: Env) => {
-    return new Response('Hello Discord!')
-})
+    console.log(EventSubUserWhisperMessageEvent);
+    return new Response('Hello Discord!');
+});
 
 router.get('/twitch', async (request: Request<unknown, IncomingRequestCfProperties>, env: Env) => {
-    return await preHandleTwitch(request, env)
-})
+    let eventSub = getTwitchEventSub(env);
+    eventSub.apply(router as any);
+    return await preHandleTwitch(request, env);
+});
 
-export default router
+router.get('/test', async (request: Request<unknown, IncomingRequestCfProperties>, env: Env) => {
+    console.log(EventSubUserWhisperMessageEvent);
+    return new Response('Hello test!');
+});
+
+export default router;
 
 // const handler = {
 //     async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
