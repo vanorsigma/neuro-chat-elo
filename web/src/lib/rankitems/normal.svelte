@@ -22,7 +22,7 @@
 </script>
 
 <svg
-  class="w-[80%] md:w-auto my-[-2vh] md:my-0"
+  class="w-[80%] h-full md:w-auto"
   xmlns="http://www.w3.org/2000/svg"
   xmlns:xlink="http://www.w3.org/1999/xlink"
   version="1.1"

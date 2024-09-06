@@ -21,7 +21,7 @@
 </script>
 
 <svg
-  class="w-[90%] md:w-auto my-[-3vh] md:my-0"
+  class="w-[90%] h-full md:w-auto"
   xmlns="http://www.w3.org/2000/svg"
   xmlns:xlink="http://www.w3.org/1999/xlink"
   version="1.1"
