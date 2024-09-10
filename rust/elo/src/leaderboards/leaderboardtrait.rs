@@ -148,7 +148,7 @@ pub trait AbstractLeaderboard {
                     .or_insert(LeaderboardInnerState {
                         id: performance.id,
                         username: performance.username,
-                        avatar: performance.avatar,
+                        avatar: performance.avatar.clone(),
                         badges: None,
                         previous_rank: None,
                         elo: STARTING_ELO,
@@ -162,6 +162,7 @@ pub trait AbstractLeaderboard {
                 .unwrap_or_default();
 
             entry.score = score;
+            entry.avatar = performance.avatar;
             entry.badges = Some(badges);
         }
     }
