@@ -25,6 +25,10 @@
     adventureTheFarm: 10
   };
 
+  const specialEventsMapping = {
+    'Ironmouse Canvas': 11
+  };
+
   export let itemClicked: (arg0: number) => void;
   export let selectedPage: number;
 
@@ -42,7 +46,7 @@
 
 <div
   transition:fly={{ x: -100 }}
-  class="text-center absolute top-0 left-0 py-10 h-full w-6/12 md:w-72 bg-chat z-40"
+  class="text-center absolute top-0 left-0 py-10 h-full w-6/12 md:w-72 bg-chat z-40 overflow-y-scroll"
 >
   <p class="text-4xl">Menu</p>
   <br />
@@ -79,6 +83,16 @@
   <br />
   <p class="text-xl">Community Derived Mapping</p>
   {#each Object.entries(communityDerivedMapping) as menuItem}
+    <MenuItem
+      text={menuItem[0]}
+      onClick={() => onMenuItemClick(menuItem[1])}
+      selected={selectedPage == menuItem[1]}
+    />
+  {/each}
+
+  <br />
+  <p class="text-xl">Special Events</p>
+  {#each Object.entries(specialEventsMapping) as menuItem}
     <MenuItem
       text={menuItem[0]}
       onClick={() => onMenuItemClick(menuItem[1])}

@@ -2,6 +2,7 @@ use crate::_types::leaderboardtypes::BadgeInformation;
 use adventures_utils::AdventuresRankItemWithAvatar;
 use bili_utils::BiliChatMessage;
 use discord_utils::DiscordMessage;
+use pxls_utils::{PxlsUser, IronmousePxlsUser};
 use std::collections::HashMap;
 use twitch_utils::twitchtypes::{Comment, TwitchEmote};
 
@@ -120,5 +121,7 @@ declare_messages!(
     (Discord, DiscordMessage),
     (Bilibili, BiliChatMessage),
     (Adventures, AdventuresRankItemWithAvatar),
-    (Emote, TwitchEmote)
+    (Emote, TwitchEmote),
+    (Pxls, PxlsUser),
+    (IronmousePixels, IronmousePxlsUser)
 );

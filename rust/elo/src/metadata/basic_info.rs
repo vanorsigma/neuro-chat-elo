@@ -43,7 +43,26 @@ impl AbstractMetadata for BasicInfo {
                 updates: HashMap::from([(
                     rank.uid,
                     MetadataTypes::BasicInfo(rank.user, rank.avatar),
-                )])
+                )]),
+            },
+            Message::Pxls(user) => MetadataUpdate {
+                metadata_name: self.get_name(),
+                updates: HashMap::from([(
+                    "DISCORD-".to_string() + user.discord_tag
+                        .as_ref()
+                        .unwrap_or(&"!@#$%(&)DISCORD".to_string()), // scuffed ignore string
+                    MetadataTypes::BasicInfo(
+                        user.discord_tag.unwrap_or("".to_string()),
+                        "".to_string(),
+                    ),
+                )]),
+            },
+            Message::IronmousePixels(user) => MetadataUpdate {
+                metadata_name: self.get_name(),
+                updates: HashMap::from([(
+                    "TWITCH-".to_string() + &user.pxls_username,
+                    MetadataTypes::BasicInfo(user.pxls_username, "".to_string()),
+                )]),
             },
             _ => MetadataUpdate::default(),
         }
@@ -52,23 +71,17 @@ impl AbstractMetadata for BasicInfo {
 
 impl BasicInfo {
     pub fn new(seventv_client: Arc<SevenTVClient>) -> Self {
-        Self {
-            seventv_client,
-        }
+        Self { seventv_client }
     }
 
     fn process_twitch(&self, comment: twitch_utils::twitchtypes::Comment) -> MetadataUpdate {
         MetadataUpdate {
             metadata_name: self.get_name(),
-            updates: self.seventv_client
+            updates: self
+                .seventv_client
                 .get_emotes_in_comment(&comment)
                 .into_iter()
-                .map(|emote| {
-                    (
-                        emote.id,
-                        MetadataTypes::BasicInfo(emote.name, emote.url),
-                    )
-                })
+                .map(|emote| (emote.id, MetadataTypes::BasicInfo(emote.name, emote.url)))
                 .chain(std::iter::once((
                     comment.commenter._id,
                     MetadataTypes::BasicInfo(

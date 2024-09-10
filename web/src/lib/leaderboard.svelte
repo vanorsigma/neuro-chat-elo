@@ -4,7 +4,7 @@
   import RankItem from './rankitem.svelte';
 
   import { onMount, afterUpdate } from 'svelte';
-  import type { RankingInfo } from './ranks';
+  import { type RankingInfo, ironmousePixelRank } from './ranks';
 
   export let currentData: RankingInfo[];
   export let isActive: boolean;
@@ -93,6 +93,9 @@
       intersectionObserver.disconnect();
     };
   });
+
+  /* Special Events */
+  $: specialIronmouseLookup = new Set($ironmousePixelRank.map((rank: RankingInfo) => rank.id));
 </script>
 
 <div bind:this={containerElement} class="relative w-full md:h-60 grow md:h-full overflow-y-scroll">
@@ -105,6 +108,7 @@
         delta={rank.delta}
         avatarUrl={rank.avatar}
         badges={rank.badges == null ? [] : rank.badges}
+        special_ironmouse={specialIronmouseLookup.has(rank.username)}
       />
     {/each}
     <div class="h-1" bind:this={endMarker} />

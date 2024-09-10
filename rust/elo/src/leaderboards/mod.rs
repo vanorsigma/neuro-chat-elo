@@ -10,10 +10,12 @@ mod partnersonly;
 mod subsonly;
 mod adventures_farm;
 mod topemote;
+mod casual_pxls;
+mod ironmouse_pxls;
 
 use futures::join;
 
-use log::{error, info};
+use log::error;
 use tokio::sync::broadcast;
 
 use crate::{
@@ -49,6 +51,8 @@ pub struct LeaderboardProcessor {
     partnersonly: partnersonly::PartnersOnly,
     bilibililivestreamchat: bilibililivestreamchat::BilibiliLivestreamChat,
     adventures_farm: adventures_farm::AdventuresFarm,
+    casual_pxls: casual_pxls::CasualPxls,
+    ironmouse_pxls: ironmouse_pxls::IronmousePxls
 }
 
 impl LeaderboardProcessor {
@@ -64,6 +68,8 @@ impl LeaderboardProcessor {
         let partnersonly = partnersonly::PartnersOnly::new();
         let bilibililivestreamchat = bilibililivestreamchat::BilibiliLivestreamChat::new();
         let adventures_farm = adventures_farm::AdventuresFarm::new();
+        let casual_pxls = casual_pxls::CasualPxls::new();
+        let ironmouse_pxls = ironmouse_pxls::IronmousePxls::new();
 
         Self {
             bitsonly,
@@ -76,7 +82,9 @@ impl LeaderboardProcessor {
             discordlivestreamchat,
             partnersonly,
             bilibililivestreamchat,
-            adventures_farm
+            adventures_farm,
+            casual_pxls,
+            ironmouse_pxls
         }
     }
 
@@ -104,7 +112,15 @@ impl LeaderboardProcessor {
             calc_leaderboard(
                 &mut self.adventures_farm,
                 broadcast_reciever.resubscribe()
-            )
+            ),
+            calc_leaderboard(
+                &mut self.casual_pxls,
+                broadcast_reciever.resubscribe()
+            ),
+            calc_leaderboard(
+                &mut self.ironmouse_pxls,
+                broadcast_reciever.resubscribe()
+            ),
         );
     }
 }

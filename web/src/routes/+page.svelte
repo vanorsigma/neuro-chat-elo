@@ -14,7 +14,8 @@
     partnersRank,
     bilibiliRank,
     adventureTheFarmRank,
-    emoteRank
+    emoteRank,
+    ironmousePixelRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
   import Menu from '$lib/menu.svelte';
@@ -36,7 +37,8 @@
     '#livestream-chat',
     'bilibili',
     'Top Emotes',
-    'Neuro Adventures - The Farm'
+    'Neuro Adventures - The Farm',
+    'Ironmouse Subathon Canvas'
   ];
   $: ranking = [
     $overallRank,
@@ -49,7 +51,8 @@
     $discordRank,
     $bilibiliRank,
     $emoteRank,
-    $adventureTheFarmRank
+    $adventureTheFarmRank,
+    $ironmousePixelRank
   ];
 
   $: allRanksLoaded = ranking.every((r) => r.length > 0);
@@ -102,6 +105,13 @@
 
 <svg width="0" height="0">
   <defs>
+    <!-- Ironmouse color -->
+    <linearGradient x1="0%" y1="0%" x2="100%" y2="0%" id="mx-gradient-ff33ff-1-660066-1-e-0">
+      <stop offset="0%" style="stop-color: rgb(255, 51, 255); stop-opacity: 1;" />
+      <stop offset="100%" style="stop-color: rgb(102, 0, 102); stop-opacity: 1;" />
+    </linearGradient>
+    <!-- End of Ironmouse color -->
+
     <linearGradient x1="0%" y1="0%" x2="100%" y2="0%" id="mx-gradient-ffd700-1-ffb570-1-e-0">
       <stop offset="0%" style="stop-color: rgb(255, 215, 0); stop-opacity: 1;" />
       <stop offset="100%" style="stop-color: rgb(255, 181, 112); stop-opacity: 1;" />

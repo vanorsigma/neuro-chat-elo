@@ -55,6 +55,17 @@ async fn main() {
         .cloned()
         .map(|item| Message::Adventures(item));
 
+    let pxls_casual = pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls.json")
+        .expect("should have pxls json")
+        .into_iter()
+        .map(Message::Pxls);
+
+    let pxls_ironmouse =
+        pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls_ironmouse.json")
+            .expect("should have ironmouse pxls json")
+            .into_iter()
+            .map(Message::IronmousePixels);
+
     let chat_log = downloader
         .download_chat(&vod_id)
         .await
@@ -98,7 +109,9 @@ async fn main() {
             chat_log
                 .chain(discord_messages)
                 .chain(bilibili_messages)
-                .chain(adventures_farm),
+                .chain(adventures_farm)
+                .chain(pxls_casual)
+                .chain(pxls_ironmouse),
         )
         .await;
     chatlogprocessor::ChatLogProcessor::export_to_leaderboards(user_performances).await;

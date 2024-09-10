@@ -7,6 +7,9 @@ use crate::metadata::metadatatrait::AbstractMetadata;
 use twitch_utils::seventvclient::SevenTVClient;
 use twitch_utils::twitchtypes::Comment;
 
+const CASUAL_NEURO_FACTION: u64 = 3680;
+const IRONMOUSE_NEURO_FACTION: u64 = 1;
+
 /// Figures out the association of a message to a chat origin
 pub struct ChatOrigin {
     seventv_client: Arc<SevenTVClient>,
@@ -36,8 +39,28 @@ impl AbstractMetadata for ChatOrigin {
                 )]),
                 Message::Adventures(rank) => HashMap::from([(
                     rank.uid.to_string(),
-                    MetadataTypes::ChatOrigin(MessageTag::from(&message))
+                    MetadataTypes::ChatOrigin(MessageTag::from(&message)),
                 )]),
+                Message::Pxls(user) => {
+                    if let Some(CASUAL_NEURO_FACTION) = user.faction {
+                        HashMap::from([(
+                            "DISCORD-".to_string() + &user.pxls_username,
+                            MetadataTypes::ChatOrigin(MessageTag::from(&message)),
+                        )])
+                    } else {
+                        HashMap::new()
+                    }
+                }
+                Message::IronmousePixels(user) => {
+                    if let Some(IRONMOUSE_NEURO_FACTION) = user.faction {
+                        HashMap::from([(
+                            "TWITCH-".to_string() + &user.pxls_username,
+                            MetadataTypes::ChatOrigin(MessageTag::from(&message)),
+                        )])
+                    } else {
+                        HashMap::new()
+                    }
+                }
                 _ => HashMap::new(),
             },
         }
@@ -46,9 +69,7 @@ impl AbstractMetadata for ChatOrigin {
 
 impl ChatOrigin {
     pub fn new(seventv_client: Arc<SevenTVClient>) -> Self {
-        Self {
-            seventv_client,
-        }
+        Self { seventv_client }
     }
 
     pub fn process_twitch(
