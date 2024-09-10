@@ -30,6 +30,6 @@ pub fn export_item_to_inner_state(item: LeaderboardExportItem) -> LeaderboardInn
         badges: Some(item.badges),
         previous_rank: Some(item.rank),
         elo: item.elo,
-        score: 1200.0,
+        score: 0.0,
     }
 }
