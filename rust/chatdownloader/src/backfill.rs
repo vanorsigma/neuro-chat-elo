@@ -5,6 +5,7 @@ A function to backfill given video IDs
 use std::env;
 use std::sync::Arc;
 
+use discord_utils::DiscordClient;
 use elo::_types::clptypes::Message;
 use log::info;
 use twitch_utils::seventvclient::SevenTVClient;
@@ -15,6 +16,12 @@ use crate::{adventuresdownloaderproxy, discorddownloaderproxy, CHANNEL_ID};
 use twitch_utils::TwitchAPIWrapper;
 
 pub async fn backfill() {
+    let discord_token = env::var("CHAT_DISCORD_TOKEN")
+        .inspect_err(|err| {
+            log::warn!("No Discord token. continuing");
+        })
+        .unwrap_or("".to_string());
+    let discord = Arc::new(DiscordClient::new(discord_token.to_string()));
     let twitch = Arc::new(TwitchAPIWrapper::new().await.unwrap());
     let seventv_client = Arc::new(SevenTVClient::new().await);
     let video_ids = twitch
@@ -33,45 +40,47 @@ pub async fn backfill() {
             .comments;
 
         for comment in &chat_log {
-            twitch.set_user_from_username(
-                comment.commenter.name.clone(),
-                comment.commenter.clone(),
-            ).await;
+            twitch
+                .set_user_from_username(comment.commenter.name.clone(), comment.commenter.clone())
+                .await;
         }
 
         let chat_log = chat_log.into_iter().map(Message::Twitch);
 
-        // let discord_messages = match env::var("CHAT_DISCORD_TOKEN") {
-        //     Ok(token) => {
-        //         let (start_time, end_time) = twitch.get_vod_times(video_id.to_string()).await;
-        //         discorddownloaderproxy::DiscordChatDownloader::new()
-        //             .download_chat(
-        //                 start_time.into(),
-        //                 end_time.into(),
-        //                 CHANNEL_ID,
-        //                 token.as_str(),
-        //             )
-        //             .await
-        //             .expect("Failed to download Discord chat")
-        //             .messages
-        //     }
-        //     _ => {
-        //         vec![]
-        //     }
-        // }
-        // .into_iter()
-        // .map(Message::Discord);
+        let discord_messages = futures::future::join_all(
+            match discord_token.as_str() {
+                "" => {
+                    vec![]
+                }
+                token => {
+                    let (start_time, end_time) = twitch.get_vod_times(video_id.to_string()).await;
+                    discorddownloaderproxy::DiscordChatDownloader::new()
+                        .download_chat(start_time.into(), end_time.into(), CHANNEL_ID, token)
+                        .await
+                        .expect("Failed to download Discord chat")
+                        .messages
+                }
+            }
+            .into_iter()
+            .map(|message| async {
+                discord.set_username_author(message.author.clone()).await;
+                message
+            })
+            .map(|message_async| async { Message::Discord(message_async.await) }),
+        )
+        .await;
 
-        let user_performances = ChatLogProcessor::new(twitch.clone(), seventv_client.clone())
-            .await
-            .process_from_messages(chat_log)
-            // .process_from_messages(chat_log.chain(discord_messages))
-            .await;
+        let user_performances =
+            ChatLogProcessor::new(twitch.clone(), seventv_client.clone(), discord.clone())
+                .await
+                // .process_from_messages(chat_log)
+                .process_from_messages(chat_log.chain(discord_messages))
+                .await;
 
         ChatLogProcessor::export_to_leaderboards(user_performances).await;
     }
 
-    let clp = ChatLogProcessor::new(twitch, seventv_client.clone()).await;
+    let clp = ChatLogProcessor::new(twitch, seventv_client.clone(), discord).await;
 
     // if let Ok(token) = std::env::var("CHAT_DISCORD_TOKEN") {
     //     let adventure_ranks = adventuresdownloaderproxy::AdventuresDownloaderProxy::new(token)
@@ -89,25 +98,25 @@ pub async fn backfill() {
     //     );
     // }
 
-    // if std::fs::exists("pxls.json").unwrap_or(false) {
-    //     info!("Found pxls.json, will export pxls leaderboard");
-    //     additional_messages.extend(
-    //         pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls.json")
-    //             .expect("should have pxls json")
-    //             .into_iter()
-    //             .map(Message::Pxls),
-    //     );
-    // }
-
-    if std::fs::exists("pxls_ironmouse.json").unwrap_or(false) {
-        info!("Found pxls_ironmouse.json, will export pxls leaderboard");
+    if std::fs::exists("pxls.json").unwrap_or(false) {
+        info!("Found pxls.json, will export pxls leaderboard");
         additional_messages.extend(
-            pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls_ironmouse.json")
-                .expect("should have ironmouse pxls json")
+            pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls.json")
+                .expect("should have pxls json")
                 .into_iter()
-                .map(Message::IronmousePixels),
+                .map(Message::Pxls),
         );
     }
+
+    // if std::fs::exists("pxls_ironmouse.json").unwrap_or(false) {
+    //     info!("Found pxls_ironmouse.json, will export pxls leaderboard");
+    //     additional_messages.extend(
+    //         pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls_ironmouse.json")
+    //             .expect("should have ironmouse pxls json")
+    //             .into_iter()
+    //             .map(Message::IronmousePixels),
+    //     );
+    // }
 
     ChatLogProcessor::export_to_leaderboards(
         clp.process_from_messages(additional_messages.into_iter())

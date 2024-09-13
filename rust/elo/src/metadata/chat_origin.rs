@@ -3,18 +3,18 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::_types::clptypes::{Message, MessageTag, MetadataTypes, MetadataUpdate};
+use crate::_types::{CASUAL_NEURO_FACTION, IRONMOUSE_NEURO_FACTION};
 use crate::metadata::metadatatrait::AbstractMetadata;
+use discord_utils::DiscordClient;
 use twitch_utils::seventvclient::SevenTVClient;
 use twitch_utils::twitchtypes::Comment;
 use twitch_utils::TwitchAPIWrapper;
-
-const CASUAL_NEURO_FACTION: u64 = 3680;
-const IRONMOUSE_NEURO_FACTION: u64 = 1;
 
 /// Figures out the association of a message to a chat origin
 pub struct ChatOrigin {
     seventv_client: Arc<SevenTVClient>,
     twitch_client: Arc<TwitchAPIWrapper>,
+    discord_client: Arc<DiscordClient>,
 }
 
 impl AbstractMetadata for ChatOrigin {
@@ -44,11 +44,20 @@ impl AbstractMetadata for ChatOrigin {
                     MetadataTypes::ChatOrigin(MessageTag::from(&message)),
                 )]),
                 Message::Pxls(user) => {
-                    if let Some(CASUAL_NEURO_FACTION) = user.faction {
-                        HashMap::from([(
-                            "DISCORD-".to_string() + &user.pxls_username,
-                            MetadataTypes::ChatOrigin(MessageTag::from(&message)),
-                        )])
+                    if let (Some(CASUAL_NEURO_FACTION), Some(discord_tag)) =
+                        (user.faction, user.discord_tag.clone())
+                    {
+                        log::info!("processing for {discord_tag}");
+                        self.discord_client
+                            .get_username_author(discord_tag)
+                            .await
+                            .map(|author| {
+                                HashMap::from([(
+                                    author.id,
+                                    MetadataTypes::ChatOrigin(MessageTag::from(&message)),
+                                )])
+                            })
+                            .unwrap_or(HashMap::new())
                     } else {
                         HashMap::new()
                     }
@@ -76,10 +85,15 @@ impl AbstractMetadata for ChatOrigin {
 }
 
 impl ChatOrigin {
-    pub fn new(seventv_client: Arc<SevenTVClient>, twitch_client: Arc<TwitchAPIWrapper>) -> Self {
+    pub fn new(
+        seventv_client: Arc<SevenTVClient>,
+        twitch_client: Arc<TwitchAPIWrapper>,
+        discord_client: Arc<DiscordClient>,
+    ) -> Self {
         Self {
             seventv_client,
             twitch_client,
+            discord_client,
         }
     }
 

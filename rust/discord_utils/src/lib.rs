@@ -1,7 +1,10 @@
 pub mod types;
 
-pub use types::*;
+use std::collections::HashMap;
+
 use reqwest;
+pub use tokio::sync::RwLock;
+pub use types::*;
 
 const DISCORD_PROFILE_URL: &str = "https://discord.com/api/v9/users/{user_id}/profile?with_mutual_guilds=false&with_mutual_friends=false&with_mutual_friends_count=false&guild_id=574720535888396288";
 const DISCORD_AVATAR_URL: &str =
@@ -9,11 +12,15 @@ const DISCORD_AVATAR_URL: &str =
 
 pub struct DiscordClient {
     token: String,
+    username_to_author_cache: RwLock<HashMap<String, DiscordAuthor>>,
 }
 
 impl DiscordClient {
     pub fn new(token: String) -> DiscordClient {
-        Self { token }
+        Self {
+            token,
+            username_to_author_cache: RwLock::new(HashMap::new()),
+        }
     }
 
     pub async fn get_profile_for_user_id(
@@ -28,6 +35,24 @@ impl DiscordClient {
             .json::<DiscordProfileResponse>()
             .await?
             .user)
+    }
+
+    pub async fn set_username_author(&self, author: DiscordAuthor) {
+        log::info!("setting username assoc for {}", author.name);
+        self.username_to_author_cache
+            .write()
+            .await
+
+            .insert(author.name.to_string(), author.clone());
+    }
+
+    pub async fn get_username_author(&self, username: String) -> Option<DiscordAuthor> {
+        log::info!("get username assoc for {}", username);
+        self.username_to_author_cache
+            .read()
+            .await
+            .get(&username)
+            .cloned()
     }
 }
 

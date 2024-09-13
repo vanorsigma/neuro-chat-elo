@@ -4,6 +4,7 @@ use std::{
 };
 
 use _types::clptypes::{Message, MetadataTypes, MetadataUpdate, MetricUpdate, UserChatPerformance};
+use discord_utils::DiscordClient;
 use log::{debug, warn};
 use metadata::setup_metadata_and_channels;
 use metrics::setup_metrics_and_channels;
@@ -26,12 +27,12 @@ pub struct MessageProcessor {
 }
 
 impl MessageProcessor {
-    pub async fn new(twitch: Arc<TwitchAPIWrapper>, seventv_client: Arc<SevenTVClient>) -> Self {
+    pub async fn new(twitch: Arc<TwitchAPIWrapper>, seventv_client: Arc<SevenTVClient>, discord: Arc<DiscordClient>) -> Self {
         let (mut metric_processor, metric_sender, metric_receiver) =
-            setup_metrics_and_channels(seventv_client.clone(), twitch.clone()).await;
+            setup_metrics_and_channels(seventv_client.clone(), twitch.clone(), discord.clone()).await;
 
         let (mut metadata_processor, metadata_sender, metadata_receiver) =
-            setup_metadata_and_channels(twitch, seventv_client).await;
+            setup_metadata_and_channels(twitch, seventv_client, discord.clone()).await;
 
         let performances = user_chat_performance_processor(
             metric_processor.defaults.clone(),

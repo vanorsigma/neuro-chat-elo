@@ -7,6 +7,7 @@ pub mod score;
 pub mod subs;
 pub mod text;
 
+use discord_utils::DiscordClient;
 use futures::join;
 use log::debug;
 use log::warn;
@@ -40,6 +41,7 @@ impl MetricProcessor {
     pub async fn new(
         seventv_client: Arc<SevenTVClient>,
         twitch_client: Arc<TwitchAPIWrapper>,
+        discord_client: Arc<DiscordClient>,
         broadcast_receiver: broadcast::Receiver<(Message, u32)>,
         mpsc_sender: mpsc::Sender<MetricUpdate>,
     ) -> Self {
@@ -50,7 +52,7 @@ impl MetricProcessor {
         let text = text::Text::new();
         let copypastaleader = copypastaleader::CopypastaLeader::new();
         let emote = emote::Emote::new(seventv_client.clone());
-        let score = score::Score::new(twitch_client);
+        let score = score::Score::new(twitch_client, discord_client);
         let emote_use = emoteuse::EmoteUse::new(seventv_client);
 
         defaults.insert(bits.get_name(), 0.0);
@@ -147,6 +149,7 @@ async fn calc_metric<M: AbstractMetric + Sync + Send + 'static>(
 pub async fn setup_metrics_and_channels(
     seventv_client: Arc<SevenTVClient>,
     twitch_client: Arc<TwitchAPIWrapper>,
+    discord_client: Arc<DiscordClient>
 ) -> (
     MetricProcessor,
     broadcast::Sender<(Message, u32)>,
@@ -155,6 +158,6 @@ pub async fn setup_metrics_and_channels(
     let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);
     let (mpsc_sender, mpsc_receiver) = mpsc::channel(100000);
     let metric_processor =
-        MetricProcessor::new(seventv_client, twitch_client, broadcast_receiver, mpsc_sender).await;
+        MetricProcessor::new(seventv_client, twitch_client, discord_client, broadcast_receiver, mpsc_sender).await;
     (metric_processor, broadcast_sender, mpsc_receiver)
 }

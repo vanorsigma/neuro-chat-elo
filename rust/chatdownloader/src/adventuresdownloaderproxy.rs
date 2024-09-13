@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use adventures_utils::{AdventuresGetLeaderboardData, AdventuresGetLeaderboardRequest, AdventuresGetLeaderboardType, AdventuresMetadataRequest, AdventuresMetadataResponse, AdventuresRankItem, AdventuresRankItemWithAvatar};
 use discord_utils::DiscordClient;
@@ -7,13 +7,13 @@ use reqwest;
 const ADVENTURES_LEADERBOARD_URL: &str = "https://rants.theharrisontemple.com:8727/leaderboard";
 
 pub struct AdventuresDownloaderProxy {
-    client: DiscordClient,
+    client: Arc<DiscordClient>,
 }
 
 impl AdventuresDownloaderProxy {
-    pub fn new(token: String) -> Self {
+    pub fn new(discord: Arc<DiscordClient>) -> Self {
         Self {
-            client: DiscordClient::new(token),
+            client: discord,
         }
     }
 
@@ -88,15 +88,5 @@ impl AdventuresDownloaderProxy {
             .into_iter()
             .collect()
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[tokio::test]
-    async fn magical_test() {
-        let token = std::env::var("CHAT_DISCORD_TOKEN").unwrap();
-        let ranks = super::AdventuresDownloaderProxy::new(token).get_ranks().await;
-        println!("{:#?}", ranks.unwrap());
     }
 }

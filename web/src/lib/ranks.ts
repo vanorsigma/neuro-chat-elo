@@ -79,3 +79,4 @@ export const bilibiliRank = readable([], makeRankingInfo('bilibililivestreamchat
 export const adventureTheFarmRank = readable([], makeRankingInfo('adventures_farm.bin'))
 export const emoteRank = readable([], makeRankingInfo('top-emote.bin'));
 export const ironmousePixelRank = readable([], makeRankingInfo('ironmouse_pxls.bin'));
+export const pxlsRank = readable([], makeRankingInfo('casual_pxls.bin'));

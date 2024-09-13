@@ -10,14 +10,12 @@ use std::collections::HashMap;
 #[derive(Default, Debug)]
 pub struct IronmousePxls {
     state: HashMap<String, LeaderboardInnerState>,
-    twitch_cache: Mutex<HashMap<String, UserChatPerformance>>,
 }
 
 impl AbstractLeaderboard for IronmousePxls {
     fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
-            twitch_cache: Mutex::new(HashMap::new()),
         };
         out.read_initial_state();
         out

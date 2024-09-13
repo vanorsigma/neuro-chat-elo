@@ -3,16 +3,17 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::_types::clptypes::{Message, MetadataTypes, MetadataUpdate};
+use crate::_types::{CASUAL_NEURO_FACTION, IRONMOUSE_NEURO_FACTION};
 use crate::metadata::metadatatrait::AbstractMetadata;
+use discord_utils::DiscordClient;
 use twitch_utils::seventvclient::SevenTVClient;
 use twitch_utils::TwitchAPIWrapper;
-
-const IRONMOUSE_NEURO_FACTION: u64 = 1;
 
 /// Figures out if the user is a special role
 pub struct BasicInfo {
     seventv_client: Arc<SevenTVClient>,
     twitch_client: Arc<TwitchAPIWrapper>,
+    discord_client: Arc<DiscordClient>,
 }
 
 impl AbstractMetadata for BasicInfo {
@@ -48,20 +49,29 @@ impl AbstractMetadata for BasicInfo {
                     MetadataTypes::BasicInfo(rank.user, rank.avatar),
                 )]),
             },
-            Message::Pxls(user) => MetadataUpdate {
-                metadata_name: self.get_name(),
-                updates: HashMap::from([(
-                    "DISCORD-".to_string()
-                        + user
-                            .discord_tag
-                            .as_ref()
-                            .unwrap_or(&"!@#$%(&)DISCORD".to_string()), // scuffed ignore string
-                    MetadataTypes::BasicInfo(
-                        user.discord_tag.unwrap_or("".to_string()),
-                        "".to_string(),
-                    ),
-                )]),
-            },
+            Message::Pxls(user) => {
+                if let (Some(CASUAL_NEURO_FACTION), Some(discord_tag)) =
+                    (user.faction, user.discord_tag)
+                {
+                    log::info!("processing for {discord_tag}");
+                    MetadataUpdate {
+                        metadata_name: self.get_name(),
+                        updates: self
+                            .discord_client
+                            .get_username_author(discord_tag)
+                            .await
+                            .map(|user| {
+                                HashMap::from([(
+                                    user.id,
+                                    MetadataTypes::BasicInfo(user.nickname, user.avatar_url),
+                                )])
+                            })
+                            .unwrap_or(HashMap::new()),
+                    }
+                } else {
+                    MetadataUpdate::default()
+                }
+            }
             Message::IronmousePixels(user) => {
                 if let Some(IRONMOUSE_NEURO_FACTION) = user.faction {
                     MetadataUpdate {
@@ -88,10 +98,15 @@ impl AbstractMetadata for BasicInfo {
 }
 
 impl BasicInfo {
-    pub fn new(seventv_client: Arc<SevenTVClient>, twitch_client: Arc<TwitchAPIWrapper>) -> Self {
+    pub fn new(
+        seventv_client: Arc<SevenTVClient>,
+        twitch_client: Arc<TwitchAPIWrapper>,
+        discord_client: Arc<DiscordClient>,
+    ) -> Self {
         Self {
             seventv_client,
             twitch_client,
+            discord_client,
         }
     }
 

@@ -6,6 +6,7 @@ mod discorddownloaderproxy;
 mod github;
 mod twitchdownloaderproxy;
 
+use discord_utils::DiscordClient;
 use elo::_types::clptypes::Message;
 use env_logger::Env;
 use log::info;
@@ -41,12 +42,15 @@ async fn main() {
 
     info!("Script triggered, pulling logs for VOD ID: {}...", vod_id);
 
+    let discord = Arc::new(DiscordClient::new(token));
+
     let mut downloader = twitchdownloaderproxy::TwitchChatDownloader::new();
 
-    let adventure_ranks = adventuresdownloaderproxy::AdventuresDownloaderProxy::new(token)
-        .get_ranks()
-        .await
-        .unwrap();
+    let adventure_ranks =
+        adventuresdownloaderproxy::AdventuresDownloaderProxy::new(discord.clone())
+            .get_ranks()
+            .await
+            .unwrap();
 
     let adventures_farm = adventure_ranks
         .get("The Farm")
@@ -54,11 +58,6 @@ async fn main() {
         .into_iter()
         .cloned()
         .map(|item| Message::Adventures(item));
-
-    let pxls_casual = pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls.json")
-        .expect("should have pxls json")
-        .into_iter()
-        .map(Message::Pxls);
 
     let pxls_ironmouse =
         pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls_ironmouse.json")
@@ -74,26 +73,38 @@ async fn main() {
         .into_iter()
         .map(Message::Twitch);
 
-    let discord_messages = match env::var("CHAT_DISCORD_TOKEN") {
-        Ok(token) => {
-            let (start_time, end_time) = twitch.get_vod_times(vod_id).await;
-            discorddownloaderproxy::DiscordChatDownloader::new()
-                .download_chat(
-                    start_time.into(),
-                    end_time.into(),
-                    CHANNEL_ID,
-                    token.as_str(),
-                )
-                .await
-                .expect("Failed to download Discord chat")
-                .messages
+    let discord_messages = futures::future::join_all(
+        match env::var("CHAT_DISCORD_TOKEN") {
+            Ok(token) => {
+                let (start_time, end_time) = twitch.get_vod_times(vod_id).await;
+                discorddownloaderproxy::DiscordChatDownloader::new()
+                    .download_chat(
+                        start_time.into(),
+                        end_time.into(),
+                        CHANNEL_ID,
+                        token.as_str(),
+                    )
+                    .await
+                    .expect("Failed to download Discord chat")
+                    .messages
+            }
+            _ => {
+                vec![]
+            }
         }
-        _ => {
-            vec![]
-        }
-    }
-    .into_iter()
-    .map(Message::Discord);
+        .into_iter()
+        .map(|message| async {
+            discord.set_username_author(message.author.clone()).await;
+            message
+        })
+        .map(|x| async { Message::Discord(x.await) }),
+    )
+    .await;
+
+    let pxls_casual = pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls.json")
+        .expect("should have pxls json")
+        .into_iter()
+        .map(Message::Pxls);
 
     let bilibili_messages = bilidownloaderproxy::BiliChatDownloader::new()
         .from_path(Path::new("./output_fixed_fixed.json"))
@@ -102,7 +113,7 @@ async fn main() {
 
     let seventv_client = Arc::new(SevenTVClient::new().await);
 
-    let processor = chatlogprocessor::ChatLogProcessor::new(Arc::new(twitch), seventv_client).await;
+    let processor = chatlogprocessor::ChatLogProcessor::new(Arc::new(twitch), seventv_client, discord).await;
     // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());
     let user_performances = processor
         .process_from_messages(

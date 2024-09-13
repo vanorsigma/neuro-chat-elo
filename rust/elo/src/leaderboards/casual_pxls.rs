@@ -10,14 +10,12 @@ use std::collections::HashMap;
 #[derive(Default, Debug)]
 pub struct CasualPxls {
     state: HashMap<String, LeaderboardInnerState>,
-    discord_cache: Mutex<HashMap<String, UserChatPerformance>>,
 }
 
 impl AbstractLeaderboard for CasualPxls {
     fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
-            discord_cache: Mutex::new(HashMap::new()),
         };
         out.read_initial_state();
         out
@@ -33,42 +31,29 @@ impl AbstractLeaderboard for CasualPxls {
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
         if is_message_origin!(performance, MessageTag::Pxls) {
+            log::info!("nothing here chief {:#?}", performance);
             Some(*performance.metrics.get("score").unwrap_or(&0.0))
-        } else if is_message_origin!(performance, MessageTag::Discord) {
-            tokio::task::block_in_place(|| {
-                self.discord_cache
-                    .blocking_lock()
-                    .insert("DISCORD-".to_string() + &performance.username, performance.clone())
-            });
-            None
         } else {
             None
         }
     }
 
     fn save(&mut self) {
-        let mut new_values = tokio::task::block_in_place(|| {
-            let discord_cache_lock = self.discord_cache.blocking_lock();
-            self.state.clone().into_iter().filter_map(move |(key, mut state)| {
-                if discord_cache_lock.contains_key(&state.id) {
-                    state.username = state.id.replace("DISCORD-", "");
-                    state.elo = state.score;
-                    state.avatar = discord_cache_lock
-                        .get(&state.id)
-                        .unwrap()
-                        .avatar
-                        .clone();
-                    state.id = state.id.replace("DISCORD-", "");
-                    Some((key, state))
+        let mut new_state = self
+            .__get_state()
+            .iter()
+            .filter_map(|(k, state)| {
+                if state.score != 0.0 {
+                    let mut new_state = state.clone();
+                    new_state.elo = state.score;
+                    Some((k.to_string(), new_state))
                 } else {
                     None
                 }
             })
-            .collect::<HashMap<_, _>>()
-        });
+            .collect::<HashMap<_, _>>();
 
-        // save to disk uses self.state
-        std::mem::swap(&mut self.state, &mut new_values);
+        std::mem::swap(&mut self.state, &mut new_state);
         self.save_to_disk();
     }
 }

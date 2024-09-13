@@ -1,3 +1,4 @@
+use discord_utils::DiscordClient;
 use elo::MessageProcessor;
 use elo::_types::clptypes::{Message, UserChatPerformance};
 use elo::leaderboards::LeaderboardProcessor;
@@ -23,8 +24,8 @@ pub struct ChatLogProcessor {
 }
 
 impl ChatLogProcessor {
-    pub async fn new(twitch: Arc<TwitchAPIWrapper>, seventv_client: Arc<SevenTVClient>) -> Self {
-        let message_processor = MessageProcessor::new(twitch, seventv_client).await;
+    pub async fn new(twitch: Arc<TwitchAPIWrapper>, seventv_client: Arc<SevenTVClient>, discord_client: Arc<DiscordClient>) -> Self {
+        let message_processor = MessageProcessor::new(twitch, seventv_client, discord_client).await;
 
         Self { message_processor }
     }
