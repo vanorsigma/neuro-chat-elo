@@ -24,7 +24,7 @@ impl AbstractMetric for Text {
         String::from("text")
     }
 
-    fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
+    async fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
         match message {
             Message::Twitch(comment) => {
                 let score = calculate_score(comment.message.body.len());

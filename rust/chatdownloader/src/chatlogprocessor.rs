@@ -23,7 +23,7 @@ pub struct ChatLogProcessor {
 }
 
 impl ChatLogProcessor {
-    pub async fn new(twitch: &TwitchAPIWrapper, seventv_client: Arc<SevenTVClient>) -> Self {
+    pub async fn new(twitch: Arc<TwitchAPIWrapper>, seventv_client: Arc<SevenTVClient>) -> Self {
         let message_processor = MessageProcessor::new(twitch, seventv_client).await;
 
         Self { message_processor }

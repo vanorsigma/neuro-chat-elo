@@ -102,7 +102,7 @@ async fn main() {
 
     let seventv_client = Arc::new(SevenTVClient::new().await);
 
-    let processor = chatlogprocessor::ChatLogProcessor::new(&twitch, seventv_client).await;
+    let processor = chatlogprocessor::ChatLogProcessor::new(Arc::new(twitch), seventv_client).await;
     // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());
     let user_performances = processor
         .process_from_messages(

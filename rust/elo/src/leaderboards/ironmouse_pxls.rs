@@ -17,7 +17,7 @@ impl AbstractLeaderboard for IronmousePxls {
     fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
-            twitch_cache: Mutex::new(HashMap::new())
+            twitch_cache: Mutex::new(HashMap::new()),
         };
         out.read_initial_state();
         out
@@ -34,41 +34,27 @@ impl AbstractLeaderboard for IronmousePxls {
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
         if is_message_origin!(performance, MessageTag::IronmousePixels) {
             Some(*performance.metrics.get("score").unwrap_or(&0.0))
-        } else if is_message_origin!(performance, MessageTag::Twitch) {
-            tokio::task::block_in_place(|| {
-                self.twitch_cache
-                    .blocking_lock()
-                    .insert("TWITCH-".to_string() + &performance.username, performance.clone())
-            });
-            None
         } else {
             None
         }
     }
 
     fn save(&mut self) {
-        let mut new_values = tokio::task::block_in_place(|| {
-            let twitch_cache_lock = self.twitch_cache.blocking_lock();
-            self.state.clone().into_iter().filter_map(move |(key, mut state)| {
-                if twitch_cache_lock.contains_key(&state.id) {
-                    state.username = state.id.replace("TWITCH-", "");
-                    state.elo = state.score;
-                    state.avatar = twitch_cache_lock
-                        .get(&state.id)
-                        .unwrap()
-                        .avatar
-                        .clone();
-                    state.id = state.id.replace("TWITCH-", "");
-                    Some((key, state))
+        let mut new_state = self
+            .__get_state()
+            .iter()
+            .filter_map(|(k, state)| {
+                if state.score != 0.0 {
+                    let mut new_state = state.clone();
+                    new_state.elo = state.score;
+                    Some((k.to_string(), new_state))
                 } else {
                     None
                 }
             })
-                .collect::<HashMap<_, _>>()
-        });
+            .collect::<HashMap<_, _>>();
 
-        // save to disk uses self.state
-        std::mem::swap(&mut self.state, &mut new_values);
+        std::mem::swap(&mut self.state, &mut new_state);
         self.save_to_disk();
     }
 }

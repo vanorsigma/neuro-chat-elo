@@ -35,7 +35,7 @@ impl AbstractMetric for Subs {
         String::from("subs")
     }
 
-    fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
+    async fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
         match message {
             Message::Twitch(comment) => {
                 let total_subs: i32 = comment

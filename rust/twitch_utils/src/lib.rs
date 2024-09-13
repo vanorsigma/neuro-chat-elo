@@ -1,11 +1,16 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
+use tokio::sync::RwLock;
 
 use chrono::{DateTime, FixedOffset};
 use log::debug;
 use twitch_api::helix::chat::{ChatBadge, GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
+use twitch_api::helix::users::{GetUsersRequest, User};
 use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
+use twitch_api::types::NicknameRef;
 use twitch_api::HelixClient;
+use twitchtypes::ChatUserInfo;
 
 pub mod seventvclient;
 pub mod seventvtypes;
@@ -40,10 +45,10 @@ fn parse_time(duration_str: &str) -> Result<u32, Box<dyn std::error::Error>> {
     Ok(hours * 3600 + minutes * 60 + seconds)
 }
 
-#[derive(Clone)]
 pub struct TwitchAPIWrapper {
-    pub twitch: HelixClient<'static, reqwest::Client>,
-    pub token: AppAccessToken,
+    twitch: HelixClient<'static, reqwest::Client>,
+    token: AppAccessToken,
+    username_to_profile_cache: RwLock<HashMap<String, ChatUserInfo>>,
 }
 
 impl TwitchAPIWrapper {
@@ -70,7 +75,11 @@ impl TwitchAPIWrapper {
                 .await
                 .unwrap();
 
-        Ok(Self { twitch, token })
+        Ok(Self {
+            twitch,
+            token,
+            username_to_profile_cache: RwLock::new(HashMap::new()),
+        })
     }
 
     pub async fn get_latest_vod_ids(&self, ch_id: String, num: usize) -> Vec<String> {
@@ -144,5 +153,55 @@ impl TwitchAPIWrapper {
         }
 
         Ok(badge_sets)
+    }
+
+    pub async fn set_user_from_username(&self, username: String, info: ChatUserInfo) {
+        self.username_to_profile_cache
+            .write()
+            .await
+            .insert(username, info);
+    }
+
+    pub async fn get_user_from_username(
+        &self,
+        username: String,
+    ) -> Result<ChatUserInfo, anyhow::Error> {
+        let cache_read = self.username_to_profile_cache.read().await;
+        if let None = cache_read.get(&username) {
+            drop(cache_read); // release read lock to obtain write lock
+
+            let nickname = [NicknameRef::from_str(&username)];
+            let request = GetUsersRequest::logins(&nickname);
+            let response = self.twitch.req_get(request, &self.token).await?;
+
+            log::info!("getting id for username: {username}");
+
+            if response.data.len() < 1 {
+                log::error!("can't find user id for username: {username}");
+                return Err(anyhow::anyhow!("can't find user id for username: {username}"));
+            }
+
+            let user = response.data[0].clone();
+
+            self.username_to_profile_cache.write().await.insert(
+                user.login.to_string(),
+                ChatUserInfo {
+                    display_name: user.display_name.to_string(),
+                    _id: user.id.to_string(),
+                    logo: user.profile_image_url.unwrap_or("".to_string()),
+                    name: user.login.to_string(),
+                },
+            );
+        } else {
+            log::info!("cache hit for {username}");
+        }
+
+        self.username_to_profile_cache
+            .read()
+            .await
+            .get(&username)
+            .cloned()
+            .ok_or(anyhow::anyhow!("shouldn't be empty by now"))
+            .inspect_err(|obj| log::info!("cannot find {username} due to {obj}"))
     }
 }

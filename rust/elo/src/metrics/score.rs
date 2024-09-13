@@ -1,15 +1,20 @@
 use std::collections::HashMap;
+use std::sync::Arc;
+
+use twitch_utils::TwitchAPIWrapper;
 
 use crate::_types::clptypes::{Message, MetricUpdate};
-use crate::is_message_origin;
 use crate::metrics::metrictrait::AbstractMetric;
 
-#[derive(Default, Debug)]
-pub struct Score;
+const IRONMOUSE_NEURO_FACTION: u64 = 1;
+
+pub struct Score {
+    twitch: Arc<TwitchAPIWrapper>,
+}
 
 impl Score {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(twitch: Arc<TwitchAPIWrapper>) -> Self {
+        Self { twitch }
     }
 }
 
@@ -22,7 +27,7 @@ impl AbstractMetric for Score {
         String::from("score")
     }
 
-    fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
+    async fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
         match message {
             Message::Adventures(rank) => MetricUpdate {
                 metric_name: self.get_name(),
@@ -38,12 +43,18 @@ impl AbstractMetric for Score {
                     )]),
                 })
                 .unwrap_or(MetricUpdate::empty_with_name(self.get_name())),
-            Message::IronmousePixels(user) => MetricUpdate {
+            Message::IronmousePixels(user) => if let Some(IRONMOUSE_NEURO_FACTION) = user.faction {
+                MetricUpdate {
                 metric_name: self.get_name(),
-                updates: HashMap::from([(
-                    "TWITCH-".to_string() + &user.pxls_username,
-                    user.score as f32,
-                )]),
+                updates: self
+                    .twitch
+                    .get_user_from_username(user.pxls_username)
+                    .await
+                    .map(|info| HashMap::from([(info._id, user.score as f32)]))
+                        .unwrap_or(HashMap::new()),
+                }
+            } else {
+                MetricUpdate::empty_with_name(self.get_name())
             },
             _ => MetricUpdate::empty_with_name(self.get_name()),
         }

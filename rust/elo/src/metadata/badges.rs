@@ -162,7 +162,7 @@ impl AbstractMetadata for Badges {
         MetadataTypes::BadgeList(vec![])
     }
 
-    fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
+    async fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
         match message {
             Message::Twitch(comment) => self.get_metadata_twitch(comment),
             Message::Discord(msg) => self.get_metadata_discord(msg),

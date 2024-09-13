@@ -16,5 +16,9 @@ pub trait AbstractMetadata: Sized {
     fn get_default_value(&self) -> MetadataTypes;
 
     /// Get information about a user from a chat message
-    fn get_metadata(&self, message: Message, sequence_no: u32) -> MetadataUpdate;
+    fn get_metadata(
+        &self,
+        message: Message,
+        sequence_no: u32,
+    ) -> impl std::future::Future<Output = MetadataUpdate> + Send;
 }

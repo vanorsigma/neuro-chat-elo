@@ -28,7 +28,7 @@ pub trait AbstractMetric {
     ///
     /// # Return value
     /// A metric update to be added for the associated user
-    fn get_metric(&mut self, message: Message, sequence_no: u32) -> MetricUpdate;
+    async fn get_metric(&mut self, message: Message, sequence_no: u32) -> MetricUpdate;
 
     /// This method is called when there are no more comments to
     /// process. Useful for metrics that need to flush any remaining

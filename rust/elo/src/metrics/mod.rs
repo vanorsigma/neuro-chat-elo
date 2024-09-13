@@ -10,6 +10,7 @@ pub mod text;
 use futures::join;
 use log::debug;
 use log::warn;
+use twitch_utils::TwitchAPIWrapper;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::broadcast;
@@ -38,6 +39,7 @@ impl MetricProcessor {
     /// get_defaults_and_setup_channels must be called before run
     pub async fn new(
         seventv_client: Arc<SevenTVClient>,
+        twitch_client: Arc<TwitchAPIWrapper>,
         broadcast_receiver: broadcast::Receiver<(Message, u32)>,
         mpsc_sender: mpsc::Sender<MetricUpdate>,
     ) -> Self {
@@ -48,7 +50,7 @@ impl MetricProcessor {
         let text = text::Text::new();
         let copypastaleader = copypastaleader::CopypastaLeader::new();
         let emote = emote::Emote::new(seventv_client.clone());
-        let score = score::Score::new();
+        let score = score::Score::new(twitch_client);
         let emote_use = emoteuse::EmoteUse::new(seventv_client);
 
         defaults.insert(bits.get_name(), 0.0);
@@ -125,7 +127,7 @@ async fn calc_metric<M: AbstractMetric + Sync + Send + 'static>(
     */
     loop {
         if let Ok((message, sequence_no)) = reciever.recv().await {
-            let metric_result = (*metric).get_metric(message, sequence_no);
+            let metric_result = (*metric).get_metric(message, sequence_no).await;
             if let Err(e) = sender.send(metric_result).await {
                 warn!("Failed to send metric result: {}", e)
             };
@@ -144,6 +146,7 @@ async fn calc_metric<M: AbstractMetric + Sync + Send + 'static>(
 /// Get the default values for the metrics and set up the channels
 pub async fn setup_metrics_and_channels(
     seventv_client: Arc<SevenTVClient>,
+    twitch_client: Arc<TwitchAPIWrapper>,
 ) -> (
     MetricProcessor,
     broadcast::Sender<(Message, u32)>,
@@ -152,6 +155,6 @@ pub async fn setup_metrics_and_channels(
     let (broadcast_sender, broadcast_receiver) = broadcast::channel(100000);
     let (mpsc_sender, mpsc_receiver) = mpsc::channel(100000);
     let metric_processor =
-        MetricProcessor::new(seventv_client, broadcast_receiver, mpsc_sender).await;
+        MetricProcessor::new(seventv_client, twitch_client, broadcast_receiver, mpsc_sender).await;
     (metric_processor, broadcast_sender, mpsc_receiver)
 }

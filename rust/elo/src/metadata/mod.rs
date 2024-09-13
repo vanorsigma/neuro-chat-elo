@@ -31,7 +31,7 @@ pub struct MetadataProcessor {
 
 impl MetadataProcessor {
     pub async fn new(
-        twitch: &TwitchAPIWrapper,
+        twitch: Arc<TwitchAPIWrapper>,
         seventv_client: Arc<SevenTVClient>,
         broadcast_receiver: broadcast::Receiver<(Message, u32)>,
         mpsc_sender: mpsc::Sender<MetadataUpdate>,
@@ -39,10 +39,10 @@ impl MetadataProcessor {
         let mut defaults: HashMap<String, MetadataTypes> = HashMap::new();
 
         // Initialize the metadata
-        let basic_info = basic_info::BasicInfo::new(seventv_client.clone());
-        let badges = badges::Badges::new(twitch).await;
+        let basic_info = basic_info::BasicInfo::new(seventv_client.clone(), twitch.clone());
+        let badges = badges::Badges::new(&twitch).await;
         let special_role = special_role::SpecialRole::new();
-        let chat_origin = chat_origin::ChatOrigin::new(seventv_client);
+        let chat_origin = chat_origin::ChatOrigin::new(seventv_client, twitch);
 
         // Add names and default values to the metadata
         defaults.insert(basic_info.get_name(), basic_info.get_default_value());
@@ -97,7 +97,7 @@ async fn calc_metadata<M: AbstractMetadata + Send + Sync + 'static>(
     Find metadata based on chat messages sent by a tokio broadcast channel
     */
     while let Ok((message, sequence_no)) = reciever.recv().await {
-        let metadata = (*metadata).get_metadata(message, sequence_no);
+        let metadata = (*metadata).get_metadata(message, sequence_no).await;
         if let Err(e) = sender.send(metadata).await {
             warn!("Failed to send metadata result {}", e)
         };
@@ -106,7 +106,7 @@ async fn calc_metadata<M: AbstractMetadata + Send + Sync + 'static>(
 
 /// Get the default values for the metrics and set up the channels
 pub async fn setup_metadata_and_channels(
-    twitch: &TwitchAPIWrapper,
+    twitch: Arc<TwitchAPIWrapper>,
     seventv_client: Arc<SevenTVClient>,
 ) -> (
     MetadataProcessor,

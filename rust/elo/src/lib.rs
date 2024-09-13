@@ -26,9 +26,9 @@ pub struct MessageProcessor {
 }
 
 impl MessageProcessor {
-    pub async fn new(twitch: &TwitchAPIWrapper, seventv_client: Arc<SevenTVClient>) -> Self {
+    pub async fn new(twitch: Arc<TwitchAPIWrapper>, seventv_client: Arc<SevenTVClient>) -> Self {
         let (mut metric_processor, metric_sender, metric_receiver) =
-            setup_metrics_and_channels(seventv_client.clone()).await;
+            setup_metrics_and_channels(seventv_client.clone(), twitch.clone()).await;
 
         let (mut metadata_processor, metadata_sender, metadata_receiver) =
             setup_metadata_and_channels(twitch, seventv_client).await;

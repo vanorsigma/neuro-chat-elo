@@ -6,6 +6,7 @@ use crate::_types::clptypes::{Message, MessageTag, MetadataTypes, MetadataUpdate
 use crate::metadata::metadatatrait::AbstractMetadata;
 use twitch_utils::seventvclient::SevenTVClient;
 use twitch_utils::twitchtypes::Comment;
+use twitch_utils::TwitchAPIWrapper;
 
 const CASUAL_NEURO_FACTION: u64 = 3680;
 const IRONMOUSE_NEURO_FACTION: u64 = 1;
@@ -13,6 +14,7 @@ const IRONMOUSE_NEURO_FACTION: u64 = 1;
 /// Figures out the association of a message to a chat origin
 pub struct ChatOrigin {
     seventv_client: Arc<SevenTVClient>,
+    twitch_client: Arc<TwitchAPIWrapper>,
 }
 
 impl AbstractMetadata for ChatOrigin {
@@ -24,11 +26,11 @@ impl AbstractMetadata for ChatOrigin {
         MetadataTypes::ChatOrigin(MessageTag::None)
     }
 
-    fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
+    async fn get_metadata(&self, message: Message, _sequence_no: u32) -> MetadataUpdate {
         MetadataUpdate {
             metadata_name: self.get_name(),
             updates: match &message {
-                Message::Twitch(comment) => self.process_twitch(comment, &message),
+                Message::Twitch(comment) => self.process_twitch(comment, &message).await,
                 Message::Discord(msg) => HashMap::from([(
                     msg.author.id.to_string(),
                     MetadataTypes::ChatOrigin(MessageTag::from(&message)),
@@ -53,10 +55,16 @@ impl AbstractMetadata for ChatOrigin {
                 }
                 Message::IronmousePixels(user) => {
                     if let Some(IRONMOUSE_NEURO_FACTION) = user.faction {
-                        HashMap::from([(
-                            "TWITCH-".to_string() + &user.pxls_username,
-                            MetadataTypes::ChatOrigin(MessageTag::from(&message)),
-                        )])
+                        self.twitch_client
+                            .get_user_from_username(user.pxls_username.clone())
+                            .await
+                            .map(|user| {
+                                HashMap::from([(
+                                    user._id,
+                                    MetadataTypes::ChatOrigin(MessageTag::from(&message)),
+                                )])
+                            })
+                            .unwrap_or(HashMap::new())
                     } else {
                         HashMap::new()
                     }
@@ -68,11 +76,14 @@ impl AbstractMetadata for ChatOrigin {
 }
 
 impl ChatOrigin {
-    pub fn new(seventv_client: Arc<SevenTVClient>) -> Self {
-        Self { seventv_client }
+    pub fn new(seventv_client: Arc<SevenTVClient>, twitch_client: Arc<TwitchAPIWrapper>) -> Self {
+        Self {
+            seventv_client,
+            twitch_client,
+        }
     }
 
-    pub fn process_twitch(
+    pub async fn process_twitch(
         &self,
         comment: &Comment,
         message: &Message,

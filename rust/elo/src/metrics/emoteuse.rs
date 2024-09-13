@@ -29,7 +29,7 @@ impl AbstractMetric for EmoteUse {
         String::from("emote_use")
     }
 
-    fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
+    async fn get_metric(&mut self, message: Message, _sequence_no: u32) -> MetricUpdate {
         let update = match message {
             Message::Twitch(comment) => {
                 MetricUpdate {

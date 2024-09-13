@@ -134,6 +134,7 @@ pub struct ChatUserInfo {
     Represents a user in a chat.
     */
     pub display_name: String,
+    pub name: String,
     pub _id: String,
     pub logo: String,
 }

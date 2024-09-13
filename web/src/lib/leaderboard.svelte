@@ -108,7 +108,7 @@
         delta={rank.delta}
         avatarUrl={rank.avatar}
         badges={rank.badges == null ? [] : rank.badges}
-        special_ironmouse={specialIronmouseLookup.has(rank.username)}
+        special_ironmouse={specialIronmouseLookup.has(rank.id)}
       />
     {/each}
     <div class="h-1" bind:this={endMarker} />
