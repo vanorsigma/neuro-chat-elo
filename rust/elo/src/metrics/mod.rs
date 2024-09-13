@@ -128,6 +128,7 @@ impl MetricProcessor {
             calc_metric(&mut self.text),
             calc_metric(&mut self.copypastaleader),
             calc_metric(&mut self.emote),
+            calc_metric(&mut self.score),
             calc_metric(&mut self.emote_use),
         );
         debug!("All metrics finished");

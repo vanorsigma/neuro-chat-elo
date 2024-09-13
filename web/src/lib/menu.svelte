@@ -14,7 +14,8 @@
   };
 
   const discordMenuItemMapping = {
-    '#livestream-chat': 7
+    '#livestream-chat': 7,
+    'Casual Canvas': 12
   };
 
   const bilibiliMenuItemMapping = {

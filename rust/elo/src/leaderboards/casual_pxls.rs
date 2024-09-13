@@ -31,7 +31,6 @@ impl AbstractLeaderboard for CasualPxls {
 
     fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
         if is_message_origin!(performance, MessageTag::Pxls) {
-            log::info!("nothing here chief {:#?}", performance);
             Some(*performance.metrics.get("score").unwrap_or(&0.0))
         } else {
             None

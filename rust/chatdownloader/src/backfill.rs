@@ -25,7 +25,7 @@ pub async fn backfill() {
     let twitch = Arc::new(TwitchAPIWrapper::new().await.unwrap());
     let seventv_client = Arc::new(SevenTVClient::new().await);
     let video_ids = twitch
-        .get_latest_vod_ids(elo::_constants::VED_CH_ID.to_string(), 1)
+        .get_latest_vod_ids(elo::_constants::VED_CH_ID.to_string(), 5)
         .await;
     let mut downloader = TwitchChatDownloader::new();
     let mut additional_messages = vec![];
@@ -108,15 +108,15 @@ pub async fn backfill() {
         );
     }
 
-    // if std::fs::exists("pxls_ironmouse.json").unwrap_or(false) {
-    //     info!("Found pxls_ironmouse.json, will export pxls leaderboard");
-    //     additional_messages.extend(
-    //         pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls_ironmouse.json")
-    //             .expect("should have ironmouse pxls json")
-    //             .into_iter()
-    //             .map(Message::IronmousePixels),
-    //     );
-    // }
+    if std::fs::exists("pxls_ironmouse.json").unwrap_or(false) {
+        info!("Found pxls_ironmouse.json, will export pxls leaderboard");
+        additional_messages.extend(
+            pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls_ironmouse.json")
+                .expect("should have ironmouse pxls json")
+                .into_iter()
+                .map(Message::IronmousePixels),
+        );
+    }
 
     ChatLogProcessor::export_to_leaderboards(
         clp.process_from_messages(additional_messages.into_iter())

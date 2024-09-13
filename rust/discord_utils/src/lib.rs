@@ -38,7 +38,6 @@ impl DiscordClient {
     }
 
     pub async fn set_username_author(&self, author: DiscordAuthor) {
-        log::info!("setting username assoc for {}", author.name);
         self.username_to_author_cache
             .write()
             .await
@@ -47,7 +46,6 @@ impl DiscordClient {
     }
 
     pub async fn get_username_author(&self, username: String) -> Option<DiscordAuthor> {
-        log::info!("get username assoc for {}", username);
         self.username_to_author_cache
             .read()
             .await

@@ -53,17 +53,16 @@ impl AbstractMetadata for BasicInfo {
                 if let (Some(CASUAL_NEURO_FACTION), Some(discord_tag)) =
                     (user.faction, user.discord_tag)
                 {
-                    log::info!("processing for {discord_tag}");
                     MetadataUpdate {
                         metadata_name: self.get_name(),
                         updates: self
                             .discord_client
                             .get_username_author(discord_tag)
                             .await
-                            .map(|user| {
+                            .map(|author| {
                                 HashMap::from([(
-                                    user.id,
-                                    MetadataTypes::BasicInfo(user.nickname, user.avatar_url),
+                                    author.id,
+                                    MetadataTypes::BasicInfo(author.nickname, author.avatar_url),
                                 )])
                             })
                             .unwrap_or(HashMap::new()),
