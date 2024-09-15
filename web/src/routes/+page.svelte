@@ -58,7 +58,7 @@
     $pxlsRank
   ];
 
-  $: allRanksLoaded = ranking.every((r) => r.length > 0);
+  $: allRanksLoaded = ranking.every((r) => r.ranks.length > 0);
 
   let menuAppear = false;
 
@@ -97,10 +97,10 @@
     }, 100);
   }
 
-  $: metadatas = ranking.map((rankingInfo: RankingInfo[], idx) => {
+  $: metadatas = ranking.map((leaderboardInfo, idx) => {
     return {
-      avatarName: rankingInfo[0]?.username,
-      avatarUrl: rankingInfo[0]?.avatar,
+      avatarName: leaderboardInfo.ranks[0]?.username,
+      avatarUrl: leaderboardInfo.ranks[0]?.avatar,
       leaderboardName: rankingTitles[idx]
     } as RevealMetadata;
   });
@@ -161,7 +161,7 @@
       showRankingsLoading = false;
     }}
   >
-    {#each ranking as rankingInfo, index}
+    {#each ranking as leaderboardInfo, index}
       <div
         class="flex flex-col px-5 w-full h-full md:h-full md:h-[90%] {index === activeIndex
           ? ''
@@ -170,12 +170,17 @@
         <h1 class="text-3xl flex-none font-bold my-5 md:my-0 text-center">
           {rankingTitles[index]}
         </h1>
-        <RankingCard isActive={index === activeIndex} bind:userSearchTextValue {rankingInfo} />
+        <RankingCard
+          isActive={index === activeIndex}
+          bind:userSearchTextValue
+          rankingInfo={leaderboardInfo.ranks}
+        />
+        <p>Generated at: {leaderboardInfo.generatedAt.toLocaleString()} (your timezone)</p>
       </div>
     {/each}
   </LoadableFlexContainer>
 {/if}
 
-{#if !showRankingsLoading && !allowRankings && ranking[0]?.length > 0 && allRanksLoaded}
+{#if !showRankingsLoading && !allowRankings && ranking[0]?.ranks.length > 0 && allRanksLoaded}
   <RevealCards revealMetadatas={metadatas} allAnimationsDone={onAnimationDone} />
 {/if}

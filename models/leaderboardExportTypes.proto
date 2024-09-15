@@ -19,4 +19,5 @@ message LeaderboardExportItem {
 
 message LeaderboardExport {
     repeated LeaderboardExportItem items = 1;
+    uint64 generated_at = 2;
 }

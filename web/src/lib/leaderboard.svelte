@@ -95,7 +95,9 @@
   });
 
   /* Special Events */
-  $: specialIronmouseLookup = new Set($ironmousePixelRank.map((rank: RankingInfo) => rank.id));
+  $: specialIronmouseLookup = new Set(
+    $ironmousePixelRank.ranks.map((rank: RankingInfo) => rank.id)
+  );
 </script>
 
 <div bind:this={containerElement} class="relative w-full md:h-60 grow md:h-full overflow-y-scroll">

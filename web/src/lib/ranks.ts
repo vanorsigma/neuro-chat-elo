@@ -17,6 +17,16 @@ export interface RankingInfo {
   badges: Badge[];
 }
 
+export interface LeaderboardInfo {
+  ranks: RankingInfo[];
+  generatedAt: Date;
+}
+
+const DEFAULT_LEADERBOARD_INFO: LeaderboardInfo = {
+  ranks: [],
+  generatedAt: new Date(0),
+};
+
 function makeRankingInfo(path: string) {
   return (set: (arg0: any) => void) => {
     axios.get(`./${path}`, { responseType: 'arraybuffer' })
@@ -38,7 +48,7 @@ function makeRankingInfo(path: string) {
   };
 }
 
-function mapLeaderboardToRanking(leaderboard: LeaderboardExport): RankingInfo[] {
+function mapLeaderboardToRanking(leaderboard: LeaderboardExport): LeaderboardInfo {
   const rankingInfo: RankingInfo[] = leaderboard.items.map(item => {
     const badges = convertProtoBadges(item.badges);
     return {
@@ -51,7 +61,10 @@ function mapLeaderboardToRanking(leaderboard: LeaderboardExport): RankingInfo[] 
       badges: badges
     };
   });
-  return rankingInfo;
+  return {
+    ranks: rankingInfo,
+    generatedAt: new Date(leaderboard.generatedAt * 1000)
+  };
 }
 
 function convertProtoBadges(badges: BadgeInformation[]): Badge[] {
@@ -67,16 +80,16 @@ function handleError(path: string, error: any) {
 }
 
 
-export const overallRank = readable([], makeRankingInfo('overall.bin'));
-export const chatOnlyRank = readable([], makeRankingInfo('chat-only.bin'));
-export const nonvipsRank = readable([], makeRankingInfo('nonvips.bin'));
-export const copypastaRank = readable([], makeRankingInfo('copypasta.bin'));
-export const bitsRank = readable([], makeRankingInfo('bits-only.bin'));
-export const subsRank = readable([], makeRankingInfo('subs-only.bin'));
-export const discordRank = readable([], makeRankingInfo('discordlivestream.bin'))
-export const partnersRank = readable([], makeRankingInfo('partners-only.bin'))
-export const bilibiliRank = readable([], makeRankingInfo('bilibililivestreamchat.bin'))
-export const adventureTheFarmRank = readable([], makeRankingInfo('adventures_farm.bin'))
-export const emoteRank = readable([], makeRankingInfo('top-emote.bin'));
-export const ironmousePixelRank = readable([], makeRankingInfo('ironmouse_pxls.bin'));
-export const pxlsRank = readable([], makeRankingInfo('casual_pxls.bin'));
+export const overallRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('overall.bin'));
+export const chatOnlyRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('chat-only.bin'));
+export const nonvipsRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('nonvips.bin'));
+export const copypastaRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('copypasta.bin'));
+export const bitsRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('bits-only.bin'));
+export const subsRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('subs-only.bin'));
+export const discordRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('discordlivestream.bin'))
+export const partnersRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('partners-only.bin'))
+export const bilibiliRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('bilibililivestreamchat.bin'))
+export const adventureTheFarmRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('adventures_farm.bin'))
+export const emoteRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('top-emote.bin'));
+export const ironmousePixelRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('ironmouse_pxls.bin'));
+export const pxlsRank = readable(DEFAULT_LEADERBOARD_INFO, makeRankingInfo('casual_pxls.bin'));

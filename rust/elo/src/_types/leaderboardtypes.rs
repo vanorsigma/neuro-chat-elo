@@ -2,12 +2,20 @@
 Publically accessible leaderboard types
 */
 
+use std::time::UNIX_EPOCH;
+
 // Includes the protobuf types defined in models/leaderboardExportTypes.proto
 include!(concat!(env!("OUT_DIR"), "/leaderboard_export_types.rs"));
 
 impl From<Vec<LeaderboardExportItem>> for LeaderboardExport {
     fn from(items: Vec<LeaderboardExportItem>) -> Self {
-        LeaderboardExport { items }
+        LeaderboardExport {
+            items,
+            generated_at: std::time::SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("should be able to get current system time")
+                .as_secs(),
+        }
     }
 }
 
