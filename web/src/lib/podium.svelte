@@ -1,26 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { User } from './user';
-  import { sanitizeString } from '$lib';
   import { loadImageAsBase64URL } from './rankitems/rankutils';
   import Podiumbar from './podiumbar.svelte';
-
-  const avatarToPodiumPadding = 20;
-
-  let canvasWidth: number = 400;
-  let canvasHeight: number = 400;
 
   const minimumHeight = 110;
   const maximumHeight = 180;
 
-  $: podiumWidth = canvasWidth / 3;
-  $: podiumHeight = canvasHeight - canvasToPodiumOffset;
-
   export let scaleToX: number;
-
-  $: canvasWidth = scaleToX;
-  $: canvasHeight = scaleToX;
-  $: canvasToPodiumOffset = scaleToX * 0.5;
+  export let size: string;
 
   export let firstPlace: User;
   export let secondPlace: User;
@@ -123,8 +111,8 @@
   xmlns="http://www.w3.org/2000/svg"
   xmlns:xlink="http://www.w3.org/1999/xlink"
   version="1.1"
-  width="302px"
-  height="302px"
+  width={size}
+  height={size}
   viewBox="-0.5 -0.5 302 302"
 >
   <defs />
