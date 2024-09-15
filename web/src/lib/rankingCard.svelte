@@ -71,7 +71,7 @@
       on:input={(e) => onSearchTextValueInput(e)}
       value={userSearchTextValue}
     />
-    {#if rankingInfoLength > 3}
+    {#if rankingInfoLength >= 3}
       <Leaderboard {isActive} searchTerm={userSearchTextValue} currentData={rankingInfo} />
     {/if}
   </div>

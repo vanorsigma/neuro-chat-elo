@@ -7,7 +7,6 @@
   const minimumHeight = 110;
   const maximumHeight = 180;
 
-  export let scaleToX: number;
   export let size: string;
 
   export let firstPlace: User;
