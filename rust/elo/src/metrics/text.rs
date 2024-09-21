@@ -50,5 +50,5 @@ impl AbstractMetric for Text {
 }
 
 fn calculate_score(x: usize) -> f32 {
-    f32::max(WEIGHT_TEXT, WEIGHT_TEXT * x as f32)
+    WEIGHT_TEXT * x.min(1) as f32
 }
