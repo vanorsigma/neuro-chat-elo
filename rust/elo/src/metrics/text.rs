@@ -34,7 +34,11 @@ impl AbstractMetric for Text {
                 metric_name: self.get_name(),
                 updates: HashMap::from([(
                     msg.author.id,
-                    calculate_score(msg.content.len()),
+                    // Discord treats image links as content, which
+                    // defeats the purpose of a score calculation.
+                    // We'll just the message, rather than do it by
+                    // length
+                    1.0,
                 )]),
             },
             Message::Bilibili(bilimsg) => MetricUpdate {
