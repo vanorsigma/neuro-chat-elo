@@ -215,6 +215,9 @@ pub trait AbstractLeaderboard {
     fn save(&mut self) {
         info!("Saving {} leaderboard...", self.get_name());
         self.__calculate_new_elo();
+        // NOTE: it's possible for people to shoot up in rankings.
+        // This acts as a "second chance" for people who got overtaken to battle
+        self.__calculate_new_elo();
         self.save_to_disk();
     }
 
