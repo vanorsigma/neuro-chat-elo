@@ -5,7 +5,7 @@ use log::info;
 use tempfile::{Builder, TempDir};
 
 use std::fs::{self, File};
-use std::io;
+use std::io::{self, BufReader};
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::Command;
@@ -114,8 +114,8 @@ impl DiscordChatDownloader {
         }
 
         info!("Parsing JSON");
-        Ok(serde_json::from_reader::<File, DiscordChatLogs>(
-            File::open(&output_path)?,
-        )?)
+        Ok(serde_json::from_reader(BufReader::new(File::open(
+            &output_path,
+        )?))?)
     }
 }
