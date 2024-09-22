@@ -5,7 +5,9 @@ use discord_utils::DiscordClient;
 use twitch_utils::TwitchAPIWrapper;
 
 use crate::_types::clptypes::{Message, MetricUpdate};
-use crate::_types::{CASUAL_NEURO_FACTION, IRONMOUSE_NEURO_FACTION};
+use crate::_types::{
+    CASUAL_ID_SUFFIX, CASUAL_NEURO_FACTION, IRONMOUSE_ID_SUFFIX, IRONMOUSE_NEURO_FACTION,
+};
 use crate::metrics::metrictrait::AbstractMetric;
 
 pub struct Score {
@@ -44,7 +46,9 @@ impl AbstractMetric for Score {
                             .discord
                             .get_username_author(discord_tag)
                             .await
-                            .map(|info| HashMap::from([(info.id, user.score as f32)]))
+                            .map(|info| {
+                                HashMap::from([(info.id + CASUAL_ID_SUFFIX, user.score as f32)])
+                            })
                             .unwrap_or(HashMap::new()),
                     }
                 } else {
@@ -59,7 +63,9 @@ impl AbstractMetric for Score {
                             .twitch
                             .get_user_from_username(user.pxls_username)
                             .await
-                            .map(|info| HashMap::from([(info._id, user.score as f32)]))
+                            .map(|info| {
+                                HashMap::from([(info._id + IRONMOUSE_ID_SUFFIX, user.score as f32)])
+                            })
                             .unwrap_or(HashMap::new()),
                     }
                 } else {

@@ -7,3 +7,6 @@ pub mod leaderboardtypes;
 
 pub const CASUAL_NEURO_FACTION: u64 = 3680;
 pub const IRONMOUSE_NEURO_FACTION: u64 = 1;
+
+pub const CASUAL_ID_SUFFIX: &str = "_pxls";
+pub const IRONMOUSE_ID_SUFFIX: &str = "_ironmousepxls";

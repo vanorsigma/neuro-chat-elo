@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::_types::clptypes::{Message, MessageTag, MetadataTypes, MetadataUpdate};
-use crate::_types::{CASUAL_NEURO_FACTION, IRONMOUSE_NEURO_FACTION};
+use crate::_types::{
+    CASUAL_ID_SUFFIX, CASUAL_NEURO_FACTION, IRONMOUSE_ID_SUFFIX, IRONMOUSE_NEURO_FACTION,
+};
 use crate::metadata::metadatatrait::AbstractMetadata;
 use discord_utils::DiscordClient;
 use twitch_utils::seventvclient::SevenTVClient;
@@ -53,7 +55,7 @@ impl AbstractMetadata for ChatOrigin {
                             .await
                             .map(|author| {
                                 HashMap::from([(
-                                    author.id,
+                                    author.id + CASUAL_ID_SUFFIX,
                                     MetadataTypes::ChatOrigin(MessageTag::from(&message)),
                                 )])
                             })
@@ -69,7 +71,7 @@ impl AbstractMetadata for ChatOrigin {
                             .await
                             .map(|user| {
                                 HashMap::from([(
-                                    user._id,
+                                    user._id + IRONMOUSE_ID_SUFFIX,
                                     MetadataTypes::ChatOrigin(MessageTag::from(&message)),
                                 )])
                             })

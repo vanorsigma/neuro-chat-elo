@@ -3,6 +3,7 @@ use tokio::sync::Mutex;
 ///! (Special Event) Ironmouse Pxls Leaderboard
 use crate::_types::clptypes::{MessageTag, UserChatPerformance};
 use crate::_types::leaderboardtypes::LeaderboardInnerState;
+use crate::_types::IRONMOUSE_ID_SUFFIX;
 use crate::is_message_origin;
 use crate::leaderboards::leaderboardtrait::AbstractLeaderboard;
 use std::collections::HashMap;
@@ -44,6 +45,7 @@ impl AbstractLeaderboard for IronmousePxls {
             .filter_map(|(k, state)| {
                 if state.score != 0.0 {
                     let mut new_state = state.clone();
+                    new_state.id = state.id.replace(IRONMOUSE_ID_SUFFIX, "");
                     new_state.elo = state.score;
                     Some((k.to_string(), new_state))
                 } else {
