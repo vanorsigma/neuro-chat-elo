@@ -1,0 +1,116 @@
+name: Trigger Rust
+
+on:
+  - workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Restore leaderboards
+      uses: actions/cache/restore@v3
+      id: restore-leaderboards
+      with:
+        path: |
+          chatdownloader/*.bin
+        key: ${{ hashFiles('season.txt') }}
+    
+    - name: Restore Rust Builds
+      uses: actions/cache@v4
+      id: restore-rust-binary
+      with:
+        path: |
+          chatdownloader/target
+        key: ${{ runner.os }}-rust-binary-${{ hashFiles('chatdownloader/Cargo.toml') }}
+
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: nightly
+
+    - name: Run score calculation
+      env:
+        ACT: ${{ vars.ACT }}
+        TWITCH_APPID: ${{ secrets.TWITCH_APPID }}
+        TWITCH_APPSECRET: ${{ secrets.TWITCH_APPSECRET }}
+      working-directory: rust/
+      run: |
+        cargo run --release
+
+    - name: Stage files
+      run: |
+        ./stage.sh
+
+    - name: Delete old cache
+      env:
+        CACHE_NAME: ${{ steps.restore-leaderboards.outputs.cache-primary-key }}
+        REPO: ${{ github.repository }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if [ "${ACT}" == "1" ]; then
+          echo "On Act, skipping."
+          exit 0
+        fi
+        echo "Deleting old cache"
+        gh extension install actions/gh-actions-cache
+        gh actions-cache delete ${CACHE_NAME} -R $REPO --confirm || exit 0
+
+    - name: Save leaderboards to cache
+      uses: actions/cache/save@v3
+      with:
+        path: |
+          chatdownloader/*.json
+        key: ${{ steps.restore-leaderboards.outputs.cache-primary-key }}
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache-dependency-path: 'web/package-lock.json'
+        cache: 'npm'
+
+    - name: Install npm dependencies
+      working-directory: web/
+      run: npm install
+
+    - name: Build website
+      working-directory: web/
+      run: npm run build
+
+    - name: Upload build Files
+      uses: actions/upload-artifact@v3  # NOTE: v3 to support act
+      with:
+        name: build
+        path: ./web/build
+
+    - name: Clean Directory and Checkout to Another Branch
+      run: |
+        git reset --hard
+        git clean -fd
+
+    - name: Checkout to publish branch
+      uses: actions/checkout@v4
+      with:
+        ref: 'publish'
+
+    - name: Clean directory again
+      run: |
+        git reset --hard
+        git clean -fd
+
+    - name: Download Build Files
+      uses: actions/download-artifact@v3
+      with:
+        name: build
+        path: .
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name 'Bot'
+        git config --global user.email 'bot@github.com'
+        git add . || exit 0
+        git commit -m "Update leaderboards" || exit 0
+        git push origin publish || exit 0

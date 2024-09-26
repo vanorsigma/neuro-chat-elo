@@ -1,0 +1,3 @@
+[workspace]
+members = ["chatdownloader", "discord_utils", "elo", "twitch_utils"]
+resolver = "2"
