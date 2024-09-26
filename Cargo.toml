@@ -1,0 +1,3 @@
+[workspace]
+members = ["lbo", "live-elo", "websocket-shared"]
+resolver = "2"

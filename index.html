@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>live-elo example</title>
+
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        .websocket_unknown::after {
+            color: gray;
+            content: "Unknown";
+        }
+
+        .websocket_connected::after {
+            color: green;
+            content: "Connected";
+        }
+
+        .websocket_disconnected::after {
+            color: red;
+            content: "Disconnected";
+        }
+    </style>
+
+    <script>
+        // This currently only works with one leaderboard beacuse I can't be bothered
+        // to actually do webdev
+        const displayedLeaderboard = "message_count";
+        const websocketUrl = "ws://localhost:8000/websocket";
+        const websocket = new WebSocket(websocketUrl);
+
+        function setWebsocketStatus(status) {
+            const websocketStatusElement = document.getElementById("websocket-status");
+            websocketStatusElement.classList = [status];
+        }
+
+        websocket.onopen = (event) => {
+            console.log("websocket opened", event);
+
+            setWebsocketStatus("websocket_connected");
+        };
+
+        websocket.onclose = (event) => {
+
+            console.warn("websocket closed", event);
+            setWebsocketStatus("websocket_disconnected");
+        };
+
+        websocket.onerror = (event) => {
+            console.error("websocket error", event);
+
+            setWebsocketStatus("websocket_disconnected");
+        };
+
+        websocket.onmessage = (message) => {
+            message.data.text().then((message) => handleMessage(JSON.parse(message)));
+        };
+
+        // :Clueless: this should be a message queue or something to preserve order I'm just lazy
+        // and I think this will be fine
+        async function handleMessage(message) {
+            const messageType = message.type;
+
+            switch (messageType) {
+                case "initial_leaderboards":
+                    const leaderboardData = message.data.leaderboards[displayedLeaderboard];
+                    fillInitialTable(leaderboardData);
+                    break;
+
+                case "changes":
+                    processUpdate(message.data.changes[displayedLeaderboard]);
+                    break;
+
+                default:
+                    console.warn("got unknown data type from websocket", messageType);
+                    break;
+            }
+        }
+
+        function fillInitialTable(data) {
+            const table = document.getElementById("leaderboard_entries");
+
+            data.forEach(entry => {
+                // console.log(entry);
+                appendRow(table, `${entry.author_id.platform}:${entry.author_id.id}`, entry.elo);
+            });
+        }
+
+        function appendRow(table, ...values) {
+            const tableBody = table.querySelector("tbody");
+            const newRow = tableBody.insertRow();
+
+            values.forEach((value) => {
+                const cellElement = document.createElement("td");
+                cellElement.innerText = value;
+                newRow.appendChild(cellElement);
+            });
+        }
+
+        function processUpdate(update) {
+            const table = document.getElementById("leaderboard_entries");
+            const tableBody = table.querySelector("tbody");
+
+            // Object.entries(update).forEach((key, value) => {
+            //     const index = parseInt(key);
+            //     console.log("update", index, value);
+            //     // tableBody.rows[)];
+            // });
+
+            const entries = [];
+            for (const [key, value] of Object.entries(update)) {
+                const index = parseInt(key);
+                entries.push([index, value]);
+            }
+
+            // This *should* avoid having to leave spaces in the leaderboard or other shenanegans
+            // also for some reason js complains if both unused arguments are called `_`
+            entries.sort(([a, _a], [b, _b]) => a - b);
+
+            for (const [index, value] of entries) {
+                const tableBodyLength = tableBody.rows.length;
+                if (index === tableBodyLength) {
+                    appendRow(table, `${value.author_id.platform}:${value.author_id.id}`, value.elo);
+                } else {
+                    const existingElement = tableBody.rows.item(index);
+                    existingElement.children[0].innerHTML = `${value.author_id.platform}:${value.author_id.id}`;
+                    existingElement.children[1].innerHTML = value.elo;
+                }
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <header>
+        <p id="websocket-status" class="websocket_unknown">Websocket status: </p>
+    </header>
+
+    <section>
+        <h1>leaderboard</h1>
+        <table id="leaderboard_entries">
+            <thead>
+                <tr>
+                    <th scope="col">User Id</th>
+                    <th scope="col">Elo</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </section>
+</body>
+
+</html>
