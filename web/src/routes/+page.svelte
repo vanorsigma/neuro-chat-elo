@@ -16,7 +16,8 @@
     adventureTheFarmRank,
     emoteRank,
     ironmousePixelRank,
-    pxlsRank
+    pxlsRank,
+    ironmouseChatRank
   } from '$lib/ranks';
   import { sanitizeString } from '$lib';
   import Menu from '$lib/menu.svelte';
@@ -40,7 +41,8 @@
     'Top Emotes',
     'Neuro Adventures - The Farm',
     'Ironmouse Subathon Canvas',
-    'Casual pxls'
+    'Casual pxls',
+    'Ironmouse Canvas Chat'
   ];
   $: ranking = [
     $overallRank,
@@ -55,7 +57,8 @@
     $emoteRank,
     $adventureTheFarmRank,
     $ironmousePixelRank,
-    $pxlsRank
+    $pxlsRank,
+    $ironmouseChatRank
   ];
 
   $: allRanksLoaded = ranking.every((r) => r.ranks.length > 0);

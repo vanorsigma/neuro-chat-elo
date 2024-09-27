@@ -59,6 +59,14 @@ impl DiscordChatDownloader {
         Ok(())
     }
 
+    pub async fn load_from_json(
+        path: &str
+    ) -> Result<DiscordChatLogs, Box<dyn std::error::Error>> {
+        Ok(serde_json::from_reader(BufReader::new(File::open(
+            &path,
+        )?))?)
+    }
+
     pub async fn download_chat(
         &mut self,
         start_datetime: DateTime<Utc>,
@@ -114,8 +122,6 @@ impl DiscordChatDownloader {
         }
 
         info!("Parsing JSON");
-        Ok(serde_json::from_reader(BufReader::new(File::open(
-            &output_path,
-        )?))?)
+        Self::load_from_json(&output_path).await
     }
 }

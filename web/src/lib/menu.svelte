@@ -27,7 +27,8 @@
   };
 
   const specialEventsMapping = {
-    'Ironmouse Canvas': 11
+    'Ironmouse Canvas': 11,
+    'Ironmouse Canvas Chat': 13
   };
 
   export let itemClicked: (arg0: number) => void;

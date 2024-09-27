@@ -44,6 +44,15 @@ async fn main() {
 
     let discord = Arc::new(DiscordClient::new(token));
 
+    if let Ok(cache_path) = env::var("DISCORD_USER_CACHE") {
+        discord
+            .preload_cache(&cache_path)
+            .await
+            .expect("cache path configured, but cannot preload");
+    } else {
+        log::warn!("No discord user cache, not preloading discord client")
+    }
+
     let mut downloader = twitchdownloaderproxy::TwitchChatDownloader::new();
 
     let adventure_ranks =
@@ -94,7 +103,9 @@ async fn main() {
         }
         .into_iter()
         .map(|message| async {
-            discord.set_username_author(message.author.clone()).await;
+            discord
+                .set_username_author(message.author.clone())
+                .await;
             message
         })
         .map(|x| async { Message::Discord(x.await) }),
@@ -113,7 +124,8 @@ async fn main() {
 
     let seventv_client = Arc::new(SevenTVClient::new().await);
 
-    let processor = chatlogprocessor::ChatLogProcessor::new(Arc::new(twitch), seventv_client, discord).await;
+    let processor =
+        chatlogprocessor::ChatLogProcessor::new(Arc::new(twitch), seventv_client, discord).await;
     // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());
     let user_performances = processor
         .process_from_messages(

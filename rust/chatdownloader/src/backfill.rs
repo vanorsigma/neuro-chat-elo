@@ -2,6 +2,7 @@
 A function to backfill given video IDs
 */
 
+use core::error;
 use std::env;
 use std::sync::Arc;
 
@@ -11,6 +12,7 @@ use log::info;
 use twitch_utils::seventvclient::SevenTVClient;
 
 use crate::chatlogprocessor::ChatLogProcessor;
+use crate::discorddownloaderproxy::DiscordChatDownloader;
 use crate::twitchdownloaderproxy::TwitchChatDownloader;
 use crate::{adventuresdownloaderproxy, discorddownloaderproxy, CHANNEL_ID};
 use twitch_utils::TwitchAPIWrapper;
@@ -22,6 +24,16 @@ pub async fn backfill() {
         })
         .unwrap_or("".to_string());
     let discord = Arc::new(DiscordClient::new(discord_token.to_string()));
+
+    if let Ok(cache_path) = env::var("DISCORD_USER_CACHE") {
+        discord
+            .preload_cache(&cache_path)
+            .await
+            .expect("cache path configured, but cannot preload");
+    } else {
+        log::warn!("No discord user cache, not preloading discord client")
+    }
+
     let twitch = Arc::new(TwitchAPIWrapper::new().await.unwrap());
     let seventv_client = Arc::new(SevenTVClient::new().await);
     let video_ids = twitch

@@ -1,7 +1,8 @@
 pub mod types;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::File, io::BufReader};
 
+use anyhow::Error;
 use reqwest;
 pub use tokio::sync::RwLock;
 pub use types::*;
@@ -37,11 +38,23 @@ impl DiscordClient {
             .user)
     }
 
+    pub async fn preload_cache(&self, cache_path: &str) -> Result<(), Error> {
+        for task in serde_json::from_reader::<_, Vec<DiscordAuthor>>(BufReader::new(File::open(
+            &cache_path,
+        )?))?
+        .into_iter()
+        .map(|author| self.set_username_author(author))
+        {
+            task.await
+        }
+
+        Ok(())
+    }
+
     pub async fn set_username_author(&self, author: DiscordAuthor) {
         self.username_to_author_cache
             .write()
             .await
-
             .insert(author.name.to_string(), author.clone());
     }
 
