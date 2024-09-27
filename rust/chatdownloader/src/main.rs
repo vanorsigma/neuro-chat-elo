@@ -34,7 +34,7 @@ async fn main() {
 
     info!("Authenticating with Twitch...");
 
-    let twitch = TwitchAPIWrapper::new().await.unwrap();
+    let twitch = Arc::new(TwitchAPIWrapper::new().await.unwrap());
     let vod_id = twitch
         .get_latest_vod_ids(elo::_constants::VED_CH_ID.to_string(), 1)
         .await[0]
@@ -68,12 +68,6 @@ async fn main() {
         .cloned()
         .map(|item| Message::Adventures(item));
 
-    let pxls_ironmouse =
-        pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls_ironmouse.json")
-            .expect("should have ironmouse pxls json")
-            .into_iter()
-            .map(Message::IronmousePixels);
-
     let chat_log = downloader
         .download_chat(&vod_id)
         .await
@@ -103,9 +97,7 @@ async fn main() {
         }
         .into_iter()
         .map(|message| async {
-            discord
-                .set_username_author(message.author.clone())
-                .await;
+            discord.set_author_cache(message.author.clone()).await;
             message
         })
         .map(|x| async { Message::Discord(x.await) }),
@@ -125,7 +117,8 @@ async fn main() {
     let seventv_client = Arc::new(SevenTVClient::new().await);
 
     let processor =
-        chatlogprocessor::ChatLogProcessor::new(Arc::new(twitch), seventv_client, discord).await;
+        chatlogprocessor::ChatLogProcessor::new(twitch.clone(), seventv_client, discord.clone())
+            .await;
     // let chat_log = processor.__parse_to_log_struct("chat.json".to_string());
     let user_performances = processor
         .process_from_messages(
@@ -133,9 +126,9 @@ async fn main() {
                 .chain(discord_messages)
                 .chain(bilibili_messages)
                 .chain(adventures_farm)
-                .chain(pxls_casual)
-                .chain(pxls_ironmouse),
+                .chain(pxls_casual),
         )
         .await;
-    chatlogprocessor::ChatLogProcessor::export_to_leaderboards(user_performances).await;
+    chatlogprocessor::ChatLogProcessor::export_to_leaderboards(user_performances, twitch, discord)
+        .await;
 }

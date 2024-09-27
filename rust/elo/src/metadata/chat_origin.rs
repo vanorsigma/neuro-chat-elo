@@ -64,22 +64,6 @@ impl AbstractMetadata for ChatOrigin {
                         HashMap::new()
                     }
                 }
-                Message::IronmousePixels(user) => {
-                    if let Some(IRONMOUSE_NEURO_FACTION) = user.faction {
-                        self.twitch_client
-                            .get_user_from_username(user.pxls_username.clone())
-                            .await
-                            .map(|user| {
-                                HashMap::from([(
-                                    user._id + IRONMOUSE_ID_SUFFIX,
-                                    MetadataTypes::ChatOrigin(MessageTag::from(&message)),
-                                )])
-                            })
-                            .unwrap_or(HashMap::new())
-                    } else {
-                        HashMap::new()
-                    }
-                }
                 _ => HashMap::new(),
             },
         }

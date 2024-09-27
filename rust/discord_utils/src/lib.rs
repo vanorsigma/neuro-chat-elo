@@ -3,7 +3,7 @@ pub mod types;
 use std::{collections::HashMap, fs::File, io::BufReader};
 
 use anyhow::Error;
-use reqwest;
+use reqwest::{self, StatusCode};
 pub use tokio::sync::RwLock;
 pub use types::*;
 
@@ -14,6 +14,7 @@ const DISCORD_AVATAR_URL: &str =
 pub struct DiscordClient {
     token: String,
     username_to_author_cache: RwLock<HashMap<String, DiscordAuthor>>,
+    uid_to_author_cache: RwLock<HashMap<String, DiscordAuthor>>,
 }
 
 impl DiscordClient {
@@ -21,13 +22,37 @@ impl DiscordClient {
         Self {
             token,
             username_to_author_cache: RwLock::new(HashMap::new()),
+            uid_to_author_cache: RwLock::new(HashMap::new()),
+        }
+    }
+
+    pub async fn fetch_new_profile_only_if_not_found(
+        &self,
+        author: DiscordAuthor,
+    ) -> Result<DiscordAuthor, anyhow::Error> {
+        if let StatusCode::NOT_FOUND = reqwest::Client::new()
+            .get(author.avatar_url.clone())
+            .send()
+            .await?
+            .status()
+        {
+            let profile = self.get_profile_for_user_id(author.id).await?;
+            Ok(DiscordAuthor {
+                id: profile.id,
+                name: author.name,
+                nickname: author.nickname,
+                roles: author.roles,
+                avatar_url: profile.avatar,
+            })
+        } else {
+            Ok(author)
         }
     }
 
     pub async fn get_profile_for_user_id(
         &self,
         user_id: String,
-    ) -> Result<DiscordProfileUserResponse, anyhow::Error> {
+    ) -> Result<TransformedDiscordProfileUserResponse, anyhow::Error> {
         Ok(reqwest::Client::new()
             .get(DISCORD_PROFILE_URL.replace("{user_id}", &user_id))
             .header("Authorization", self.token.to_string())
@@ -35,27 +60,52 @@ impl DiscordClient {
             .await?
             .json::<DiscordProfileResponse>()
             .await?
-            .user)
+            .user
+            .into())
+    }
+
+    pub async fn cached_get_profile_for_user_id(
+        &self,
+        user_id: String,
+    ) -> Result<TransformedDiscordProfileUserResponse, anyhow::Error> {
+        if let Some(author) = self.get_userid_author(user_id.clone()).await {
+            return Ok(author.into());
+        }
+
+        log::debug!("cache miss for {user_id}");
+        self.get_profile_for_user_id(user_id).await
     }
 
     pub async fn preload_cache(&self, cache_path: &str) -> Result<(), Error> {
-        for task in serde_json::from_reader::<_, Vec<DiscordAuthor>>(BufReader::new(File::open(
-            &cache_path,
-        )?))?
-        .into_iter()
-        .map(|author| self.set_username_author(author))
-        {
-            task.await
-        }
+        futures::future::join_all(
+            serde_json::from_reader::<_, Vec<DiscordAuthor>>(BufReader::new(File::open(
+                &cache_path,
+            )?))?
+            .into_iter()
+            .map(|author| async {
+                self.set_author_cache(
+                    self.fetch_new_profile_only_if_not_found(author.clone())
+                        .await
+                        .unwrap_or(author),
+                )
+                .await
+            }),
+        )
+        .await;
 
         Ok(())
     }
 
-    pub async fn set_username_author(&self, author: DiscordAuthor) {
+    pub async fn set_author_cache(&self, author: DiscordAuthor) {
         self.username_to_author_cache
             .write()
             .await
             .insert(author.name.to_string(), author.clone());
+
+        self.uid_to_author_cache
+            .write()
+            .await
+            .insert(author.id.to_string(), author);
     }
 
     pub async fn get_username_author(&self, username: String) -> Option<DiscordAuthor> {
@@ -65,6 +115,10 @@ impl DiscordClient {
             .get(&username)
             .cloned()
     }
+
+    pub async fn get_userid_author(&self, uid: String) -> Option<DiscordAuthor> {
+        self.uid_to_author_cache.read().await.get(&uid).cloned()
+    }
 }
 
 impl DiscordProfileUserResponse {
@@ -72,5 +126,32 @@ impl DiscordProfileUserResponse {
         DISCORD_AVATAR_URL
             .replace("{user_id}", &self.id)
             .replace("{avatar}", &self.avatar)
+    }
+}
+
+pub struct TransformedDiscordProfileUserResponse {
+    pub id: String,
+    pub avatar: String,
+    pub global_name: String,
+}
+
+impl Into<TransformedDiscordProfileUserResponse> for DiscordProfileUserResponse {
+    fn into(self) -> TransformedDiscordProfileUserResponse {
+        let url = self.get_profile_url();
+        TransformedDiscordProfileUserResponse {
+            id: self.id,
+            avatar: url,
+            global_name: self.global_name,
+        }
+    }
+}
+
+impl Into<TransformedDiscordProfileUserResponse> for DiscordAuthor {
+    fn into(self) -> TransformedDiscordProfileUserResponse {
+        TransformedDiscordProfileUserResponse {
+            id: self.id,
+            avatar: self.avatar_url,
+            global_name: self.nickname,
+        }
     }
 }

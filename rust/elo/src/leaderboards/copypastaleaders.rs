@@ -13,15 +13,17 @@ pub struct CopypastaLeaders {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for CopypastaLeaders {
-    fn new() -> Self {
+impl CopypastaLeaders {
+    pub fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
         };
         out.read_initial_state();
         out
     }
+}
 
+impl AbstractLeaderboard for CopypastaLeaders {
     fn get_name(&self) -> String {
         "copypasta".to_string()
     }

@@ -10,15 +10,17 @@ pub struct DiscordLivestreamChat {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for DiscordLivestreamChat {
-    fn new() -> Self {
+impl DiscordLivestreamChat {
+    pub fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
         };
         out.read_initial_state();
         out
     }
+}
 
+impl AbstractLeaderboard for DiscordLivestreamChat {
     fn get_name(&self) -> String {
         "discordlivestream".to_string()
     }

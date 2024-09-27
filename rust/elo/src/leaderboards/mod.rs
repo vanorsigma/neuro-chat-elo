@@ -5,6 +5,7 @@ mod casual_pxls;
 mod chatonly;
 mod copypastaleaders;
 mod discordlivestreamchat;
+mod ironmouse_canvas_chat;
 mod ironmouse_pxls;
 mod leaderboardtrait;
 mod nonvips;
@@ -13,10 +14,14 @@ mod partnersonly;
 mod subsonly;
 mod topemote;
 
+use std::sync::Arc;
+
+use discord_utils::DiscordClient;
 use futures::join;
 
 use log::error;
 use tokio::sync::broadcast;
+use twitch_utils::TwitchAPIWrapper;
 
 use crate::{
     _types::clptypes::UserChatPerformance, leaderboards::leaderboardtrait::AbstractLeaderboard,
@@ -37,7 +42,7 @@ async fn calc_leaderboard<L: AbstractLeaderboard + Sync + Send + 'static>(
             .leaderboard
             .update_leaderboard(user_chat_performance);
     }
-    leaderboard.leaderboard.save();
+    leaderboard.leaderboard.save().await;
 }
 
 struct WithReceiver<L: AbstractLeaderboard> {
@@ -72,10 +77,11 @@ pub struct LeaderboardProcessor {
     adventures_farm: WithReceiver<adventures_farm::AdventuresFarm>,
     casual_pxls: WithReceiver<casual_pxls::CasualPxls>,
     ironmouse_pxls: WithReceiver<ironmouse_pxls::IronmousePxls>,
+    ironmouse_canvas_chat: WithReceiver<ironmouse_canvas_chat::IronmouseCanvasChat>,
 }
 
 impl LeaderboardProcessor {
-    pub fn new() -> Self {
+    pub fn new(twitch_api: Arc<TwitchAPIWrapper>, discord_api: Arc<DiscordClient>) -> Self {
         let (tx, rx) = broadcast::channel(100000);
 
         let bitsonly = WithReceiver::new(bitsonly::BitsOnly::new(), rx.resubscribe());
@@ -97,9 +103,18 @@ impl LeaderboardProcessor {
         );
         let adventures_farm =
             WithReceiver::new(adventures_farm::AdventuresFarm::new(), rx.resubscribe());
-        let casual_pxls = WithReceiver::new(casual_pxls::CasualPxls::new(), rx.resubscribe());
-        let ironmouse_pxls =
-            WithReceiver::new(ironmouse_pxls::IronmousePxls::new(), rx.resubscribe());
+        let casual_pxls = WithReceiver::new(
+            casual_pxls::CasualPxls::new(discord_api.clone()),
+            rx.resubscribe(),
+        );
+        let ironmouse_pxls = WithReceiver::new(
+            ironmouse_pxls::IronmousePxls::new(twitch_api),
+            rx.resubscribe(),
+        );
+        let ironmouse_canvas_chat = WithReceiver::new(
+            ironmouse_canvas_chat::IronmouseCanvasChat::new(discord_api.clone()),
+            rx.resubscribe(),
+        );
 
         Self {
             tx: Some(tx),
@@ -116,6 +131,7 @@ impl LeaderboardProcessor {
             adventures_farm,
             casual_pxls,
             ironmouse_pxls,
+            ironmouse_canvas_chat,
         }
     }
 
@@ -129,22 +145,13 @@ impl LeaderboardProcessor {
             calc_leaderboard(&mut self.overall),
             calc_leaderboard(&mut self.subsonly),
             calc_leaderboard(&mut self.topemote),
-            calc_leaderboard(
-                &mut self.discordlivestreamchat
-            ),
+            calc_leaderboard(&mut self.discordlivestreamchat),
             calc_leaderboard(&mut self.partnersonly),
-            calc_leaderboard(
-                &mut self.bilibililivestreamchat,
-            ),
-            calc_leaderboard(
-                &mut self.adventures_farm,
-            ),
-            calc_leaderboard(
-                &mut self.casual_pxls,
-            ),
-            calc_leaderboard(
-                &mut self.ironmouse_pxls,
-            ),
+            calc_leaderboard(&mut self.bilibililivestreamchat,),
+            calc_leaderboard(&mut self.adventures_farm,),
+            calc_leaderboard(&mut self.casual_pxls),
+            calc_leaderboard(&mut self.ironmouse_pxls),
+            calc_leaderboard(&mut self.ironmouse_canvas_chat),
         );
     }
 }

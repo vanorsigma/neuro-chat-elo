@@ -10,15 +10,17 @@ pub struct AdventuresFarm {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for AdventuresFarm {
-    fn new() -> Self {
+impl AdventuresFarm {
+    pub fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
         };
         out.read_initial_state();
         out
     }
+}
 
+impl AbstractLeaderboard for AdventuresFarm {
     fn get_name(&self) -> String {
         "adventures_farm".to_string()
     }
@@ -35,7 +37,7 @@ impl AbstractLeaderboard for AdventuresFarm {
         }
     }
 
-    fn save(&mut self) {
+    async fn save(&mut self) {
         self.__get_state()
             .values_mut()
             .for_each(|state| state.elo = state.score);

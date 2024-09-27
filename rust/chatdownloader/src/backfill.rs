@@ -52,9 +52,7 @@ pub async fn backfill() {
             .comments;
 
         for comment in &chat_log {
-            twitch
-                .set_user_from_username(comment.commenter.name.clone(), comment.commenter.clone())
-                .await;
+            twitch.set_user_cache(comment.commenter.clone()).await;
         }
 
         let chat_log = chat_log.into_iter().map(Message::Twitch);
@@ -75,7 +73,7 @@ pub async fn backfill() {
             }
             .into_iter()
             .map(|message| async {
-                discord.set_username_author(message.author.clone()).await;
+                discord.set_author_cache(message.author.clone()).await;
                 message
             })
             .map(|message_async| async { Message::Discord(message_async.await) }),
@@ -89,26 +87,32 @@ pub async fn backfill() {
                 .process_from_messages(chat_log.chain(discord_messages))
                 .await;
 
-        ChatLogProcessor::export_to_leaderboards(user_performances).await;
+        ChatLogProcessor::export_to_leaderboards(
+            user_performances,
+            twitch.clone(),
+            discord.clone(),
+        )
+        .await;
     }
 
-    let clp = ChatLogProcessor::new(twitch, seventv_client.clone(), discord).await;
+    let clp = ChatLogProcessor::new(twitch.clone(), seventv_client.clone(), discord.clone()).await;
 
-    // if let Ok(token) = std::env::var("CHAT_DISCORD_TOKEN") {
-    //     let adventure_ranks = adventuresdownloaderproxy::AdventuresDownloaderProxy::new(token)
-    //         .get_ranks()
-    //         .await
-    //         .unwrap();
+    if let Ok(_) = std::env::var("CHAT_DISCORD_TOKEN") {
+        let adventure_ranks =
+            adventuresdownloaderproxy::AdventuresDownloaderProxy::new(discord.clone())
+                .get_ranks()
+                .await
+                .unwrap();
 
-    //     additional_messages.extend(
-    //         adventure_ranks
-    //             .get("The Farm")
-    //             .unwrap()
-    //             .into_iter()
-    //             .cloned()
-    //             .map(|item| Message::Adventures(item)),
-    //     );
-    // }
+        additional_messages.extend(
+            adventure_ranks
+                .get("The Farm")
+                .unwrap()
+                .into_iter()
+                .cloned()
+                .map(|item| Message::Adventures(item)),
+        );
+    }
 
     if std::fs::exists("pxls.json").unwrap_or(false) {
         info!("Found pxls.json, will export pxls leaderboard");
@@ -120,19 +124,11 @@ pub async fn backfill() {
         );
     }
 
-    if std::fs::exists("pxls_ironmouse.json").unwrap_or(false) {
-        info!("Found pxls_ironmouse.json, will export pxls leaderboard");
-        additional_messages.extend(
-            pxls_utils::PxlsJsonReader::read_pxls_from_json_path("pxls_ironmouse.json")
-                .expect("should have ironmouse pxls json")
-                .into_iter()
-                .map(Message::IronmousePixels),
-        );
-    }
-
     ChatLogProcessor::export_to_leaderboards(
         clp.process_from_messages(additional_messages.into_iter())
             .await,
+        twitch,
+        discord,
     )
     .await;
 }

@@ -15,15 +15,17 @@ pub struct BitsOnly {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for BitsOnly {
-    fn new() -> Self {
+impl BitsOnly {
+    pub fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
         };
         out.read_initial_state();
         out
     }
+}
 
+impl AbstractLeaderboard for BitsOnly {
     fn get_name(&self) -> String {
         "bits-only".to_string()
     }

@@ -73,26 +73,6 @@ impl AbstractMetadata for BasicInfo {
                     MetadataUpdate::default()
                 }
             }
-            Message::IronmousePixels(user) => {
-                if let Some(IRONMOUSE_NEURO_FACTION) = user.faction {
-                    MetadataUpdate {
-                        metadata_name: self.get_name(),
-                        updates: self
-                            .twitch_client
-                            .get_user_from_username(user.pxls_username.clone())
-                            .await
-                            .map(|user| {
-                                HashMap::from([(
-                                    user._id + IRONMOUSE_ID_SUFFIX,
-                                    MetadataTypes::BasicInfo(user.display_name, user.logo),
-                                )])
-                            })
-                            .unwrap_or(HashMap::new()),
-                    }
-                } else {
-                    MetadataUpdate::default()
-                }
-            }
             _ => MetadataUpdate::default(),
         }
     }

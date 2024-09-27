@@ -55,23 +55,6 @@ impl AbstractMetric for Score {
                     MetricUpdate::empty_with_name(self.get_name())
                 }
             }
-            Message::IronmousePixels(user) => {
-                if let Some(IRONMOUSE_NEURO_FACTION) = user.faction {
-                    MetricUpdate {
-                        metric_name: self.get_name(),
-                        updates: self
-                            .twitch
-                            .get_user_from_username(user.pxls_username)
-                            .await
-                            .map(|info| {
-                                HashMap::from([(info._id + IRONMOUSE_ID_SUFFIX, user.score as f32)])
-                            })
-                            .unwrap_or(HashMap::new()),
-                    }
-                } else {
-                    MetricUpdate::empty_with_name(self.get_name())
-                }
-            }
             _ => MetricUpdate::empty_with_name(self.get_name()),
         }
     }

@@ -13,15 +13,17 @@ pub struct ChatOnly {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for ChatOnly {
-    fn new() -> Self {
+impl ChatOnly {
+    pub fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
         };
         out.read_initial_state();
         out
     }
+}
 
+impl AbstractLeaderboard for ChatOnly {
     fn get_name(&self) -> String {
         "chat-only".to_string()
     }

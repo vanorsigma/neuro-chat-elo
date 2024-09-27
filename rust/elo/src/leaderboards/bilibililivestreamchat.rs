@@ -11,15 +11,17 @@ pub struct BilibiliLivestreamChat {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for BilibiliLivestreamChat {
-    fn new() -> Self {
+impl BilibiliLivestreamChat {
+    pub fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
         };
         out.read_initial_state();
         out
     }
+}
 
+impl AbstractLeaderboard for BilibiliLivestreamChat {
     fn get_name(&self) -> String {
         "bilibililivestreamchat".to_string()
     }

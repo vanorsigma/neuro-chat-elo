@@ -13,15 +13,17 @@ pub struct Overall {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for Overall {
-    fn new() -> Self {
+impl Overall {
+    pub fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
         };
         out.read_initial_state();
         out
     }
+}
 
+impl AbstractLeaderboard for Overall {
     fn get_name(&self) -> String {
         "overall".to_string()
     }

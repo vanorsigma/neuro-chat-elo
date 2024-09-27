@@ -1,7 +1,7 @@
 use discord_utils::DiscordClient;
-use elo::{MessageProcessorSetup, MessageProcessorRunning};
 use elo::_types::clptypes::{Message, UserChatPerformance};
 use elo::leaderboards::LeaderboardProcessor;
+use elo::{MessageProcessorRunning, MessageProcessorSetup};
 use log::{debug, info};
 use std::fs;
 use std::sync::Arc;
@@ -24,7 +24,11 @@ pub struct ChatLogProcessor {
 }
 
 impl ChatLogProcessor {
-        pub async fn new(twitch: Arc<TwitchAPIWrapper>, seventv_client: Arc<SevenTVClient>, discord_client: Arc<DiscordClient>) -> Self {
+    pub async fn new(
+        twitch: Arc<TwitchAPIWrapper>,
+        seventv_client: Arc<SevenTVClient>,
+        discord_client: Arc<DiscordClient>,
+    ) -> Self {
         let message_processor = MessageProcessorSetup::new(twitch, seventv_client, discord_client)
             .await
             .start()
@@ -69,8 +73,12 @@ impl ChatLogProcessor {
     }
 
     /// A function to export the user performances to the leaderboards and save them
-    pub async fn export_to_leaderboards(performances: Vec<UserChatPerformance>) {
-        let mut leaderboard_processor = LeaderboardProcessor::new();
+    pub async fn export_to_leaderboards(
+        performances: Vec<UserChatPerformance>,
+        twitch_api: Arc<TwitchAPIWrapper>,
+        discord: Arc<DiscordClient>,
+    ) {
+        let mut leaderboard_processor = LeaderboardProcessor::new(twitch_api, discord);
         leaderboard_processor.run(performances).await;
     }
 }

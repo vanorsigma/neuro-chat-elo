@@ -13,15 +13,17 @@ pub struct NonVIPS {
     state: HashMap<String, LeaderboardInnerState>,
 }
 
-impl AbstractLeaderboard for NonVIPS {
-    fn new() -> Self {
+impl NonVIPS {
+    pub fn new() -> Self {
         let mut out = Self {
             state: HashMap::new(),
         };
         out.read_initial_state();
         out
     }
+}
 
+impl AbstractLeaderboard for NonVIPS {
     fn get_name(&self) -> String {
         "nonvips".to_string()
     }

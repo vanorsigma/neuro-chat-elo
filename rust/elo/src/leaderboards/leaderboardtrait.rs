@@ -13,7 +13,7 @@ use std::io::{Read, Write};
 use std::{fs, fs::File};
 
 const K: f32 = 2.0;
-const STARTING_ELO: f32 = 80.0;
+pub(super) const STARTING_ELO: f32 = 80.0;
 
 trait PartialWindowable<'a, T: 'a, F: Fn(&&T) -> R, R> {
     /// Constructs a partial window.
@@ -100,10 +100,6 @@ where
 }
 
 pub trait AbstractLeaderboard {
-    fn new() -> Self
-    where
-        Self: Sized;
-
     fn get_name(&self) -> String;
 
     fn __get_state(&mut self) -> &mut HashMap<String, LeaderboardInnerState>;
@@ -212,7 +208,7 @@ pub trait AbstractLeaderboard {
         info!("{} leaderboard saved", self.get_name());
     }
 
-    fn save(&mut self) {
+    async fn save(&mut self) {
         info!("Saving {} leaderboard...", self.get_name());
         self.__calculate_new_elo();
         self.save_to_disk();

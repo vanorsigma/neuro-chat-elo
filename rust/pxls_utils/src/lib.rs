@@ -2,7 +2,7 @@ use std::io::BufReader;
 
 use serde::Deserialize;
 use types::SqliteDump;
-pub use types::{PxlsUser, IronmousePxlsUser};
+pub use types::PxlsUser;
 
 mod types;
 

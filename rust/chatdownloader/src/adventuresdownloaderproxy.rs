@@ -18,7 +18,7 @@ impl AdventuresDownloaderProxy {
     }
 
     async fn get_rank_item_with_avatar(&self, rank_item: AdventuresRankItem) -> Result<AdventuresRankItemWithAvatar, anyhow::Error> {
-        let avatar_url = self.client.get_profile_for_user_id(rank_item.uid.clone()).await?.get_profile_url();
+        let avatar_url = self.client.get_profile_for_user_id(rank_item.uid.clone()).await?.avatar;
         AdventuresRankItemWithAvatar::with_adventures_rank_item(rank_item, avatar_url)
     }
 

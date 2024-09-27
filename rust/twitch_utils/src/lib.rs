@@ -1,14 +1,13 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 
 use chrono::{DateTime, FixedOffset};
 use log::debug;
 use twitch_api::helix::chat::{ChatBadge, GetChannelChatBadgesRequest, GetGlobalChatBadgesRequest};
-use twitch_api::helix::users::{GetUsersRequest, User};
+use twitch_api::helix::users::GetUsersRequest;
 use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
-use twitch_api::types::NicknameRef;
+use twitch_api::types::{NicknameRef, UserIdRef};
 use twitch_api::HelixClient;
 use twitchtypes::ChatUserInfo;
 
@@ -49,6 +48,7 @@ pub struct TwitchAPIWrapper {
     twitch: HelixClient<'static, reqwest::Client>,
     token: AppAccessToken,
     username_to_profile_cache: RwLock<HashMap<String, ChatUserInfo>>,
+    uid_to_profile_cache: RwLock<HashMap<String, ChatUserInfo>>,
 }
 
 impl TwitchAPIWrapper {
@@ -79,6 +79,7 @@ impl TwitchAPIWrapper {
             twitch,
             token,
             username_to_profile_cache: RwLock::new(HashMap::new()),
+            uid_to_profile_cache: RwLock::new(HashMap::new()),
         })
     }
 
@@ -155,11 +156,52 @@ impl TwitchAPIWrapper {
         Ok(badge_sets)
     }
 
-    pub async fn set_user_from_username(&self, username: String, info: ChatUserInfo) {
+    pub async fn set_user_cache(&self, info: ChatUserInfo) {
         self.username_to_profile_cache
             .write()
             .await
-            .insert(username, info);
+            .insert(info.name.clone(), info.clone());
+
+        self.uid_to_profile_cache
+            .write()
+            .await
+            .insert(info._id.clone(), info);
+    }
+
+    async fn cache_user_from_request(
+        &self,
+        request: GetUsersRequest<'_>,
+    ) -> Result<(), anyhow::Error> {
+        let response = self.twitch.req_get(request, &self.token).await?;
+
+        if response.data.len() < 1 {
+            return Err(anyhow::anyhow!("can't find user id"));
+        }
+
+        let user = response.data[0].clone();
+        let image_url = user.profile_image_url.unwrap_or("".to_string()).to_string();
+
+        self.username_to_profile_cache.write().await.insert(
+            user.login.to_string(),
+            ChatUserInfo {
+                display_name: user.display_name.to_string(),
+                _id: user.id.to_string(),
+                logo: image_url.clone(),
+                name: user.login.to_string(),
+            },
+        );
+
+        self.uid_to_profile_cache.write().await.insert(
+            user.id.to_string(),
+            ChatUserInfo {
+                display_name: user.display_name.to_string(),
+                _id: user.id.to_string(),
+                logo: image_url,
+                name: user.login.to_string(),
+            },
+        );
+
+        Ok(())
     }
 
     pub async fn get_user_from_username(
@@ -172,26 +214,7 @@ impl TwitchAPIWrapper {
 
             let nickname = [NicknameRef::from_str(&username)];
             let request = GetUsersRequest::logins(&nickname);
-            let response = self.twitch.req_get(request, &self.token).await?;
-
-            log::info!("getting id for username: {username}");
-
-            if response.data.len() < 1 {
-                log::error!("can't find user id for username: {username}");
-                return Err(anyhow::anyhow!("can't find user id for username: {username}"));
-            }
-
-            let user = response.data[0].clone();
-
-            self.username_to_profile_cache.write().await.insert(
-                user.login.to_string(),
-                ChatUserInfo {
-                    display_name: user.display_name.to_string(),
-                    _id: user.id.to_string(),
-                    logo: user.profile_image_url.unwrap_or("".to_string()),
-                    name: user.login.to_string(),
-                },
-            );
+            self.cache_user_from_request(request).await?;
         } else {
             log::info!("cache hit for {username}");
         }
@@ -203,5 +226,26 @@ impl TwitchAPIWrapper {
             .cloned()
             .ok_or(anyhow::anyhow!("shouldn't be empty by now"))
             .inspect_err(|obj| log::info!("cannot find {username} due to {obj}"))
+    }
+
+    pub async fn get_user_from_uid(&self, uid: String) -> Result<ChatUserInfo, anyhow::Error> {
+        let cache_read = self.uid_to_profile_cache.read().await;
+        if let None = cache_read.get(&uid) {
+            drop(cache_read); // release read lock to obtain write lock
+
+            let nickname = [UserIdRef::from_str(&uid)];
+            let request = GetUsersRequest::ids(&nickname);
+            self.cache_user_from_request(request).await?;
+        } else {
+            log::info!("cache hit for {uid}");
+        }
+
+        self.uid_to_profile_cache
+            .read()
+            .await
+            .get(&uid)
+            .cloned()
+            .ok_or(anyhow::anyhow!("shouldn't be empty by now"))
+            .inspect_err(|obj| log::info!("cannot find {uid} due to {obj}"))
     }
 }
