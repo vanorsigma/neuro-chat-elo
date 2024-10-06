@@ -39,7 +39,7 @@
               height="225"
               rx="25.5"
               ry="25.5"
-              fill={winner ? 'url(#mx-gradient-ffd700-1-d4c11e-1-s-0)' : '#f7dedf'}
+              class={winner ? 'gold' : 'normal'}
               pointer-events="all"
             />
           </g>
@@ -139,3 +139,13 @@
     </g>
   </g>
 </svg>
+
+<style lang="postcss">
+  svg .normal {
+    fill: theme(colors.chat);
+  }
+
+  svg .gold {
+    fill: url(#mx-gradient-ffd700-1-d4c11e-1-s-0);
+  }
+</style>

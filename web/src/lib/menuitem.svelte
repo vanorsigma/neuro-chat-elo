@@ -9,8 +9,8 @@
   <p class="item {selected ? 'selected-item bold underline' : 'cursor-pointer'}">{text}</p>
 </div>
 
-<style>
+<style lang="postcss">
   .item {
-    color: salmon;
+    color: theme(colors.on-bg);
   }
 </style>

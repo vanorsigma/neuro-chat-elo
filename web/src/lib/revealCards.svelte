@@ -13,7 +13,7 @@
 </script>
 
 <button
-  class="absolute z-50 top-10 left-4"
+  class="absolute text-on-bg z-50 top-10 left-4"
   on:click={() => {
     allAnimationsDone();
     if (currentTimeout) {

@@ -7,8 +7,9 @@ export default {
         '4': '1fr 4fr 1fr 1fr'
       },
       colors: {
-        'neuro': '#fea8ae',
-        'chat': '#f7dedf'
+        'neuro': '#ad5411',
+        'chat': '#e2936f',
+        'on-bg': '#ffffff',
       }
     },
   },

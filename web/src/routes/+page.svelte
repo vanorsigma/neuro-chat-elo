@@ -170,7 +170,7 @@
           ? ''
           : 'hidden'}"
       >
-        <h1 class="text-3xl flex-none font-bold my-5 md:my-0 text-center">
+        <h1 class="text-on-bg text-3xl flex-none font-bold my-5 md:my-0 text-center">
           {rankingTitles[index]}
         </h1>
         <RankingCard
@@ -187,3 +187,11 @@
 {#if !showRankingsLoading && !allowRankings && ranking[0]?.ranks.length > 0 && allRanksLoaded}
   <RevealCards revealMetadatas={metadatas} allAnimationsDone={onAnimationDone} />
 {/if}
+
+<div class="snowflakes">
+  {#each [...Array(10).keys()] as i}
+    <div class="snowflake">
+      <img src="./bat.gif" alt="bat" />
+    </div>
+  {/each}
+</div>

@@ -47,7 +47,7 @@
           <g style="filter: drop-shadow(rgba(0, 0, 0, 0.25) 2px 3px 2px);">
             <path
               d="M 164 48 L 20 48 Q 10 48 12.54 38.33 L 17.46 19.67 Q 20 10 30 10 L 318 10 Q 328 10 325.46 19.67 L 320.54 38.33 Q 318 48 308 48 Z"
-              fill="#ebbcbd"
+              fill="#eb6123"
               stroke="none"
               pointer-events="all"
             />
