@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Discord "API" responses
 #[derive(Deserialize)]
@@ -16,14 +16,14 @@ pub struct DiscordProfileResponse {
 
 /// Discord Chat CLI responses
 
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct DiscordRole {
     pub id: String,
     pub name: String,
     pub position: u32,
 }
 
-#[derive(Clone, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct DiscordAuthor {
     pub id: String,
     pub name: String,

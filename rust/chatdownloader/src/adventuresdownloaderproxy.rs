@@ -1,6 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
-use adventures_utils::{AdventuresGetLeaderboardData, AdventuresGetLeaderboardRequest, AdventuresGetLeaderboardType, AdventuresMetadataRequest, AdventuresMetadataResponse, AdventuresRankItem, AdventuresRankItemWithAvatar};
+use adventures_utils::{
+    AdventuresGetLeaderboardData, AdventuresGetLeaderboardRequest, AdventuresGetLeaderboardType,
+    AdventuresMetadataRequest, AdventuresMetadataResponse, AdventuresRankItem,
+    AdventuresRankItemWithAvatar,
+};
 use discord_utils::DiscordClient;
 use itertools::Itertools;
 use reqwest;
@@ -12,24 +16,52 @@ pub struct AdventuresDownloaderProxy {
 
 impl AdventuresDownloaderProxy {
     pub fn new(discord: Arc<DiscordClient>) -> Self {
-        Self {
-            client: discord,
-        }
+        Self { client: discord }
     }
 
-    async fn get_rank_item_with_avatar(&self, rank_item: AdventuresRankItem) -> Result<AdventuresRankItemWithAvatar, anyhow::Error> {
-        let avatar_url = self.client.get_profile_for_user_id(rank_item.uid.clone()).await?.avatar;
+    async fn get_rank_item_with_avatar(
+        &self,
+        rank_item: AdventuresRankItem,
+    ) -> Result<AdventuresRankItemWithAvatar, anyhow::Error> {
+        let avatar_url = self
+            .client
+            .get_profile_for_user_id(rank_item.uid.clone())
+            .await?
+            .avatar;
         AdventuresRankItemWithAvatar::with_adventures_rank_item(rank_item, avatar_url)
     }
 
-    async fn get_rank_items_with_avatar(&self, rank_items: Vec<AdventuresRankItem>) -> Result<Vec<AdventuresRankItemWithAvatar>, anyhow::Error> {
-        futures::future::try_join_all(rank_items.into_iter().map(|rank_item| self.get_rank_item_with_avatar(rank_item))).await
+    async fn get_rank_items_with_avatar_drop_if_error(
+        &self,
+        rank_items: Vec<AdventuresRankItem>,
+    ) -> Vec<AdventuresRankItemWithAvatar> {
+        futures::future::join_all(
+            rank_items
+                .into_iter()
+                .map(|rank_item| self.get_rank_item_with_avatar(rank_item)),
+        )
+        .await
+        .into_iter()
+        .filter_map(|maybe_item| match maybe_item {
+            Ok(i) => Some(i),
+            Err(e) => {
+                log::error!("Dropping an entry because {e}");
+                None
+            }
+        })
+        .collect_vec()
     }
 
-    fn get_highest_score_rank_items(&self, mut rank_items: Vec<AdventuresRankItem>) -> Vec<AdventuresRankItem> {
+    fn get_highest_score_rank_items(
+        &self,
+        mut rank_items: Vec<AdventuresRankItem>,
+    ) -> Vec<AdventuresRankItem> {
         rank_items.sort_by_key(|rank_item| u64::from_str_radix(&rank_item.score, 10).unwrap());
         rank_items.reverse();
-        rank_items.into_iter().unique_by(|rank_item| rank_item.uid.clone()).collect()
+        rank_items
+            .into_iter()
+            .unique_by(|rank_item| rank_item.uid.clone())
+            .collect()
     }
 
     pub async fn get_ranks(
@@ -71,22 +103,28 @@ impl AdventuresDownloaderProxy {
                 response
                     .json::<Vec<AdventuresRankItem>>()
                     .await
-                    .map(|rank_items| (game_map, self.get_rank_items_with_avatar(self.get_highest_score_rank_items(rank_items))))
+                    .map(|rank_items| {
+                        (
+                            game_map,
+                            self.get_rank_items_with_avatar_drop_if_error(
+                                self.get_highest_score_rank_items(rank_items),
+                            ),
+                        )
+                    })
             },
         ))
-            .await?;
+        .await?;
 
         Ok(
-            futures::future::try_join_all(responses_with_avatar.into_iter().map(
+            futures::future::join_all(responses_with_avatar.into_iter().map(
                 |(game_map, response)| async {
-                    response
-                        .await
-                        .map(|rank_item| (game_map, rank_item))
+                    let rank_item = response.await;
+                    (game_map, rank_item)
                 },
             ))
-            .await?
+            .await
             .into_iter()
-            .collect()
+            .collect(),
         )
     }
 }

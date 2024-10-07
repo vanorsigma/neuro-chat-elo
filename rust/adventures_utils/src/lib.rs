@@ -1,6 +1,6 @@
 use serde::{self, Deserialize, Serialize};
 
-const BADGE_URL: &str = "https://vanorsigma.github.io/neuro-chat-elo/{ai}-{collab}.png";
+const BADGE_URL: &str = "https://neuroranks.chat/neuro-chat-elo/{ai}-{collab}.png";
 
 #[derive(Serialize, Default, Debug)]
 pub enum AdventuresMetadataType {

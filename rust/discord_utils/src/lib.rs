@@ -1,6 +1,10 @@
 pub mod types;
 
-use std::{collections::HashMap, fs::File, io::BufReader};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{BufReader, BufWriter},
+};
 
 use anyhow::Error;
 use reqwest::{self, StatusCode};
@@ -93,6 +97,20 @@ impl DiscordClient {
         )
         .await;
 
+        Ok(())
+    }
+
+    pub async fn dump_cache(&self, cache_path: &str) -> Result<(), Error> {
+        serde_json::to_writer(
+            BufWriter::new(File::create(&cache_path)?),
+            &self
+                .username_to_author_cache
+                .read()
+                .await
+                .values()
+                .cloned()
+                .collect::<Vec<_>>(),
+        )?;
         Ok(())
     }
 

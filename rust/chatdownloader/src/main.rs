@@ -129,6 +129,19 @@ async fn main() {
                 .chain(pxls_casual),
         )
         .await;
-    chatlogprocessor::ChatLogProcessor::export_to_leaderboards(user_performances, twitch, discord)
-        .await;
+    chatlogprocessor::ChatLogProcessor::export_to_leaderboards(
+        user_performances,
+        twitch,
+        discord.clone(),
+    )
+    .await;
+
+    if let Ok(cache_path) = env::var("DISCORD_USER_CACHE") {
+        discord
+            .dump_cache(&cache_path)
+            .await
+            .expect("cache path configured, dumped cache");
+    } else {
+        log::warn!("No discord user cache, not dumping discord cache")
+    }
 }
