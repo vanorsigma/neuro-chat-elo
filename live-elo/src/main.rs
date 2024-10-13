@@ -1,5 +1,8 @@
-use std::sync::Arc;
+mod config;
 
+use std::{str::FromStr, sync::Arc};
+
+use config::GLOBAL_CONFIG;
 use lbo::{performances::StandardLeaderboard, Pipeline};
 use live_elo::{
     exporter::{shared_processor::SharedHandle, DummyExporter, MultiExporter},
@@ -20,7 +23,7 @@ async fn main() {
             .with(
                 tracing_subscriber::fmt::layer()
                     .with_writer(std::io::stderr)
-                    .with_filter(tracing_subscriber::EnvFilter::from_default_env()),
+                    .with_filter(tracing_subscriber::EnvFilter::from_str(&GLOBAL_CONFIG.rust_log).unwrap()),
             )
             .init();
     }
@@ -49,7 +52,7 @@ async fn main() {
     let pipeline = Pipeline::builder()
         .source(CancellableSource::new(
             TokioTaskSource::builder()
-                .add_source(TwitchMessageSourceHandle::spawn("ironmouse"))
+                .add_source(TwitchMessageSourceHandle::spawn(GLOBAL_CONFIG.channel_name.as_ref()))
                 .build(),
             cancellation_token,
         ))
