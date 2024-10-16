@@ -18,3 +18,4 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 twelf = { version = "0.15.0", features = ["default_trait", "yaml"] }
 twitch-irc = "5.0.1"
 websocket-shared = { path = "../websocket-shared/" }
+app_state = { path = "../app_state/" }
