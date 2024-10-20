@@ -1,3 +1,5 @@
+use app_state::AppState;
+
 use crate::{message::AuthoredMesasge, scoring::ScoringSystem};
 
 pub trait PerformanceProcessor: Send {
@@ -19,6 +21,7 @@ pub struct StandardLeaderboard<
     Performance,
     ScoringClosed,
     ExporterClosed,
+    State,
 > where
     Message: AuthoredMesasge<Id = Id>,
     Scoring: ScoringSystem<Message = Message, Performance = Performance, Closed = ScoringClosed>,
@@ -27,13 +30,24 @@ pub struct StandardLeaderboard<
         Performance = Performance,
         Closed = ExporterClosed,
     >,
+    State: AppState,
 {
     scoring_system: Scoring,
     exporter: Exporter,
+    app_state: State,
 }
 
-impl<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed>
-    StandardLeaderboard<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed>
+impl<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed, State>
+    StandardLeaderboard<
+        Scoring,
+        Exporter,
+        Message,
+        Id,
+        Performance,
+        ScoringClosed,
+        ExporterClosed,
+        State,
+    >
 where
     Message: AuthoredMesasge<Id = Id>,
     Scoring: ScoringSystem<Message = Message, Performance = Performance, Closed = ScoringClosed>,
@@ -42,16 +56,18 @@ where
         Performance = Performance,
         Closed = ExporterClosed,
     >,
+    State: AppState,
 {
-    pub fn new(scoring_system: Scoring, exporter: Exporter) -> Self {
+    pub fn new(scoring_system: Scoring, exporter: Exporter, app_state: State) -> Self {
         Self {
             scoring_system,
             exporter,
+            app_state,
         }
     }
 }
 
-impl<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed>
+impl<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed, State>
     PerformanceProcessor
     for StandardLeaderboard<
         Scoring,
@@ -61,6 +77,7 @@ impl<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed>
         Performance,
         ScoringClosed,
         ExporterClosed,
+        State,
     >
 where
     Message: AuthoredMesasge<Id = Id> + Send,
@@ -68,6 +85,7 @@ where
     Exporter: crate::exporter::Exporter<AuthorId = Id, Performance = Performance, Closed = ExporterClosed>
         + Send,
     Scoring: Send,
+    State: AppState,
 {
     type Message = Message;
     type Closed = ClosedStandardLeaderboard<
