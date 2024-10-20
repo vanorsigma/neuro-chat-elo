@@ -1,15 +1,21 @@
+pub mod bilibili;
+pub mod discord;
 pub mod twitch;
 
+use bilibili::B2Message;
+use discord::DiscordMessage;
 use lbo::{message::AuthoredMesasge, sources::Source};
 use tokio::{sync::mpsc, task::JoinSet};
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
 use twitch::TwitchMessage;
-use websocket_shared::{AuthorId, TwitchId};
+use websocket_shared::{AuthorId, B2Id, DiscordId, TwitchId};
 
 #[derive(Debug)]
 pub enum Message {
     Twitch(TwitchMessage),
+    Discord(DiscordMessage),
+    B2(B2Message),
 }
 
 impl AuthoredMesasge for Message {
@@ -18,6 +24,10 @@ impl AuthoredMesasge for Message {
     fn author_id(&self) -> Self::Id {
         match self {
             Message::Twitch(message) => AuthorId::Twitch(TwitchId::new(message.author_id.clone())),
+            Message::Discord(message) => {
+                AuthorId::Discord(DiscordId::new(message.author_id.clone()))
+            }
+            Message::B2(message) => AuthorId::B2(B2Id::new(message.user_id.clone())),
         }
     }
 }

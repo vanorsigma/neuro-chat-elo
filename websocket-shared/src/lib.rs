@@ -131,7 +131,35 @@ pub struct LeaderboardEloEntry {
 #[serde(transparent)]
 pub struct TwitchId(String);
 
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct DiscordId(String);
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct B2Id(String);
+
 impl TwitchId {
+    pub fn new(id: String) -> Self {
+        Self(id)
+    }
+
+    pub fn get(&self) -> &str {
+        &self.0
+    }
+}
+
+impl DiscordId {
+    pub fn new(id: String) -> Self {
+        Self(id)
+    }
+
+    pub fn get(&self) -> &str {
+        &self.0
+    }
+}
+
+impl B2Id {
     pub fn new(id: String) -> Self {
         Self(id)
     }
@@ -145,4 +173,6 @@ impl TwitchId {
 #[serde(tag = "platform", content = "id", rename_all = "snake_case")]
 pub enum AuthorId {
     Twitch(TwitchId),
+    Discord(DiscordId),
+    B2(B2Id),
 }

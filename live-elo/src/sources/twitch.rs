@@ -18,7 +18,7 @@ pub struct TwitchMessageSourceHandle {
 }
 
 impl TwitchMessageSourceHandle {
-    pub fn spawn(channel: &'static str) -> Self {
+    pub fn spawn(channel: String) -> Self {
         let cancellation_token = CancellationToken::new();
         let (mpsc_send, mpsc_recv) = mpsc::channel(1000);
         let task_join = tokio::task::spawn(twitch_source_inner(
@@ -51,7 +51,7 @@ impl Source for TwitchMessageSourceHandle {
 
 async fn twitch_source_inner(
     mpsc_send: mpsc::Sender<TwitchMessage>,
-    channel: &str,
+    channel: String,
     cancellation_token: CancellationToken,
 ) {
     let config = twitch_irc::ClientConfig::default();
@@ -86,7 +86,7 @@ async fn twitch_source_inner(
         }
     });
 
-    client.join(channel.to_string()).unwrap();
+    client.join(channel).unwrap();
 
     jh.await.unwrap()
 }
