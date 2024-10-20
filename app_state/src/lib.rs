@@ -4,7 +4,7 @@ struct RawAppState<N> {
     null_client: N,
 }
 
-pub trait AppState: NullClient {}
+pub trait AppState: Send + NullClient {}
 
 impl<N: NullClient> NullClient for RawAppState<N> {
     fn do_nothing(&self) {

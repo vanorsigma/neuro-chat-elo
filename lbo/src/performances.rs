@@ -30,15 +30,24 @@ pub struct StandardLeaderboard<
         Performance = Performance,
         Closed = ExporterClosed,
     >,
-    State: AppState
+    State: AppState,
 {
     scoring_system: Scoring,
     exporter: Exporter,
-    app_state: State
+    app_state: State,
 }
 
 impl<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed, State>
-    StandardLeaderboard<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed, State>
+    StandardLeaderboard<
+        Scoring,
+        Exporter,
+        Message,
+        Id,
+        Performance,
+        ScoringClosed,
+        ExporterClosed,
+        State,
+    >
 where
     Message: AuthoredMesasge<Id = Id>,
     Scoring: ScoringSystem<Message = Message, Performance = Performance, Closed = ScoringClosed>,
@@ -68,7 +77,7 @@ impl<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed,
         Performance,
         ScoringClosed,
         ExporterClosed,
-        State
+        State,
     >
 where
     Message: AuthoredMesasge<Id = Id> + Send,
@@ -76,7 +85,7 @@ where
     Exporter: crate::exporter::Exporter<AuthorId = Id, Performance = Performance, Closed = ExporterClosed>
         + Send,
     Scoring: Send,
-    State: AppState + Send,
+    State: AppState,
 {
     type Message = Message;
     type Closed = ClosedStandardLeaderboard<
@@ -92,7 +101,6 @@ where
     async fn process_message(&mut self, message: Self::Message) {
         let message_author_id = message.author_id();
         let score = self.scoring_system.score_message(message);
-        self.app_state.do_nothing();
         self.exporter.export(message_author_id, score).await;
     }
 
