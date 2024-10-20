@@ -4,9 +4,21 @@ use twelf::{config, Layer};
 #[config]
 #[derive(Default)]
 pub struct Config {
-    pub channel_name: String,
     #[serde(default = "default_rust_log")]
     pub rust_log: String,
+
+    #[serde(default = "default_false")]
+    pub twitch_enabled: bool,
+    pub twitch_channel_name: Option<String>,
+
+    #[serde(default = "default_false")]
+    pub discord_enabled: bool,
+    pub discord_livestream_channel_id: Option<String>,
+    pub discord_livestream_guild_id: Option<String>,
+}
+
+fn default_false() -> bool {
+    return false;
 }
 
 fn default_rust_log() -> String {

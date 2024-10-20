@@ -2,13 +2,18 @@ mod config;
 
 use ::app_state::create_app_state;
 use config::GLOBAL_CONFIG;
+use hubbub::prelude::DiscordMessage;
 use lbo::{performances::StandardLeaderboard, Pipeline};
 use live_elo::{
     exporter::{shared_processor::SharedHandle, DummyExporter, MultiExporter},
     filter::DummyFilter,
     performances::FanoutPerformances,
     scoring::MessageCountScoring,
-    sources::{twitch::TwitchMessageSourceHandle, CancellableSource, TokioTaskSource},
+    sources::{
+        discord::{DiscordHandleOptions, DiscordMessageSourceHandle},
+        twitch::TwitchMessageSourceHandle,
+        CancellableSource, TokioTaskSource,
+    },
 };
 use std::{str::FromStr, sync::Arc};
 use tracing::{info, trace};
@@ -53,13 +58,36 @@ async fn main() {
 
     let app_state = create_app_state();
 
+    let mut tokio_task_builder = TokioTaskSource::builder();
+
+    if GLOBAL_CONFIG.twitch_enabled {
+        tokio_task_builder = tokio_task_builder.add_source(TwitchMessageSourceHandle::spawn(
+            GLOBAL_CONFIG
+                .twitch_channel_name
+                .clone()
+                .expect("need twitch channel name"),
+        ));
+    }
+
+    if GLOBAL_CONFIG.discord_enabled {
+        tokio_task_builder = tokio_task_builder.add_source(DiscordMessageSourceHandle::spawn(
+            DiscordHandleOptions {
+                channel_id: GLOBAL_CONFIG
+                    .discord_livestream_channel_id
+                    .clone()
+                    .expect("should have livestream channel id"),
+                guild_id: GLOBAL_CONFIG
+                    .discord_livestream_guild_id
+                    .clone()
+                    .expect("should have livestream guild id"),
+                token: std::env::var("CHAT_DISCORD_TOKEN").unwrap(),
+            },
+        ));
+    }
+
     let pipeline = Pipeline::builder()
         .source(CancellableSource::new(
-            TokioTaskSource::builder()
-                .add_source(TwitchMessageSourceHandle::spawn(
-                    GLOBAL_CONFIG.channel_name.as_ref(),
-                ))
-                .build(),
+            tokio_task_builder.build(),
             cancellation_token,
         ))
         .filter(DummyFilter::new())
