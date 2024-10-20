@@ -23,6 +23,9 @@ impl ScoringSystem for MessageCountScoring {
             crate::sources::Message::Discord(_) => {
                 super::exporter::websocket::PerformancePoints::new(1.0)
             }
+            crate::sources::Message::B2(_) => {
+                super::exporter::websocket::PerformancePoints::new(1.0)
+            }
         }
     }
 

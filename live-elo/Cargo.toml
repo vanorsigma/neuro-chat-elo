@@ -19,7 +19,8 @@ twelf = { version = "0.15.0", features = ["default_trait", "yaml"] }
 twitch-irc = "5.0.1"
 websocket-shared = { path = "../websocket-shared/" }
 app_state = { path = "../app_state/" }
-bililive = { git = "https://github.com/vanorsigma/bililive-rs.git" }
+bililive = { git = "https://github.com/vanorsigma/bililive-rs.git", ref = "e15f7b9" }
+# bililive = { path = "../../testing/bililive-rs/bililive" }
 futures = "0.3.31"
 hubbub = { git = "https://github.com/vanorsigma/hubbub.git", ref = "9e16fb3"}
 anyhow = "1.0.90"

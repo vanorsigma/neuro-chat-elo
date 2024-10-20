@@ -30,15 +30,24 @@ pub struct StandardLeaderboard<
         Performance = Performance,
         Closed = ExporterClosed,
     >,
-    State: AppState
+    State: AppState,
 {
     scoring_system: Scoring,
     exporter: Exporter,
-    app_state: State
+    app_state: State,
 }
 
 impl<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed, State>
-    StandardLeaderboard<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed, State>
+    StandardLeaderboard<
+        Scoring,
+        Exporter,
+        Message,
+        Id,
+        Performance,
+        ScoringClosed,
+        ExporterClosed,
+        State,
+    >
 where
     Message: AuthoredMesasge<Id = Id>,
     Scoring: ScoringSystem<Message = Message, Performance = Performance, Closed = ScoringClosed>,
@@ -68,7 +77,7 @@ impl<Scoring, Exporter, Message, Id, Performance, ScoringClosed, ExporterClosed,
         Performance,
         ScoringClosed,
         ExporterClosed,
-        State
+        State,
     >
 where
     Message: AuthoredMesasge<Id = Id> + Send,

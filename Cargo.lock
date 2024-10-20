@@ -276,7 +276,7 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 [[package]]
 name = "bililive"
 version = "0.2.0-beta.5"
-source = "git+https://github.com/vanorsigma/bililive-rs.git#b020db9f1d4a583ba5f2ebd292955b8bc0c56911"
+source = "git+https://github.com/vanorsigma/bililive-rs.git#e15f7b9351958cac1c8f66b179d3f678acce7083"
 dependencies = [
  "async-tungstenite 0.23.0",
  "bililive-core",
@@ -294,7 +294,7 @@ dependencies = [
 [[package]]
 name = "bililive-core"
 version = "0.1.0-beta.4"
-source = "git+https://github.com/vanorsigma/bililive-rs.git#b020db9f1d4a583ba5f2ebd292955b8bc0c56911"
+source = "git+https://github.com/vanorsigma/bililive-rs.git#e15f7b9351958cac1c8f66b179d3f678acce7083"
 dependencies = [
  "brotli-decompressor",
  "flate2",

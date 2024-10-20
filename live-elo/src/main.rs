@@ -10,6 +10,7 @@ use live_elo::{
     performances::FanoutPerformances,
     scoring::MessageCountScoring,
     sources::{
+        bilibili::B2MessageSourceHandle,
         discord::{DiscordHandleOptions, DiscordMessageSourceHandle},
         twitch::TwitchMessageSourceHandle,
         CancellableSource, TokioTaskSource,
@@ -85,6 +86,19 @@ async fn main() {
                     .clone()
                     .expect("should have discord token"),
             },
+        ));
+    }
+
+    if GLOBAL_CONFIG.b2_enabled {
+        tokio_task_builder = tokio_task_builder.add_source(B2MessageSourceHandle::spawn(
+            GLOBAL_CONFIG
+                .b2_livestream_channel
+                .clone()
+                .expect("should have bilibili channel id"),
+            GLOBAL_CONFIG
+                .b2_token
+                .clone()
+                .expect("shoudl ahve b2 token"),
         ));
     }
 

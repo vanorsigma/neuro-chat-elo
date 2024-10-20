@@ -16,6 +16,11 @@ pub struct Config {
     pub discord_livestream_channel_id: Option<String>,
     pub discord_livestream_guild_id: Option<String>,
     pub discord_token: Option<String>,
+
+    #[serde(default = "default_false")]
+    pub b2_enabled: bool,
+    pub b2_livestream_channel: Option<u64>,
+    pub b2_token: Option<String>,
 }
 
 fn default_false() -> bool {
