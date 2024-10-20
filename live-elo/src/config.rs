@@ -15,6 +15,7 @@ pub struct Config {
     pub discord_enabled: bool,
     pub discord_livestream_channel_id: Option<String>,
     pub discord_livestream_guild_id: Option<String>,
+    pub discord_token: Option<String>,
 }
 
 fn default_false() -> bool {

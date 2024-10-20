@@ -80,7 +80,10 @@ async fn main() {
                     .discord_livestream_guild_id
                     .clone()
                     .expect("should have livestream guild id"),
-                token: std::env::var("CHAT_DISCORD_TOKEN").unwrap(),
+                token: GLOBAL_CONFIG
+                    .discord_token
+                    .clone()
+                    .expect("should have discord token"),
             },
         ));
     }
