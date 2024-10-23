@@ -1,7 +1,6 @@
 mod config;
 
-use std::{str::FromStr, sync::Arc};
-
+use ::app_state::create_app_state;
 use config::GLOBAL_CONFIG;
 use lbo::{performances::StandardLeaderboard, Pipeline};
 use live_elo::{
@@ -11,6 +10,7 @@ use live_elo::{
     scoring::MessageCountScoring,
     sources::{twitch::TwitchMessageSourceHandle, CancellableSource, TokioTaskSource},
 };
+use std::{str::FromStr, sync::Arc};
 use tracing::{info, trace};
 use websocket_shared::{LeaderboardElos, LeaderboardName};
 
@@ -23,7 +23,9 @@ async fn main() {
             .with(
                 tracing_subscriber::fmt::layer()
                     .with_writer(std::io::stderr)
-                    .with_filter(tracing_subscriber::EnvFilter::from_str(&GLOBAL_CONFIG.rust_log).unwrap()),
+                    .with_filter(
+                        tracing_subscriber::EnvFilter::from_str(&GLOBAL_CONFIG.rust_log).unwrap(),
+                    ),
             )
             .init();
     }
@@ -49,10 +51,14 @@ async fn main() {
     let websocket_server =
         live_elo::exporter::websocket::UnstartedWebsocketServer::new(shared_handle.clone());
 
+    let app_state = create_app_state();
+
     let pipeline = Pipeline::builder()
         .source(CancellableSource::new(
             TokioTaskSource::builder()
-                .add_source(TwitchMessageSourceHandle::spawn(GLOBAL_CONFIG.channel_name.as_ref()))
+                .add_source(TwitchMessageSourceHandle::spawn(
+                    GLOBAL_CONFIG.channel_name.as_ref(),
+                ))
                 .build(),
             cancellation_token,
         ))
@@ -67,6 +73,7 @@ async fn main() {
                             "message_count".to_string(),
                         )),
                     ),
+                    app_state,
                 ))
                 .build(),
         )
