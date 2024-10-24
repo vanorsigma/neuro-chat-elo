@@ -6,7 +6,6 @@
     Overall: 0,
     'Non-VIPS': 1,
     'Chat Only': 2,
-    Copypasta: 3,
     Bits: 4,
     Subs: 5,
     'Partner Only': 6,
