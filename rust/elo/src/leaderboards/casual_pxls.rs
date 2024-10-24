@@ -78,6 +78,10 @@ impl AbstractLeaderboard for CasualPxlsDecorator {
         self.pre_update_leaderboard(&performance);
         self.0.update_leaderboard(performance)
     }
+
+    async fn save(&mut self) {
+        self.0.save().await
+    }
 }
 
 impl AbstractLeaderboard for CasualPxls {
