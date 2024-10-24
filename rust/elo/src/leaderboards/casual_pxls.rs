@@ -43,19 +43,21 @@ impl CasualPxls {
 pub struct CasualPxlsDecorator(pub CasualPxls);
 
 impl CasualPxlsDecorator {
-    fn pre_update_leaderboard(&mut self, performance: UserChatPerformance) {
-        // NOTE: insert an entry before update_leaderboard can do so
-        self.__get_state()
-            .entry(performance.id.clone())
-            .or_insert(LeaderboardInnerState {
-                id: performance.id,
-                username: performance.username,
-                avatar: performance.avatar.clone(),
-                badges: None,
-                previous_rank: None,
-                elo: 0.0,
-                score: 0.0,
-            });
+    fn pre_update_leaderboard(&mut self, performance: &UserChatPerformance) {
+        if is_message_origin!(performance, MessageTag::Pxls) {
+            // NOTE: insert an entry before update_leaderboard can do so
+            self.__get_state()
+                .entry(performance.id.clone())
+                .or_insert(LeaderboardInnerState {
+                    id: performance.id.clone(),
+                    username: performance.username.clone(),
+                    avatar: performance.avatar.clone(),
+                    badges: None,
+                    previous_rank: None,
+                    elo: 0.0,
+                    score: 0.0,
+                });
+        }
     }
 }
 
@@ -73,7 +75,7 @@ impl AbstractLeaderboard for CasualPxlsDecorator {
     }
 
     fn update_leaderboard(&mut self, performance: UserChatPerformance) {
-        self.pre_update_leaderboard(performance.clone());
+        self.pre_update_leaderboard(&performance);
         self.0.update_leaderboard(performance)
     }
 }
