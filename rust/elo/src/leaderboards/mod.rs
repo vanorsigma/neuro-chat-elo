@@ -75,7 +75,7 @@ pub struct LeaderboardProcessor {
     partnersonly: WithReceiver<partnersonly::PartnersOnly>,
     bilibililivestreamchat: WithReceiver<bilibililivestreamchat::BilibiliLivestreamChat>,
     adventures_farm: WithReceiver<adventures_farm::AdventuresFarm>,
-    casual_pxls: WithReceiver<casual_pxls::CasualPxls>,
+    casual_pxls: WithReceiver<casual_pxls::CasualPxlsDecorator>,
     ironmouse_pxls: WithReceiver<ironmouse_pxls::IronmousePxls>,
     ironmouse_canvas_chat: WithReceiver<ironmouse_canvas_chat::IronmouseCanvasChat>,
 }
@@ -104,7 +104,7 @@ impl LeaderboardProcessor {
         let adventures_farm =
             WithReceiver::new(adventures_farm::AdventuresFarm::new(), rx.resubscribe());
         let casual_pxls = WithReceiver::new(
-            casual_pxls::CasualPxls::new(discord_api.clone()),
+            casual_pxls::CasualPxlsDecorator(casual_pxls::CasualPxls::new(discord_api.clone())),
             rx.resubscribe(),
         );
         let ironmouse_pxls = WithReceiver::new(

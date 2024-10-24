@@ -40,6 +40,44 @@ impl CasualPxls {
     }
 }
 
+pub struct CasualPxlsDecorator(pub CasualPxls);
+
+impl CasualPxlsDecorator {
+    fn pre_update_leaderboard(&mut self, performance: UserChatPerformance) {
+        // NOTE: insert an entry before update_leaderboard can do so
+        self.__get_state()
+            .entry(performance.id.clone())
+            .or_insert(LeaderboardInnerState {
+                id: performance.id,
+                username: performance.username,
+                avatar: performance.avatar.clone(),
+                badges: None,
+                previous_rank: None,
+                elo: 0.0,
+                score: 0.0,
+            });
+    }
+}
+
+impl AbstractLeaderboard for CasualPxlsDecorator {
+    fn get_name(&self) -> String {
+        self.0.get_name()
+    }
+
+    fn __get_state(&mut self) -> &mut HashMap<String, LeaderboardInnerState> {
+        self.0.__get_state()
+    }
+
+    fn calculate_score(&self, performance: &UserChatPerformance) -> Option<f32> {
+        self.0.calculate_score(performance)
+    }
+
+    fn update_leaderboard(&mut self, performance: UserChatPerformance) {
+        self.pre_update_leaderboard(performance.clone());
+        self.0.update_leaderboard(performance)
+    }
+}
+
 impl AbstractLeaderboard for CasualPxls {
     fn get_name(&self) -> String {
         "casual_pxls".to_string()
@@ -65,14 +103,7 @@ impl AbstractLeaderboard for CasualPxls {
                 .map(|(k, state)| {
                     let mut new_state = state.clone();
                     new_state.id = state.id.replace(CASUAL_ID_SUFFIX, "");
-
-                    // hack: if we see the starting elo, it means that we've
-                    // never seen this user in our lives
-                    if state.elo == STARTING_ELO {
-                        new_state.elo = state.score
-                    } else {
-                        new_state.elo = state.score.max(state.elo);
-                    }
+                    new_state.elo = state.score;
 
                     (k.to_string(), new_state)
                 })

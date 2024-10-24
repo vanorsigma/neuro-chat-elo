@@ -7,7 +7,7 @@ use twitch_api::helix::chat::{ChatBadge, GetChannelChatBadgesRequest, GetGlobalC
 use twitch_api::helix::users::GetUsersRequest;
 use twitch_api::helix::videos::GetVideosRequest;
 use twitch_api::twitch_oauth2::{AppAccessToken, ClientId, ClientSecret};
-use twitch_api::types::{NicknameRef, UserIdRef};
+use twitch_api::types::{NicknameRef, UserIdRef, VideoIdRef};
 use twitch_api::HelixClient;
 use twitchtypes::ChatUserInfo;
 
@@ -102,7 +102,7 @@ impl TwitchAPIWrapper {
         &self,
         vod_id: String,
     ) -> (DateTime<FixedOffset>, DateTime<FixedOffset>) {
-        let vod_ids = [(&vod_id).into()];
+        let vod_ids: [&VideoIdRef; 1] = [(&vod_id).into()];
         let vod_info = self
             .twitch
             .req_get(GetVideosRequest::ids(&vod_ids), &self.token)
